@@ -265,76 +265,70 @@ el("btnLoginAction")?.addEventListener("click", async () => {
 });
 
 // ── 인증 상태 변경 감지 ──
-let _authHandling = false;
-sb.auth.onAuthStateChange(async (event, session) => {
-  // TOKEN_REFRESHED는 화면 전환 없이 user만 갱신
-  if (event === "TOKEN_REFRESHED") {
-    state.user = session?.user || null;
+async function handleAuthUser(user) {
+  const logoutBtn = el("btnLogout");
+  const userBadge = el("userBadge");
+  if (logoutBtn) logoutBtn.style.display = "block";
+
+  // 관리자 패스트트랙
+  if (user.email?.toLowerCase() === ADMIN_EMAIL) {
+    state.profile = { id: user.id, role: "admin", username: "admin",
+      doctor_name: "총괄관리자", hospital_name: "서울대학교" };
+    if (userBadge) { userBadge.textContent = "관리자"; userBadge.style.display = "block"; }
+    initAdmin();
     return;
   }
 
-  // 중복 실행 방지 (SIGNED_IN + INITIAL_SESSION 동시 발생 대응)
-  if (_authHandling) return;
-  _authHandling = true;
+  // 프로필 로드 (최대 5회 재시도)
+  let prof = null;
+  for (let i = 0; i < 5; i++) {
+    const { data, error } = await sb.from("profiles")
+      .select("id, role, email, username, full_name, doctor_name, hospital_name, hospital_code, patient_number, contact_email, dob, gender, approved_at")
+      .eq("id", user.id).maybeSingle();
+    if (data) { prof = data; break; }
+    if (error) console.warn("프로필 조회 오류:", error.message);
+    if (i < 4) await new Promise(r => setTimeout(r, 500));
+  }
 
-  try {
+  if (!prof) {
+    show("view-auth");
+    setMsg("authMsg", "프로필 정보를 찾을 수 없습니다. 새로고침해 주세요.", "error");
+    return;
+  }
+
+  state.profile = prof;
+  const roleLabel = { patient: "응답자", doctor: "의사", admin: "관리자", doctor_pending: "승인대기" };
+  if (userBadge) { userBadge.textContent = roleLabel[prof.role] || prof.role; userBadge.style.display = "block"; }
+
+  if (prof.role === "admin")               initAdmin();
+  else if (prof.role === "patient")        initPatient();
+  else if (prof.role === "doctor")         initDoctor();
+  else if (prof.role === "doctor_pending") showPendingScreen();
+}
+
+sb.auth.onAuthStateChange((event, session) => {
+  // 화면 전환이 필요한 이벤트만 처리
+  if (event === "SIGNED_IN" || event === "INITIAL_SESSION") {
     state.user = session?.user || null;
-
-    const logoutBtn = el("btnLogout");
-    const userBadge = el("userBadge");
-
-    if (!state.user) {
-      if (logoutBtn) logoutBtn.style.display = "none";
-      if (userBadge) userBadge.style.display = "none";
+    if (state.user) {
+      handleAuthUser(state.user);
+    } else {
+      // 세션 없음 (INITIAL_SESSION with no session)
+      el("btnLogout") && (el("btnLogout").style.display = "none");
+      el("userBadge") && (el("userBadge").style.display = "none");
       show("view-auth");
       renderAuthForms();
-      _authHandling = false;
-      return;
     }
-
-    if (logoutBtn) logoutBtn.style.display = "block";
-
-    // 관리자 패스트트랙
-    if (state.user.email?.toLowerCase() === ADMIN_EMAIL) {
-      state.profile = { id: state.user.id, role: "admin", username: "admin",
-        doctor_name: "총괄관리자", hospital_name: "서울대학교" };
-      if (userBadge) { userBadge.textContent = "관리자"; userBadge.style.display = "block"; }
-      _authHandling = false;
-      initAdmin();
-      return;
-    }
-
-    // 프로필 로드 (최대 5회 재시도, 500ms 간격)
-    let prof = null;
-    for (let i = 0; i < 5; i++) {
-      const { data, error } = await sb.from("profiles")
-        .select("id, role, email, username, full_name, doctor_name, hospital_name, hospital_code, patient_number, contact_email, dob, gender, approved_at")
-        .eq("id", state.user.id).maybeSingle();
-      if (data) { prof = data; break; }
-      if (error) console.warn("프로필 조회 오류:", error.message);
-      if (i < 4) await new Promise(r => setTimeout(r, 500));
-    }
-
-    _authHandling = false;
-
-    if (!prof) {
-      show("view-auth");
-      setMsg("authMsg", "프로필 정보를 찾을 수 없습니다. 새로고침해 주세요.", "error");
-      return;
-    }
-
-    state.profile = prof;
-    const roleLabel = { patient: "응답자", doctor: "의사", admin: "관리자", doctor_pending: "승인대기" };
-    if (userBadge) { userBadge.textContent = roleLabel[prof.role] || prof.role; userBadge.style.display = "block"; }
-
-    if (prof.role === "admin")               initAdmin();
-    else if (prof.role === "patient")        initPatient();
-    else if (prof.role === "doctor")         initDoctor();
-    else if (prof.role === "doctor_pending") showPendingScreen();
-
-  } catch (e) {
-    console.error("onAuthStateChange 오류:", e);
-    _authHandling = false;
+  } else if (event === "SIGNED_OUT") {
+    state.user = null;
+    state.profile = null;
+    el("btnLogout") && (el("btnLogout").style.display = "none");
+    el("userBadge") && (el("userBadge").style.display = "none");
+    show("view-auth");
+    renderAuthForms();
+  } else if (event === "TOKEN_REFRESHED") {
+    state.user = session?.user || null;
+    // 화면 전환 없음
   }
 });
 
