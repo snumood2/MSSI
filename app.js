@@ -118,6 +118,36 @@ el("btnToggleSignup")?.addEventListener("click", () => {
   renderAuthMode();
 });
 
+// 병원코드 중복 확인
+let hcodeVerified = false;
+el("d_hcode")?.addEventListener("input", () => {
+  hcodeVerified = false;
+  const msg = el("hcodeMsg");
+  if (msg) msg.className = "status-msg";
+});
+
+el("btnCheckHcode")?.addEventListener("click", async () => {
+  const code = el("d_hcode")?.value.trim();
+  const msg = el("hcodeMsg");
+  if (!code || code.length < 4) {
+    msg.className = "status-msg show error";
+    msg.textContent = "4자 이상 입력해주세요.";
+    return;
+  }
+  msg.className = "status-msg show info";
+  msg.textContent = "확인 중...";
+  const { data } = await sb.from("profiles").select("id").eq("hospital_code", code).maybeSingle();
+  if (data) {
+    hcodeVerified = false;
+    msg.className = "status-msg show error";
+    msg.textContent = `'${code}'는 이미 사용 중인 코드입니다. 다른 코드를 입력해주세요.`;
+  } else {
+    hcodeVerified = true;
+    msg.className = "status-msg show ok";
+    msg.textContent = `'${code}' 사용 가능한 코드입니다.`;
+  }
+});
+
 function renderAuthMode() {
   el("authTitle").textContent  = authMode === "login" ? "로그인" : "회원가입";
   el("btnLoginAction").textContent = authMode === "login" ? "로그인" : "가입하기";
@@ -126,6 +156,10 @@ function renderAuthMode() {
   if (selectedRole === "doctor" && loginOnly)
     loginOnly.style.display = authMode === "signup" ? "none" : "block";
   clearMsg("authMsg");
+  // 탭/모드 전환 시 코드 확인 상태 초기화
+  hcodeVerified = false;
+  const hcodeMsg = el("hcodeMsg");
+  if (hcodeMsg) hcodeMsg.className = "status-msg";
 }
 
 // ── 로그인 / 가입 처리 ──
@@ -195,6 +229,9 @@ el("btnLoginAction")?.addEventListener("click", async () => {
           patient_number: el("p_pnum").value.trim()
         };
       } else {
+        const hcode = el("d_hcode")?.value.trim();
+        if (!hcode || hcode.length < 4) throw "병원코드를 4자 이상 입력해주세요.";
+        if (!hcodeVerified) throw "병원코드 중복 확인을 먼저 해주세요.";
         signUpMeta = {
           role: "doctor_pending",
           username: rawId,
@@ -202,7 +239,7 @@ el("btnLoginAction")?.addEventListener("click", async () => {
           doctor_name: el("d_name").value.trim(),
           hospital_name: el("d_hname").value.trim(),
           dob: el("d_dob").value,
-          hospital_code: Math.random().toString(36).substring(2, 8).toUpperCase()
+          hospital_code: hcode
         };
       }
 
