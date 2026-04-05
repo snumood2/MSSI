@@ -385,7 +385,7 @@ el("btnAdminRefresh")?.addEventListener("click", async () => {
 });
 
 el("btnExportAll")?.addEventListener("click", async () => {
-  const { data } = await sb.from("survey_responses").select("*").eq("status", "completed");
+  const { data } = await sb.from("survey_responses").select("*").or("status.eq.completed,completed.eq.true");
   if (!data?.length) return alert("데이터가 없습니다.");
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
   const a = document.createElement("a");
@@ -527,7 +527,7 @@ async function initPatient() {
 async function refreshPatientStatus() {
   const { data: row } = await sb.from("survey_responses")
     .select("*")
-    .eq("patient_user_id", state.user.id)
+    .or(`patient_id.eq.${state.user.id},patient_user_id.eq.${state.user.id}`)
     .order("created_at", { ascending: false })
     .limit(1)
     .maybeSingle();
@@ -567,9 +567,9 @@ async function loadPatientHistory() {
   const list = el("patientHistoryList");
   if (!list) return;
   const { data } = await sb.from("survey_responses")
-    .select("id, completed_at, status")
-    .eq("patient_user_id", state.user.id)
-    .eq("status", "completed")
+    .select("id, completed_at, status, completed")
+    .or(`patient_id.eq.${state.user.id},patient_user_id.eq.${state.user.id}`)
+    .or("status.eq.completed,completed.eq.true")
     .order("completed_at", { ascending: false });
 
   if (!data?.length) {
@@ -592,10 +592,12 @@ el("btnStartSurvey")?.addEventListener("click", async () => {
   if (!confirm("새 설문을 시작하시겠습니까?")) return;
   state.answers = {}; state.currentSectionIdx = 0;
   const { data, error } = await sb.from("survey_responses").insert({
+    patient_id:      state.user.id,
     patient_user_id: state.user.id,
     hospital_code:   state.profile.hospital_code,
     patient_number:  state.profile.patient_number,
     status: "in_progress",
+    completed: false,
     answers: {}, progress: { sectionIndex: 0 }
   }).select().single();
   if (error) return alert("오류: " + error.message);
@@ -994,6 +996,7 @@ async function submitSurvey() {
     await sb.from("survey_responses").update({
       answers: state.answers, scores, report,
       status: "completed",
+      completed: true,
       completed_at: new Date().toISOString()
     }).eq("id", state.responseId);
 
@@ -1007,6 +1010,7 @@ async function submitSurvey() {
     // 채점 실패해도 저장은 시도
     await sb.from("survey_responses").update({
       answers: state.answers, status: "completed",
+      completed: true,
       completed_at: new Date().toISOString()
     }).eq("id", state.responseId);
     alert("제출 완료 (결과 계산 오류 발생 – 의사에게 문의하세요).");
