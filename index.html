@@ -2,948 +2,271 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>MSSI (한국어판) 채점기</title>
-  <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css" rel="stylesheet">
-  <style>
-    :root {
-      --primary-color: #4F46E5; /* Indigo Blue */
-      --primary-light: #EEF2FF;
-      --text-color: #1F2937;
-      --gray-color: #6B7280;
-      --bg-color: #F9FAFB;
-      --card-bg: #FFFFFF;
-      --success-color: #10B981;
-      --danger-color: #EF4444;
-    }
-
-    * {
-      box-sizing: border-box;
-      -webkit-tap-highlight-color: transparent;
-    }
-
-    body {
-      font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
-      background-color: var(--bg-color);
-      color: var(--text-color);
-      margin: 0;
-      padding: 20px 16px;
-      line-height: 1.5;
-    }
-
-    .container {
-      max-width: 720px;
-      margin: 0 auto;
-    }
-
-    header {
-      text-align: left;
-      margin-bottom: 32px;
-      padding: 24px;
-      background: var(--card-bg);
-      border-radius: 16px;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
-    }
-
-    h1 {
-      font-size: 1.75rem;
-      font-weight: 700;
-      color: var(--text-color);
-      margin: 0 0 16px 0;
-    }
-
-    .description {
-      color: var(--gray-color);
-      font-size: 0.95rem;
-      margin: 0;
-      line-height: 1.6;
-    }
-
-    .question-card {
-      background: var(--card-bg);
-      border-radius: 16px;
-      padding: 24px 20px;
-      margin-bottom: 20px;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
-      transition: transform 0.2s ease, box-shadow 0.2s ease;
-    }
-
-    .question-title {
-      font-size: 1.15rem;
-      font-weight: 600;
-      margin-bottom: 16px;
-      color: var(--text-color);
-      display: flex;
-      align-items: baseline;
-    }
-
-    .question-number {
-      color: var(--primary-color);
-      font-weight: 800;
-      margin-right: 10px;
-      font-size: 1.2rem;
-    }
-    
-    .gate-question {
-        display: flex;
-        gap: 12px;
-        margin-bottom: 16px;
-    }
-
-    /* "예/아니오" 라디오 버튼 */
-    .gate-label {
-        flex: 1;
-        display: block;
-        padding: 14px 16px;
-        border: 2px solid #E5E7EB;
-        border-radius: 12px;
-        cursor: pointer;
-        transition: all 0.2s ease;
-        font-size: 1rem;
-        font-weight: 600;
-        text-align: center;
-    }
-    
-    .gate-radio {
-        display: none; /* 실제 라디오 버튼 숨기기 */
-    }
-
-    .gate-radio:checked + .gate-label {
-        border-color: var(--primary-color);
-        background-color: var(--primary-light);
-        color: var(--primary-color);
-        box-shadow: 0 2px 4px rgba(79, 70, 229, 0.1);
-    }
-    
-    /* "아니오" 선택 시 */
-    .gate-radio[value="0"]:checked + .gate-label {
-        border-color: #D1D5DB;
-        background-color: #F3F4F6;
-        color: var(--gray-color);
-    }
-    
-    /* 빈도/심각도 선택 영역 */
-    .sub-questions {
-      display: none; /* 기본 숨김 */
-      margin-top: 20px;
-      padding-top: 20px;
-      border-top: 1px dashed #E5E7EB;
-    }
-    
-    .sub-question-group {
-        margin-bottom: 20px;
-    }
-    
-    .sub-question-title {
-        font-size: 1rem;
-        font-weight: 600;
-        color: var(--text-color);
-        margin-bottom: 12px;
-    }
-
-    .options {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-
-    .option-label {
-      position: relative;
-      display: flex;
-      align-items: flex-start;
-      padding: 14px 16px;
-      background-color: var(--bg-color);
-      border: 2px solid transparent;
-      border-radius: 12px;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      font-size: 0.95rem;
-      color: var(--text-color);
-    }
-
-    .option-label:active {
-      transform: scale(0.98);
-    }
-
-    .option-radio {
-      appearance: none;
-      -webkit-appearance: none;
-      min-width: 22px;
-      height: 22px;
-      border: 2px solid var(--gray-color);
-      border-radius: 50%;
-      margin-right: 12px;
-      margin-top: 2px;
-      position: relative;
-      transition: all 0.2s ease;
-      flex-shrink: 0;
-    }
-
-    .option-radio:checked {
-      border-color: var(--primary-color);
-      background-color: var(--primary-color);
-    }
-
-    .option-radio:checked::after {
-      content: '';
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: 10px;
-      height: 10px;
-      background-color: white;
-      border-radius: 50%;
-    }
-
-    .option-radio:checked + .option-text {
-        font-weight: 600;
-        color: var(--primary-color);
-    }
-    .option-label:has(.option-radio:checked) {
-      background-color: var(--primary-light);
-      border-color: var(--primary-color);
-    }
-
-    .btn-submit {
-      display: block;
-      width: 100%;
-      padding: 18px;
-      background-color: var(--primary-color);
-      color: white;
-      border: none;
-      border-radius: 16px;
-      font-size: 1.1rem;
-      font-weight: 700;
-      cursor: pointer;
-      transition: background-color 0.3s, transform 0.2s;
-      margin-top: 40px;
-      box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.2), 0 2px 4px -1px rgba(79, 70, 229, 0.1);
-    }
-
-    .btn-submit:active {
-      transform: scale(0.97);
-      background-color: #4338CA;
-    }
-
-    #result {
-      display: none;
-      margin-top: 40px;
-      padding: 32px 24px;
-      background: var(--card-bg);
-      border-radius: 24px;
-      text-align: center;
-      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-      animation: slideUp 0.5s ease-out;
-    }
-
-    @keyframes slideUp {
-      from { opacity: 0; transform: translateY(30px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    .result-title {
-      font-size: 1.3rem;
-      font-weight: 600;
-      color: var(--gray-color);
-      margin-bottom: 8px;
-    }
-
-    .score-display {
-      font-size: 4rem;
-      font-weight: 800;
-      line-height: 1;
-      margin: 16px 0 24px;
-      color: var(--primary-color);
-      display: inline-block;
-    }
-
-    .result-message {
-      padding: 20px;
-      border-radius: 16px;
-      font-size: 1.1rem;
-      line-height: 1.6;
-      background-color: #F3F4F6;
-      color: var(--text-color);
-      text-align: left;
-    }
-    
-    .result-message strong {
-        color: var(--primary-color);
-        font-size: 1.2em;
-    }
-
-  </style>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <title>기분장애 임상평가 자기보고식 설문</title>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <div class="container">
-    <header>
-      <h1>MSSI (Mood Instability Scale)</h1>
-      <p class="description">
-        본 검사는 당신의 최근 2주 동안의 모습을 알아보기 위한 것입니다.<br>
-        각 질문을 읽고 지난 2주간 해당 증상이 있었으면 "예"를, 없었으면 "아니오"를 선택해 주십시오.<br>
-        "예"를 선택한 경우, 증상이 <strong>얼마나 자주</strong> 있었는지(빈도), <strong>얼마나 심했는지</strong>(심각도) 이어서 응답해 주십시오.
-      </p>
-    </header>
-    
-    <form id="mssiForm" onsubmit="calculateScore(event)">
-      
-      <div class="question-card">
-        <div class="question-title"><span class="question-number">1</span>감정 기복이 있었다.</div>
-        <div class="gate-question">
-          <input type="radio" name="q1_gate" value="0" class="gate-radio" id="q1_no" required><label for="q1_no" class="gate-label">아니오 (없었음)</label>
-          <input type="radio" name="q1_gate" value="1" class="gate-radio" id="q1_yes"><label for="q1_yes" class="gate-label">예 (있었음)</label>
+
+<!-- ══════════ 헤더 ══════════ -->
+<header id="mainHeader">
+  <h1>기분장애 임상평가 설문</h1>
+  <div class="header-right">
+    <span id="userBadge" class="user-badge" style="display:none;"></span>
+    <button id="btnLogout" class="btn secondary sm" style="display:none;">로그아웃</button>
+  </div>
+</header>
+
+<div class="container">
+
+  <!-- ══════════ 로그인 뷰 ══════════ -->
+  <div id="view-auth" class="view active">
+    <div class="card" style="max-width:480px; margin:0 auto;">
+      <h2 id="authTitle" class="card-title text-center">로그인</h2>
+
+      <!-- 역할 탭 -->
+      <div class="auth-tabs">
+        <button class="auth-tab active" data-role="patient">응답자</button>
+        <button class="auth-tab" data-role="doctor">의사</button>
+        <button class="auth-tab" data-role="admin">관리자</button>
+      </div>
+
+      <!-- 응답자 폼 -->
+      <div id="form-patient">
+        <div class="form-group">
+          <label>아이디</label>
+          <input type="text" id="p_id" placeholder="아이디 입력" autocomplete="username">
         </div>
-        <div class="sub-questions" id="sq-q1">
-          <div class="sub-question-group">
-            <div class="sub-question-title">A. 얼마나 자주 있었습니까? (빈도)</div>
-            <div class="options">
-              <label class="option-label"><input type="radio" name="q1_freq" value="1" class="option-radio"><span class="option-text">1일 미만 (몇 시간 지속)</span></label>
-              <label class="option-label"><input type="radio" name="q1_freq" value="2" class="option-radio"><span class="option-text">1일 이상 1주 미만</span></label>
-              <label class="option-label"><input type="radio" name="q1_freq" value="3" class="option-radio"><span class="option-text">1주 이상 2주 미만</span></label>
-              <label class="option-label"><input type="radio" name="q1_freq" value="4" class="option-radio"><span class="option-text">매일 증상이 있었다</span></label>
-            </div>
-          </div>
-          <div class="sub-question-group">
-            <div class="sub-question-title">B. 얼마나 심했습니까? (심각도)</div>
-            <div class="options">
-              <label class="option-label"><input type="radio" name="q1_sev" value="1" class="option-radio"><span class="option-text">약간 (증상은 있었지만 힘들지 않았다)</span></label>
-              <label class="option-label"><input type="radio" name="q1_sev" value="2" class="option-radio"><span class="option-text">상당히 (매우 불쾌하지만 참을 수 있었다)</span></label>
-              <label class="option-label"><input type="radio" name="q1_sev" value="3" class="option-radio"><span class="option-text">심하게 (정말 견디기 힘들었다)</span></label>
-            </div>
-          </div>
+        <div class="form-group signup-only" style="display:none;">
+          <label>생년월일</label>
+          <input type="date" id="p_dob">
+        </div>
+        <div class="form-group signup-only" style="display:none;">
+          <label>성별</label>
+          <select id="p_gender">
+            <option value="male">남성</option>
+            <option value="female">여성</option>
+          </select>
+        </div>
+        <div class="form-group signup-only" style="display:none;">
+          <label>병원코드</label>
+          <input type="text" id="p_hcode" placeholder="의사에게 받은 병원코드">
+        </div>
+        <div class="form-group signup-only" style="display:none;">
+          <label>환자번호 <span class="text-sub">(선택)</span></label>
+          <input type="text" id="p_pnum" placeholder="예: 12345">
+        </div>
+        <div class="form-group">
+          <label>비밀번호</label>
+          <input type="password" id="p_pw" placeholder="비밀번호" autocomplete="current-password">
         </div>
       </div>
 
-      <div class="question-card">
-        <div class="question-title"><span class="question-number">2</span>기분이 불안정했다.</div>
-        <div class="gate-question">
-          <input type="radio" name="q2_gate" value="0" class="gate-radio" id="q2_no" required><label for="q2_no" class="gate-label">아니오</label>
-          <input type="radio" name="q2_gate" value="1" class="gate-radio" id="q2_yes"><label for="q2_yes" class="gate-label">예</label>
+      <!-- 의사 폼 -->
+      <div id="form-doctor" style="display:none;">
+        <div class="form-group signup-only" style="display:none;">
+          <label>연락용 이메일</label>
+          <input type="email" id="d_real_email" placeholder="example@hospital.com">
         </div>
-        <div class="sub-questions" id="sq-q2">
-          <div class="sub-question-group">
-            <div class="sub-question-title">A. 얼마나 자주 있었습니까? (빈도)</div>
-            <div class="options">
-              <label class="option-label"><input type="radio" name="q2_freq" value="1" class="option-radio"><span class="option-text">1일 미만 (몇 시간 지속)</span></label>
-              <label class="option-label"><input type="radio" name="q2_freq" value="2" class="option-radio"><span class="option-text">1일 이상 1주 미만</span></label>
-              <label class="option-label"><input type="radio" name="q2_freq" value="3" class="option-radio"><span class="option-text">1주 이상 2주 미만</span></label>
-              <label class="option-label"><input type="radio" name="q2_freq" value="4" class="option-radio"><span class="option-text">매일 증상이 있었다</span></label>
-            </div>
-          </div>
-          <div class="sub-question-group">
-            <div class="sub-question-title">B. 얼마나 심했습니까? (심각도)</div>
-            <div class="options">
-              <label class="option-label"><input type="radio" name="q2_sev" value="1" class="option-radio"><span class="option-text">약간</span></label>
-              <label class="option-label"><input type="radio" name="q2_sev" value="2" class="option-radio"><span class="option-text">상당히</span></label>
-              <label class="option-label"><input type="radio" name="q2_sev" value="3" class="option-radio"><span class="option-text">심하게</span></label>
-            </div>
-          </div>
+        <div class="form-group signup-only" style="display:none;">
+          <label>아이디</label>
+          <input type="text" id="d_signup_id" placeholder="로그인용 아이디">
         </div>
-      </div>
-      
-      <div class="question-card">
-        <div class="question-title"><span class="question-number">3</span>다른 사람들과 다투는 일이 있었다.</div>
-        <div class="gate-question">
-          <input type="radio" name="q3_gate" value="0" class="gate-radio" id="q3_no" required><label for="q3_no" class="gate-label">아니오</label>
-          <input type="radio" name="q3_gate" value="1" class="gate-radio" id="q3_yes"><label for="q3_yes" class="gate-label">예</label>
+        <div class="form-group login-only">
+          <label>아이디 (또는 이메일)</label>
+          <input type="text" id="d_login_id" placeholder="아이디 입력" autocomplete="username">
         </div>
-        <div class="sub-questions" id="sq-q3">
-          <div class="sub-question-group">
-            <div class="sub-question-title">A. 얼마나 자주 있었습니까? (빈도)</div>
-            <div class="options">
-              <label class="option-label"><input type="radio" name="q3_freq" value="1" class="option-radio"><span class="option-text">1일 미만 (몇 시간 지속)</span></label>
-              <label class="option-label"><input type="radio" name="q3_freq" value="2" class="option-radio"><span class="option-text">1일 이상 1주 미만</span></label>
-              <label class="option-label"><input type="radio" name="q3_freq" value="3" class="option-radio"><span class="option-text">1주 이상 2주 미만</span></label>
-              <label class="option-label"><input type="radio" name="q3_freq" value="4" class="option-radio"><span class="option-text">매일 증상이 있었다</span></label>
-            </div>
-          </div>
-          <div class="sub-question-group">
-            <div class="sub-question-title">B. 얼마나 심했습니까? (심각도)</div>
-            <div class="options">
-              <label class="option-label"><input type="radio" name="q3_sev" value="1" class="option-radio"><span class="option-text">약간</span></label>
-              <label class="option-label"><input type="radio" name="q3_sev" value="2" class="option-radio"><span class="option-text">상당히</span></label>
-              <label class="option-label"><input type="radio" name="q3_sev" value="3" class="option-radio"><span class="option-text">심하게</span></label>
-            </div>
-          </div>
+        <div class="form-group signup-only" style="display:none;">
+          <label>성함</label>
+          <input type="text" id="d_name" placeholder="홍길동">
+        </div>
+        <div class="form-group signup-only" style="display:none;">
+          <label>병원명</label>
+          <input type="text" id="d_hname" placeholder="분당서울대학교병원">
+        </div>
+        <div class="form-group signup-only" style="display:none;">
+          <label>생년월일</label>
+          <input type="date" id="d_dob">
+        </div>
+        <div class="form-group">
+          <label>비밀번호</label>
+          <input type="password" id="d_pw" placeholder="비밀번호" autocomplete="current-password">
         </div>
       </div>
-      
-      <div class="question-card">
-        <div class="question-title"><span class="question-number">4</span>화가 나고 짜증이 났다.</div>
-        <div class="gate-question">
-          <input type="radio" name="q4_gate" value="0" class="gate-radio" id="q4_no" required><label for="q4_no" class="gate-label">아니오</label>
-          <input type="radio" name="q4_gate" value="1" class="gate-radio" id="q4_yes"><label for="q4_yes" class="gate-label">예</label>
-        </div>
-        <div class="sub-questions" id="sq-q4">
-          <div class="sub-question-group">
-            <div class="sub-question-title">A. 얼마나 자주 있었습니까? (빈도)</div>
-            <div class="options">
-              <label class="option-label"><input type="radio" name="q4_freq" value="1" class="option-radio"><span class="option-text">1일 미만 (몇 시간 지속)</span></label>
-              <label class="option-label"><input type="radio" name="q4_freq" value="2" class="option-radio"><span class="option-text">1일 이상 1주 미만</span></label>
-              <label class="option-label"><input type="radio" name="q4_freq" value="3" class="option-radio"><span class="option-text">1주 이상 2주 미만</span></label>
-              <label class="option-label"><input type="radio" name="q4_freq" value="4" class="option-radio"><span class="option-text">매일 증상이 있었다</span></label>
-            </div>
-          </div>
-          <div class="sub-question-group">
-            <div class="sub-question-title">B. 얼마나 심했습니까? (심각도)</div>
-            <div class="options">
-              <label class="option-label"><input type="radio" name="q4_sev" value="1" class="option-radio"><span class="option-text">약간</span></label>
-              <label class="option-label"><input type="radio" name="q4_sev" value="2" class="option-radio"><span class="option-text">상당히</span></label>
-              <label class="option-label"><input type="radio" name="q4_sev" value="3" class="option-radio"><span class="option-text">심하게</span></label>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      <div class="question-card">
-        <div class="question-title"><span class="question-number">5</span>사소한 자극에도 눈물이 나거나 우는 날이 많았다.</div>
-        <div class="gate-question">
-          <input type="radio" name="q5_gate" value="0" class="gate-radio" id="q5_no" required><label for="q5_no" class="gate-label">아니오</label>
-          <input type="radio" name="q5_gate" value="1" class="gate-radio" id="q5_yes"><label for="q5_yes" class="gate-label">예</label>
-        </div>
-        <div class="sub-questions" id="sq-q5">
-          <div class="sub-question-group">
-            <div class="sub-question-title">A. 얼마나 자주 있었습니까? (빈도)</div>
-            <div class="options">
-              <label class="option-label"><input type="radio" name="q5_freq" value="1" class="option-radio"><span class="option-text">1일 미만 (몇 시간 지속)</span></label>
-              <label class="option-label"><input type="radio" name="q5_freq" value="2" class="option-radio"><span class="option-text">1일 이상 1주 미만</span></label>
-              <label class="option-label"><input type="radio" name="q5_freq" value="3" class="option-radio"><span class="option-text">1주 이상 2주 미만</span></label>
-              <label class="option-label"><input type="radio" name="q5_freq" value="4" class="option-radio"><span class="option-text">매일 증상이 있었다</span></label>
-            </div>
-          </div>
-          <div class="sub-question-group">
-            <div class="sub-question-title">B. 얼마나 심했습니까? (심각도)</div>
-            <div class="options">
-              <label class="option-label"><input type="radio" name="q5_sev" value="1" class="option-radio"><span class="option-text">약간</span></label>
-              <label class="option-label"><input type="radio" name="q5_sev" value="2" class="option-radio"><span class="option-text">상당히</span></label>
-              <label class="option-label"><input type="radio" name="q5_sev" value="3" class="option-radio"><span class="option-text">심하게</span></label>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      <div class="question-card">
-        <div class="question-title"><span class="question-number">6</span>사소한 일에도 흥분되었다.</div>
-        <div class="gate-question">
-          <input type="radio" name="q6_gate" value="0" class="gate-radio" id="q6_no" required><label for="q6_no" class="gate-label">아니오</label>
-          <input type="radio" name="q6_gate" value="1" class="gate-radio" id="q6_yes"><label for="q6_yes" class="gate-label">예</label>
-        </div>
-        <div class="sub-questions" id="sq-q6">
-          <div class="sub-question-group">
-            <div class="sub-question-title">A. 얼마나 자주 있었습니까? (빈도)</div>
-            <div class="options">
-              <label class="option-label"><input type="radio" name="q6_freq" value="1" class="option-radio"><span class="option-text">1일 미만 (몇 시간 지속)</span></label>
-              <label class="option-label"><input type="radio" name="q6_freq" value="2" class="option-radio"><span class="option-text">1일 이상 1주 미만</span></label>
-              <label class="option-label"><input type="radio" name="q6_freq" value="3" class="option-radio"><span class="option-text">1주 이상 2주 미만</span></label>
-              <label class="option-label"><input type="radio" name="q6_freq" value="4" class="option-radio"><span class="option-text">매일 증상이 있었다</span></label>
-            </div>
-          </div>
-          <div class="sub-question-group">
-            <div class="sub-question-title">B. 얼마나 심했습니까? (심각도)</div>
-            <div class="options">
-              <label class="option-label"><input type="radio" name="q6_sev" value="1" class="option-radio"><span class="option-text">약간</span></label>
-              <label class="option-label"><input type="radio" name="q6_sev" value="2" class="option-radio"><span class="option-text">상당히</span></label>
-              <label class="option-label"><input type="radio" name="q6_sev" value="3" class="option-radio"><span class="option-text">심하게</span></label>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      <div class="question-card">
-        <div class="question-title"><span class="question-number">7</span>기분이 들뜨기도 했다.</div>
-        <div class="gate-question">
-          <input type="radio" name="q7_gate" value="0" class="gate-radio" id="q7_no" required><label for="q7_no" class="gate-label">아니오</label>
-          <input type="radio" name="q7_gate" value="1" class="gate-radio" id="q7_yes"><label for="q7_yes" class="gate-label">예</label>
-        </div>
-        <div class="sub-questions" id="sq-q7">
-          <div class="sub-question-group">
-            <div class="sub-question-title">A. 얼마나 자주 있었습니까? (빈도)</div>
-            <div class="options">
-              <label class="option-label"><input type="radio" name="q7_freq" value="1" class="option-radio"><span class="option-text">1일 미만 (몇 시간 지속)</span></label>
-              <label class="option-label"><input type="radio" name="q7_freq" value="2" class="option-radio"><span class="option-text">1일 이상 1주 미만</span></label>
-              <label class="option-label"><input type="radio" name="q7_freq" value="3" class="option-radio"><span class="option-text">1주 이상 2주 미만</span></label>
-              <label class="option-label"><input type="radio" name="q7_freq" value="4" class="option-radio"><span class="option-text">매일 증상이 있었다</span></label>
-            </div>
-          </div>
-          <div class="sub-question-group">
-            <div class="sub-question-title">B. 얼마나 심했습니까? (심각도)</div>
-            <div class="options">
-              <label class="option-label"><input type="radio" name="q7_sev" value="1" class="option-radio"><span class="option-text">약간</span></label>
-              <label class="option-label"><input type="radio" name="q7_sev" value="2" class="option-radio"><span class="option-text">상당히</span></label>
-              <label class="option-label"><input type="radio" name="q7_sev" value="3" class="option-radio"><span class="option-text">심하게</span></label>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      <div class="question-card">
-        <div class="question-title"><span class="question-number">8</span>평안하다고 느낀 적이 없다.</div>
-        <div class="gate-question">
-          <input type="radio" name="q8_gate" value="0" class="gate-radio" id="q8_no" required><label for="q8_no" class="gate-label">아니오</label>
-          <input type="radio" name="q8_gate" value="1" class="gate-radio" id="q8_yes"><label for="q8_yes" class="gate-label">예</label>
-        </div>
-        <div class="sub-questions" id="sq-q8">
-          <div class="sub-question-group">
-            <div class="sub-question-title">A. 얼마나 자주 있었습니까? (빈도)</div>
-            <div class="options">
-              <label class="option-label"><input type="radio" name="q8_freq" value="1" class="option-radio"><span class="option-text">1일 미만 (몇 시간 지속)</span></label>
-              <label class="option-label"><input type="radio" name="q8_freq" value="2" class="option-radio"><span class="option-text">1일 이상 1주 미만</span></label>
-              <label class="option-label"><input type="radio" name="q8_freq" value="3" class="option-radio"><span class="option-text">1주 이상 2주 미만</span></label>
-              <label class="option-label"><input type="radio" name="q8_freq" value="4" class="option-radio"><span class="option-text">매일 증상이 있었다</span></label>
-            </div>
-          </div>
-          <div class="sub-question-group">
-            <div class="sub-question-title">B. 얼마나 심했습니까? (심각도)</div>
-            <div class="options">
-              <label class="option-label"><input type="radio" name="q8_sev" value="1" class="option-radio"><span class="option-text">약간</span></label>
-              <label class="option-label"><input type="radio" name="q8_sev" value="2" class="option-radio"><span class="option-text">상당히</span></label>
-              <label class="option-label"><input type="radio" name="q8_sev" value="3" class="option-radio"><span class="option-text">심하게</span></label>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      <div class="question-card">
-        <div class="question-title"><span class="question-number">9</span>불안하고 초조했다.</div>
-        <div class="gate-question">
-          <input type="radio" name="q9_gate" value="0" class="gate-radio" id="q9_no" required><label for="q9_no" class="gate-label">아니오</label>
-          <input type="radio" name="q9_gate" value="1" class="gate-radio" id="q9_yes"><label for="q9_yes" class="gate-label">예</label>
-        </div>
-        <div class="sub-questions" id="sq-q9">
-          <div class="sub-question-group">
-            <div class="sub-question-title">A. 얼마나 자주 있었습니까? (빈도)</div>
-            <div class="options">
-              <label class="option-label"><input type="radio" name="q9_freq" value="1" class="option-radio"><span class="option-text">1일 미만 (몇 시간 지속)</span></label>
-              <label class="option-label"><input type="radio" name="q9_freq" value="2" class="option-radio"><span class="option-text">1일 이상 1주 미만</span></label>
-              <label class="option-label"><input type="radio" name="q9_freq" value="3" class="option-radio"><span class="option-text">1주 이상 2주 미만</span></label>
-              <label class="option-label"><input type="radio" name="q9_freq" value="4" class="option-radio"><span class="option-text">매일 증상이 있었다</span></label>
-            </div>
-          </div>
-          <div class="sub-question-group">
-            <div class="sub-question-title">B. 얼마나 심했습니까? (심각도)</div>
-            <div class="options">
-              <label class="option-label"><input type="radio" name="q9_sev" value="1" class="option-radio"><span class="option-text">약간</span></label>
-              <label class="option-label"><input type="radio" name="q9_sev" value="2" class="option-radio"><span class="option-text">상당히</span></label>
-              <label class="option-label"><input type="radio" name="q9_sev" value="3" class="option-radio"><span class="option-text">심하게</span></label>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      <div class="question-card">
-        <div class="question-title"><span class="question-number">10</span>갑자기 에너지가 생겨 할 일을 정하고 행동으로 옮기기도 했다.</div>
-        <div class="gate-question">
-          <input type="radio" name="q10_gate" value="0" class="gate-radio" id="q10_no" required><label for="q10_no" class="gate-label">아니오</label>
-          <input type="radio" name="q10_gate" value="1" class="gate-radio" id="q10_yes"><label for="q10_yes" class="gate-label">예</label>
-        </div>
-        <div class="sub-questions" id="sq-q10">
-          <div class="sub-question-group">
-            <div class="sub-question-title">A. 얼마나 자주 있었습니까? (빈도)</div>
-            <div class="options">
-              <label class="option-label"><input type="radio" name="q10_freq" value="1" class="option-radio"><span class="option-text">1일 미만 (몇 시간 지속)</span></label>
-              <label class="option-label"><input type="radio" name="q10_freq" value="2" class="option-radio"><span class="option-text">1일 이상 1주 미만</span></label>
-              <label class="option-label"><input type="radio" name="q10_freq" value="3" class="option-radio"><span class="option-text">1주 이상 2주 미만</span></label>
-              <label class="option-label"><input type="radio" name="q10_freq" value="4" class="option-radio"><span class="option-text">매일 증상이 있었다</span></label>
-            </div>
-          </div>
-          <div class="sub-question-group">
-            <div class="sub-question-title">B. 얼마나 심했습니까? (심각도)</div>
-            <div class="options">
-              <label class="option-label"><input type="radio" name="q10_sev" value="1" class="option-radio"><span class="option-text">약간</span></label>
-              <label class="option-label"><input type="radio" name="q10_sev" value="2" class="option-radio"><span class="option-text">상당히</span></label>
-              <label class="option-label"><input type="radio" name="q10_sev" value="3" class="option-radio"><span class="option-text">심하게</span></label>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      <div class="question-card">
-        <div class="question-title"><span class="question-number">11</span>말이 많고 빨라졌다.</div>
-        <div class="gate-question">
-          <input type="radio" name="q11_gate" value="0" class="gate-radio" id="q11_no" required><label for="q11_no" class="gate-label">아니오</label>
-          <input type="radio" name="q11_gate" value="1" class="gate-radio" id="q11_yes"><label for="q11_yes" class="gate-label">예</label>
-        </div>
-        <div class="sub-questions" id="sq-q11">
-          <div class="sub-question-group">
-            <div class="sub-question-title">A. 얼마나 자주 있었습니까? (빈도)</div>
-            <div class="options">
-              <label class="option-label"><input type="radio" name="q11_freq" value="1" class="option-radio"><span class="option-text">1일 미만 (몇 시간 지속)</span></label>
-              <label class="option-label"><input type="radio" name="q11_freq" value="2" class="option-radio"><span class="option-text">1일 이상 1주 미만</span></label>
-              <label class="option-label"><input type="radio" name="q11_freq" value="3" class="option-radio"><span class="option-text">1주 이상 2주 미만</span></label>
-              <label class="option-label"><input type="radio" name="q11_freq" value="4" class="option-radio"><span class="option-text">매일 증상이 있었다</span></label>
-            </div>
-          </div>
-          <div class="sub-question-group">
-            <div class="sub-question-title">B. 얼마나 심했습니까? (심각도)</div>
-            <div class="options">
-              <label class="option-label"><input type="radio" name="q11_sev" value="1" class="option-radio"><span class="option-text">약간</span></label>
-              <label class="option-label"><input type="radio" name="q11_sev" value="2" class="option-radio"><span class="option-text">상당히</span></label>
-              <label class="option-label"><input type="radio" name="q11_sev" value="3" class="option-radio"><span class="option-text">심하게</span></label>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      <div class="question-card">
-        <div class="question-title"><span class="question-number">12</span>생각이 많아서 잠들기 힘들었다.</div>
-        <div class="gate-question">
-          <input type="radio" name="q12_gate" value="0" class="gate-radio" id="q12_no" required><label for="q12_no" class="gate-label">아니오</label>
-          <input type="radio" name="q12_gate" value="1" class="gate-radio" id="q12_yes"><label for="q12_yes" class="gate-label">예</label>
-        </div>
-        <div class="sub-questions" id="sq-q12">
-          <div class="sub-question-group">
-            <div class="sub-question-title">A. 얼마나 자주 있었습니까? (빈도)</div>
-            <div class="options">
-              <label class="option-label"><input type="radio" name="q12_freq" value="1" class="option-radio"><span class="option-text">1일 미만 (몇 시간 지속)</span></label>
-              <label class="option-label"><input type="radio" name="q12_freq" value="2" class="option-radio"><span class="option-text">1일 이상 1주 미만</span></label>
-              <label class="option-label"><input type="radio" name="q12_freq" value="3" class="option-radio"><span class="option-text">1주 이상 2주 미만</span></label>
-              <label class="option-label"><input type="radio" name="q12_freq" value="4" class="option-radio"><span class="option-text">매일 증상이 있었다</span></label>
-            </div>
-          </div>
-          <div class="sub-question-group">
-            <div class="sub-question-title">B. 얼마나 심했습니까? (심각도)</div>
-            <div class="options">
-              <label class="option-label"><input type="radio" name="q12_sev" value="1" class="option-radio"><span class="option-text">약간</span></label>
-              <label class="option-label"><input type="radio" name="q12_sev" value="2" class="option-radio"><span class="option-text">상당히</span></label>
-              <label class="option-label"><input type="radio" name="q12_sev" value="3" class="option-radio"><span class="option-text">심하게</span></label>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      <div class="question-card">
-        <div class="question-title"><span class="question-number">13</span>생각이 꼬리에 꼬리를 물고 이어졌다.</div>
-        <div class="gate-question">
-          <input type="radio" name="q13_gate" value="0" class="gate-radio" id="q13_no" required><label for="q13_no" class="gate-label">아니오</label>
-          <input type="radio" name="q13_gate" value="1" class="gate-radio" id="q13_yes"><label for="q13_yes" class="gate-label">예</label>
-        </div>
-        <div class="sub-questions" id="sq-q13">
-          <div class="sub-question-group">
-            <div class="sub-question-title">A. 얼마나 자주 있었습니까? (빈도)</div>
-            <div class="options">
-              <label class="option-label"><input type="radio" name="q13_freq" value="1" class="option-radio"><span class="option-text">1일 미만 (몇 시간 지속)</span></label>
-              <label class="option-label"><input type="radio" name="q13_freq" value="2" class="option-radio"><span class="option-text">1일 이상 1주 미만</span></label>
-              <label class="option-label"><input type="radio" name="q13_freq" value="3" class="option-radio"><span class="option-text">1주 이상 2주 미만</span></label>
-              <label class="option-label"><input type="radio" name="q13_freq" value="4" class="option-radio"><span class="option-text">매일 증상이 있었다</span></label>
-            </div>
-          </div>
-          <div class="sub-question-group">
-            <div class="sub-question-title">B. 얼마나 심했습니까? (심각도)</div>
-            <div class="options">
-              <label class="option-label"><input type="radio" name="q13_sev" value="1" class="option-radio"><span class="option-text">약간</span></label>
-              <label class="option-label"><input type="radio" name="q13_sev" value="2" class="option-radio"><span class="option-text">상당히</span></label>
-              <label class="option-label"><input type="radio" name="q13_sev" value="3" class="option-radio"><span class="option-text">심하게</span></label>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      <div class="question-card">
-        <div class="question-title"><span class="question-number">14</span>의기양양하거나 과대한 기분을 느꼈다.</div>
-        <div class="gate-question">
-          <input type="radio" name="q14_gate" value="0" class="gate-radio" id="q14_no" required><label for="q14_no" class="gate-label">아니오</label>
-          <input type="radio" name="q14_gate" value="1" class="gate-radio" id="q14_yes"><label for="q14_yes" class="gate-label">예</label>
-        </div>
-        <div class="sub-questions" id="sq-q14">
-          <div class="sub-question-group">
-            <div class="sub-question-title">A. 얼마나 자주 있었습니까? (빈도)</div>
-            <div class="options">
-              <label class="option-label"><input type="radio" name="q14_freq" value="1" class="option-radio"><span class="option-text">1일 미만 (몇 시간 지속)</span></label>
-              <label class="option-label"><input type="radio" name="q14_freq" value="2" class="option-radio"><span class="option-text">1일 이상 1주 미만</span></label>
-              <label class="option-label"><input type="radio" name="q14_freq" value="3" class="option-radio"><span class="option-text">1주 이상 2주 미만</span></label>
-              <label class="option-label"><input type="radio" name="q14_freq" value="4" class="option-radio"><span class="option-text">매일 증상이 있었다</span></label>
-            </div>
-          </div>
-          <div class="sub-question-group">
-            <div class="sub-question-title">B. 얼마나 심했습니까? (심각도)</div>
-            <div class="options">
-              <label class="option-label"><input type="radio" name="q14_sev" value="1" class="option-radio"><span class="option-text">약간</span></label>
-              <label class="option-label"><input type="radio" name="q14_sev" value="2" class="option-radio"><span class="option-text">상당히</span></label>
-              <label class="option-label"><input type="radio" name="q14_sev" value="3" class="option-radio"><span class="option-text">심하게</span></label>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      <div class="question-card">
-        <div class="question-title"><span class="question-number">15</span>긴장감을 느꼈다.</div>
-        <div class="gate-question">
-          <input type="radio" name="q15_gate" value="0" class="gate-radio" id="q15_no" required><label for="q15_no" class="gate-label">아니오</label>
-          <input type="radio" name="q15_gate" value="1" class="gate-radio" id="q15_yes"><label for="q15_yes" class="gate-label">예</label>
-        </div>
-        <div class="sub-questions" id="sq-q15">
-          <div class="sub-question-group">
-            <div class="sub-question-title">A. 얼마나 자주 있었습니까? (빈도)</div>
-            <div class="options">
-              <label class="option-label"><input type="radio" name="q15_freq" value="1" class="option-radio"><span class="option-text">1일 미만 (몇 시간 지속)</span></label>
-              <label class="option-label"><input type="radio" name="q15_freq" value="2" class="option-radio"><span class="option-text">1일 이상 1주 미만</span></label>
-              <label class="option-label"><input type="radio" name="q15_freq" value="3" class="option-radio"><span class="option-text">1주 이상 2주 미만</span></label>
-              <label class="option-label"><input type="radio" name="q15_freq" value="4" class="option-radio"><span class="option-text">매일 증상이 있었다</span></label>
-            </div>
-          </div>
-          <div class="sub-question-group">
-            <div class="sub-question-title">B. 얼마나 심했습니까? (심각도)</div>
-            <div class="options">
-              <label class="option-label"><input type="radio" name="q15_sev" value="1" class="option-radio"><span class="option-text">약간</span></label>
-              <label class="option-label"><input type="radio" name="q15_sev" value="2" class="option-radio"><span class="option-text">상당히</span></label>
-              <label class="option-label"><input type="radio" name="q15_sev" value="3" class="option-radio"><span class="option-text">심하게</span></label>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      <div class="question-card">
-        <div class="question-title"><span class="question-number">16</span>잠에 들 생각을 못한 채 밤을 새거나 늦게 잤다.</div>
-        <div class="gate-question">
-          <input type="radio" name="q16_gate" value="0" class="gate-radio" id="q16_no" required><label for="q16_no" class="gate-label">아니오</label>
-          <input type="radio" name="q16_gate" value="1" class="gate-radio" id="q16_yes"><label for="q16_yes" class="gate-label">예</label>
-        </div>
-        <div class="sub-questions" id="sq-q16">
-          <div class="sub-question-group">
-            <div class="sub-question-title">A. 얼마나 자주 있었습니까? (빈도)</div>
-            <div class="options">
-              <label class="option-label"><input type="radio" name="q16_freq" value="1" class="option-radio"><span class="option-text">1일 미만 (몇 시간 지속)</span></label>
-              <label class="option-label"><input type="radio" name="q16_freq" value="2" class="option-radio"><span class="option-text">1일 이상 1주 미만</span></label>
-              <label class="option-label"><input type="radio" name="q16_freq" value="3" class="option-radio"><span class="option-text">1주 이상 2주 미만</span></label>
-              <label class="option-label"><input type="radio" name="q16_freq" value="4" class="option-radio"><span class="option-text">매일 증상이 있었다</span></label>
-            </div>
-          </div>
-          <div class="sub-question-group">
-            <div class="sub-question-title">B. 얼마나 심했습니까? (심각도)</div>
-            <div class="options">
-              <label class="option-label"><input type="radio" name="q16_sev" value="1" class="option-radio"><span class="option-text">약간</span></label>
-              <label class="option-label"><input type="radio" name="q16_sev" value="2" class="option-radio"><span class="option-text">상당히</span></label>
-              <label class="option-label"><input type="radio" name="q16_sev" value="3" class="option-radio"><span class="option-text">심하게</span></label>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      <div class="question-card">
-        <div class="question-title"><span class="question-number">17</span>나에게 안 좋은 결과를 가져올 것을 알고도 몰입하는 것이 있었다.</div>
-        <div class="gate-question">
-          <input type="radio" name="q17_gate" value="0" class="gate-radio" id="q17_no" required><label for="q17_no" class="gate-label">아니오</label>
-          <input type="radio" name="q17_gate" value="1" class="gate-radio" id="q17_yes"><label for="q17_yes" class="gate-label">예</label>
-        </div>
-        <div class="sub-questions" id="sq-q17">
-          <div class="sub-question-group">
-            <div class="sub-question-title">A. 얼마나 자주 있었습니까? (빈도)</div>
-            <div class="options">
-              <label class="option-label"><input type="radio" name="q17_freq" value="1" class="option-radio"><span class="option-text">1일 미만 (몇 시간 지속)</span></label>
-              <label class="option-label"><input type="radio" name="q17_freq" value="2" class="option-radio"><span class="option-text">1일 이상 1주 미만</span></label>
-              <label class="option-label"><input type="radio" name="q17_freq" value="3" class="option-radio"><span class="option-text">1주 이상 2주 미만</span></label>
-              <label class="option-label"><input type="radio" name="q17_freq" value="4" class="option-radio"><span class="option-text">매일 증상이 있었다</span></label>
-            </div>
-          </div>
-          <div class="sub-question-group">
-            <div class="sub-question-title">B. 얼마나 심했습니까? (심각도)</div>
-            <div class="options">
-              <label class="option-label"><input type="radio" name="q17_sev" value="1" class="option-radio"><span class="option-text">약간</span></label>
-              <label class="option-label"><input type="radio" name="q17_sev" value="2" class="option-radio"><span class="option-text">상당히</span></label>
-              <label class="option-label"><input type="radio" name="q17_sev" value="3" class="option-radio"><span class="option-text">심하게</span></label>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      <div class="question-card">
-        <div class="question-title"><span class="question-number">18</span>죽고 싶다는 생각이 들었다.</div>
-        <div class="gate-question">
-          <input type="radio" name="q18_gate" value="0" class="gate-radio" id="q18_no" required><label for="q18_no" class="gate-label">아니오</label>
-          <input type="radio" name="q18_gate" value="1" class="gate-radio" id="q18_yes"><label for="q18_yes" class="gate-label">예</label>
-        </div>
-        <div class="sub-questions" id="sq-q18">
-          <div class="sub-question-group">
-            <div class="sub-question-title">A. 얼마나 자주 있었습니까? (빈도)</div>
-            <div class="options">
-              <label class="option-label"><input type="radio" name="q18_freq" value="1" class="option-radio"><span class="option-text">1일 미만 (몇 시간 지속)</span></label>
-              <label class="option-label"><input type="radio" name="q18_freq" value="2" class="option-radio"><span class="option-text">1일 이상 1주 미만</span></label>
-              <label class="option-label"><input type="radio" name="q18_freq" value="3" class="option-radio"><span class="option-text">1주 이상 2주 미만</span></label>
-              <label class="option-label"><input type="radio" name="q18_freq" value="4" class="option-radio"><span class="option-text">매일 증상이 있었다</span></label>
-            </div>
-          </div>
-          <div class="sub-question-group">
-            <div class="sub-question-title">B. 얼마나 심했습니까? (심각도)</div>
-            <div class="options">
-              <label class="option-label"><input type="radio" name="q18_sev" value="1" class="option-radio"><span class="option-text">약간</span></label>
-              <label class="option-label"><input type="radio" name="q18_sev" value="2" class="option-radio"><span class="option-text">상당히</span></label>
-              <label class="option-label"><input type="radio" name="q18_sev" value="3" class="option-radio"><span class="option-text">심하게</span></label>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      <div class="question-card">
-        <div class="question-title"><span class="question-number">19</span>충동적으로 모든 일을 그만두고 싶어졌다</div>
-        <div class="gate-question">
-          <input type="radio" name="q19_gate" value="0" class="gate-radio" id="q19_no" required><label for="q19_no" class="gate-label">아니오</label>
-          <input type="radio" name="q19_gate" value="1" class="gate-radio" id="q19_yes"><label for="q19_yes" class="gate-label">예</label>
-        </div>
-        <div class="sub-questions" id="sq-q19">
-          <div class="sub-question-group">
-            <div class="sub-question-title">A. 얼마나 자주 있었습니까? (빈도)</div>
-            <div class="options">
-              <label class="option-label"><input type="radio" name="q19_freq" value="1" class="option-radio"><span class="option-text">1일 미만 (몇 시간 지속)</span></label>
-              <label class="option-label"><input type="radio" name="q19_freq" value="2" class="option-radio"><span class="option-text">1일 이상 1주 미만</span></label>
-              <label class="option-label"><input type="radio" name="q19_freq" value="3" class="option-radio"><span class="option-text">1주 이상 2주 미만</span></label>
-              <label class="option-label"><input type="radio" name="q19_freq" value="4" class="option-radio"><span class="option-text">매일 증상이 있었다</span></label>
-            </div>
-          </div>
-          <div class="sub-question-group">
-            <div class="sub-question-title">B. 얼마나 심했습니까? (심각도)</div>
-            <div class="options">
-              <label class="option-label"><input type="radio" name="q19_sev" value="1" class="option-radio"><span class="option-text">약간</span></label>
-              <label class="option-label"><input type="radio" name="q19_sev" value="2" class="option-radio"><span class="option-text">상당히</span></label>
-              <label class="option-label"><input type="radio" name="q19_sev" value="3" class="option-radio"><span class="option-text">심하게</span></label>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      <div class="question-card">
-        <div class="question-title"><span class="question-number">20</span>자해를 하고 싶다는 생각이 들었다.</div>
-        <div class="gate-question">
-          <input type="radio" name="q20_gate" value="0" class="gate-radio" id="q20_no" required><label for="q20_no" class="gate-label">아니오</label>
-          <input type="radio" name="q20_gate" value="1" class="gate-radio" id="q20_yes"><label for="q20_yes" class="gate-label">예</label>
-        </div>
-        <div class="sub-questions" id="sq-q20">
-          <div class="sub-question-group">
-            <div class="sub-question-title">A. 얼마나 자주 있었습니까? (빈도)</div>
-            <div class="options">
-              <label class="option-label"><input type="radio" name="q20_freq" value="1" class="option-radio"><span class="option-text">1일 미만 (몇 시간 지속)</span></label>
-              <label class="option-label"><input type="radio" name="q20_freq" value="2" class="option-radio"><span class="option-text">1일 이상 1주 미만</span></label>
-              <label class="option-label"><input type="radio" name="q20_freq" value="3" class="option-radio"><span class="option-text">1주 이상 2주 미만</span></label>
-              <label class="option-label"><input type="radio" name="q20_freq" value="4" class="option-radio"><span class="option-text">매일 증상이 있었다</span></label>
-            </div>
-          </div>
-          <div class="sub-question-group">
-            <div class="sub-question-title">B. 얼마나 심했습니까? (심각도)</div>
-            <div class="options">
-              <label class="option-label"><input type="radio" name="q20_sev" value="1" class="option-radio"><span class="option-text">약간</span></label>
-              <label class="option-label"><input type="radio" name="q20_sev" value="2" class="option-radio"><span class="option-text">상당히</span></label>
-              <label class="option-label"><input type="radio" name="q20_sev" value="3" class="option-radio"><span class="option-text">심하게</span></label>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      <div class="question-card">
-        <div class="question-title"><span class="question-number">21</span>우울하더라도 행동이 느려지진 않았다.</div>
-        <div class="gate-question">
-          <input type="radio" name="q21_gate" value="0" class="gate-radio" id="q21_no" required><label for="q21_no" class="gate-label">아니오 (느려졌다)</label>
-          <input type="radio" name="q21_gate" value="1" class="gate-radio" id="q21_yes"><label for="q21_yes" class="gate-label">예 (느려지지 않았다)</label>
-        </div>
-      </div>
-      
 
-      <button type="submit" class="btn-submit">결과 확인하기</button>
-    </form>
+      <!-- 관리자 폼 -->
+      <div id="form-admin" style="display:none;">
+        <div class="form-group">
+          <label>이메일</label>
+          <input type="email" id="a_email" placeholder="관리자 이메일">
+        </div>
+        <div class="form-group">
+          <label>비밀번호</label>
+          <input type="password" id="a_pw" autocomplete="current-password">
+        </div>
+      </div>
 
-    <div id="result">
-      <div class="result-title">MSSI 채점 결과 (지난 2주)</div>
-      <div id="totalScore" class="score-display">0</div>
-      <div id="resultMessage" class="result-message"></div>
+      <!-- 아이디 저장 -->
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:20px;">
+        <input type="checkbox" id="saveIdCheck" style="width:18px; height:18px; cursor:pointer;">
+        <label for="saveIdCheck" style="font-size:14px; font-weight:500; cursor:pointer; margin:0;">아이디 저장</label>
+      </div>
+
+      <div id="authMsg" class="status-msg"></div>
+
+      <button id="btnLoginAction" class="btn primary">로그인</button>
+      <button id="btnToggleSignup" class="btn secondary" style="margin-top:10px;">회원가입으로 전환</button>
+
+      <div style="text-align:center; margin-top:24px;">
+        <button id="btnHardReset" style="border:none;background:none;font-size:12px;color:#bbb;text-decoration:underline;cursor:pointer;">
+          앱 초기화 (접속 오류 시)
+        </button>
+      </div>
     </div>
   </div>
 
-  <script>
-    // '예' 선택 시 빈도/심각도 질문을 보여주는 로직
-    document.addEventListener('DOMContentLoaded', () => {
-      // 1-20번 문항의 '예/아니오' 라디오 버튼에 이벤트 리스너 추가
-      for (let i = 1; i <= 20; i++) {
-        const gateRadios = document.querySelectorAll(`input[name="q${i}_gate"]`);
-        const subQuestionsDiv = document.getElementById(`sq-q${i}`);
-        const subRadios = subQuestionsDiv.querySelectorAll('input[type="radio"]');
+  <!-- ══════════ 승인 대기 뷰 ══════════ -->
+  <div id="view-pending" class="view">
+    <div class="card" style="max-width:480px; margin:0 auto;">
+      <div class="pending-screen">
+        <div class="icon">⏳</div>
+        <h3>승인 대기 중</h3>
+        <p style="margin-bottom:12px;"><strong id="pendingName"></strong> 선생님의 가입 신청이 접수되었습니다.</p>
+        <p>관리자 승인 후 모든 기능을 이용하실 수 있습니다.</p>
+        <div style="margin-top:32px; display:flex; flex-direction:column; gap:10px;">
+          <button id="btnPendingRefresh" class="btn primary">상태 확인 (새로고침)</button>
+          <button onclick="window.sbSignOut?.()" class="btn secondary">로그아웃</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
-        gateRadios.forEach(radio => {
-          radio.addEventListener('change', () => {
-            if (radio.value === '1' && radio.checked) {
-              // '예'를 선택한 경우
-              subQuestionsDiv.style.display = 'block';
-              subRadios.forEach(subRadio => subRadio.required = true);
-            } else if (radio.value === '0' && radio.checked) {
-              // '아니오'를 선택한 경우
-              subQuestionsDiv.style.display = 'none';
-              subRadios.forEach(subRadio => {
-                subRadio.required = false;
-                subRadio.checked = false; // 선택 해제
-              });
-            }
-          });
-        });
-      }
-    });
+  <!-- ══════════ 환자 대시보드 뷰 ══════════ -->
+  <div id="view-patient" class="view">
+    <div class="patient-hero">
+      <h2 id="patientHeroName"></h2>
+      <div class="sub" id="patientHeroSub"></div>
+    </div>
 
-    // 점수 계산 로직
-    function calculateScore(event) {
-      event.preventDefault();
-      
-      let totalScore = 0;
-      
-      // 1-20번 문항 점수 계산 (빈도 x 심각도)
-      for (let i = 1; i <= 20; i++) {
-        const yesNo = document.querySelector(`input[name="q${i}_gate"]:checked`);
-        
-        if (yesNo && yesNo.value === '1') {
-          // '예'를 선택한 경우에만 점수 계산
-          const freqInput = document.querySelector(`input[name="q${i}_freq"]:checked`);
-          const sevInput = document.querySelector(`input[name="q${i}_sev"]:checked`);
-          
-          if (freqInput && sevInput) {
-            const freq = parseInt(freqInput.value);
-            const sev = parseInt(sevInput.value);
-            totalScore += (freq * sev);
-          } else {
-            // '예'를 선택했지만 하위 문항을 선택 안한 경우 (Validation이 막겠지만)
-            totalScore += 0;
-          }
-        }
-        // '아니오' (value '0')인 경우, 점수는 0이므로 아무것도 더하지 않음.
-      }
-      
-      // 21번 문항 결과 (점수에 포함되지 않음)
-      const q21Input = document.querySelector(`input[name="q21_gate"]:checked`);
-      let q21Text = "선택 안 함";
-      if (q21Input) {
-          q21Text = q21Input.value === '1' ? "<strong>예</strong> (운동 지체 없음)" : "<strong>아니오</strong> (운동 지체 있음)";
-      }
+    <div class="card">
+      <h3 style="font-size:16px; font-weight:800; margin-bottom:16px;">설문 현황</h3>
+      <div id="patientStatusArea"></div>
+      <div style="display:flex; flex-direction:column; gap:10px; margin-top:16px;">
+        <button id="btnStartSurvey" class="btn primary">설문 시작하기</button>
+        <button id="btnResumeSurvey" class="btn accent" style="display:none;">이어서 하기</button>
+        <button id="btnViewMyResult" class="btn secondary" disabled>최근 결과 보기</button>
+      </div>
+    </div>
 
-      // 결과 표시
-      const resultDiv = document.getElementById('result');
-      const scoreDisplay = document.getElementById('totalScore');
-      const messageDisplay = document.getElementById('resultMessage');
+    <div class="card">
+      <h3 style="font-size:16px; font-weight:800; margin-bottom:4px;">이전 검사 이력</h3>
+      <div id="patientHistoryList"></div>
+    </div>
+  </div>
 
-      // 숫자 카운트 업 애니메이션
-      let currentScore = 0;
-      const finalScore = totalScore;
-      const increment = Math.max(1, Math.ceil(finalScore / 50)); // 점수에 비례하여 증가
-      
-      scoreDisplay.textContent = 0; // 0에서 시작
-      resultDiv.style.display = 'block';
+  <!-- ══════════ 설문 뷰 ══════════ -->
+  <div id="view-survey" class="view">
+    <div class="card">
+      <div class="progress-wrap">
+        <div id="surveyBar" class="progress-bar" style="width:0%;"></div>
+      </div>
+      <div id="surveyProgressLabel" class="progress-label"></div>
 
-      const interval = setInterval(() => {
-          currentScore += increment;
-          if (currentScore >= finalScore) {
-              currentScore = finalScore;
-              clearInterval(interval);
-          }
-          scoreDisplay.textContent = currentScore;
-      }, 20);
+      <h2 id="surveyTitle" class="survey-section-title"></h2>
+      <div id="surveyDesc" class="survey-desc"></div>
 
-      // 결과 메시지 설정
-      messageDisplay.innerHTML = `
-        <strong>MSSI 총점 (1-20번): ${finalScore} / 240 점</strong>
-        <hr style="border:0; border-top: 1px solid #D1D5DB; margin: 16px 0;">
-        <strong>21. 운동 지체 여부:</strong> ${q21Text}
-        <br><small></small>
-      `;
+      <div id="surveyContainer"></div>
 
-      // 부드럽게 스크롤 이동
-      setTimeout(() => {
-          resultDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }, 100);
-    }
-  </script>
+      <div class="survey-nav">
+        <button id="btnPrev" class="btn secondary">← 이전</button>
+        <button id="btnNext" class="btn primary">다음 →</button>
+      </div>
+
+      <button id="btnSaveQuit" style="display:block;width:100%;margin-top:16px;border:none;background:none;font-size:13px;color:#aaa;text-decoration:underline;cursor:pointer;">
+        임시 저장하고 나가기
+      </button>
+    </div>
+  </div>
+
+  <!-- ══════════ 결과 뷰 ══════════ -->
+  <div id="view-result" class="view">
+    <div class="card" style="max-width:900px;">
+      <div class="result-header">
+        <h2>기분장애 임상평가 결과지</h2>
+        <div class="sub">
+          <span id="resultDate"></span>
+          &nbsp;<span id="resultPatNum"></span>
+        </div>
+      </div>
+
+      <details style="margin-bottom:24px;">
+        <summary style="cursor:pointer;font-size:14px;font-weight:700;color:var(--accent);padding:12px 16px;background:var(--accent-light);border-radius:10px;">
+          📋 결과 해석 안내 (클릭하여 펼치기)
+        </summary>
+        <div id="resultInstructions" class="result-instructions" style="margin-top:8px;"></div>
+      </details>
+
+      <div id="resultTableContent"></div>
+
+      <div class="print-btn-wrap">
+        <button id="btnBack" class="btn secondary">← 돌아가기</button>
+        <button id="btnPrintResult" class="btn primary">🖨️ 인쇄 / PDF 저장</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ 의사 대시보드 뷰 ══════════ -->
+  <div id="view-doctor" class="view">
+    <div class="card">
+      <h2 class="card-title">의사 대시보드</h2>
+      <div id="doctorInfo" style="font-size:14px; color:#555; margin-bottom:24px; padding-bottom:20px; border-bottom:1px solid var(--border);"></div>
+
+      <!-- 탭 -->
+      <div class="doctor-tabs">
+        <button class="doctor-tab active" data-tab="search" id="doctorTabSearchBtn">환자 검색</button>
+        <button class="doctor-tab" data-tab="list">환자 목록</button>
+      </div>
+
+      <!-- 검색 탭 -->
+      <div id="doctorTabSearch">
+        <div class="form-group">
+          <label>환자번호</label>
+          <div style="display:flex; gap:10px;">
+            <input type="text" id="searchPNum" placeholder="예: 12345" style="margin:0;">
+            <button id="btnSearchPatient" class="btn primary" style="width:100px; margin:0;">검색</button>
+          </div>
+        </div>
+        <div id="doctorSearchMsg" class="status-msg"></div>
+        <div id="doctorResultArea"></div>
+      </div>
+
+      <!-- 목록 탭 -->
+      <div id="doctorTabList" style="display:none;">
+        <h3 style="font-size:15px; font-weight:700; margin-bottom:16px; color:var(--text-sub);">내 병원 완료된 설문 목록</h3>
+        <div id="doctorPatientList"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ 관리자 대시보드 뷰 ══════════ -->
+  <div id="view-admin" class="view">
+    <div class="card">
+      <h2 class="card-title">관리자 대시보드</h2>
+
+      <div class="list-section-title" style="margin-bottom:12px;">승인 대기 의사</div>
+      <div id="adminPendingList" style="margin-bottom:36px;"></div>
+
+      <div class="list-section-title" style="margin-bottom:12px;">등록된 의사 목록</div>
+      <div id="adminDoctorList" style="margin-bottom:36px;"></div>
+
+      <button id="btnExportAll" class="btn secondary" style="max-width:280px;">
+        전체 데이터 내보내기 (JSON)
+      </button>
+    </div>
+  </div>
+
+</div><!-- /.container -->
+
+<script type="module" src="app.js"></script>
 </body>
 </html>
