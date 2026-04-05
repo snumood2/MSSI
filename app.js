@@ -331,6 +331,11 @@ sb.auth.onAuthStateChange(async (event, session) => {
     else if (prof.role === "patient")        initPatient();
     else if (prof.role === "doctor")         initDoctor();
     else if (prof.role === "doctor_pending") showPendingScreen();
+
+  } catch (e) {
+    console.error("onAuthStateChange 오류:", e);
+    _authHandling = false;
+  }
 });
 
 // 로그아웃
