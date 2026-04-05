@@ -251,7 +251,10 @@
   <!-- ══════════ 관리자 대시보드 뷰 ══════════ -->
   <div id="view-admin" class="view">
     <div class="card">
-      <h2 class="card-title">관리자 대시보드</h2>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+        <h2 class="card-title" style="margin:0;">관리자 대시보드</h2>
+        <button id="btnAdminRefresh" class="btn secondary sm" style="min-width:80px;">새로고침</button>
+      </div>
 
       <div class="list-section-title" style="margin-bottom:12px;">승인 대기 의사</div>
       <div id="adminPendingList" style="margin-bottom:36px;"></div>

@@ -374,6 +374,16 @@ document.addEventListener("click", async (e) => {
   }
 });
 
+el("btnAdminRefresh")?.addEventListener("click", async () => {
+  const btn = el("btnAdminRefresh");
+  btn.textContent = "로딩 중...";
+  btn.disabled = true;
+  await loadAdminPending();
+  await loadAdminDoctors();
+  btn.textContent = "새로고침";
+  btn.disabled = false;
+});
+
 el("btnExportAll")?.addEventListener("click", async () => {
   const { data } = await sb.from("survey_responses").select("*").eq("status", "completed");
   if (!data?.length) return alert("데이터가 없습니다.");
