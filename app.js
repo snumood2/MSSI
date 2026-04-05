@@ -183,31 +183,35 @@ el("btnLoginAction")?.addEventListener("click", async () => {
         if (!docProf) throw "존재하지 않거나 미승인된 병원코드입니다.";
       }
 
-      const roleToSave = selectedRole === "doctor" ? "doctor_pending" : "patient";
-      const { data, error } = await sb.auth.signUp({
-        email, password: pw,
-        options: { data: { role: roleToSave, username: rawId } }
-      });
-      if (error) throw error.message;
-      if (!data.user) throw "가입 요청 실패.";
-
-      let meta = { id: data.user.id };
+      // signUp metadata에 모든 정보를 담아 전송 → handle_new_user 트리거가 profiles 자동 생성
+      let signUpMeta;
       if (selectedRole === "patient") {
-        meta = { ...meta, role: "patient", username: rawId,
-          dob: el("p_dob").value, gender: el("p_gender").value,
+        signUpMeta = {
+          role: "patient",
+          username: rawId,
+          dob: el("p_dob").value,
+          gender: el("p_gender").value,
           hospital_code: el("p_hcode").value.trim(),
-          patient_number: el("p_pnum").value.trim() };
+          patient_number: el("p_pnum").value.trim()
+        };
       } else {
-        meta = { ...meta, role: "doctor_pending", username: rawId,
+        signUpMeta = {
+          role: "doctor_pending",
+          username: rawId,
           contact_email: email,
           doctor_name: el("d_name").value.trim(),
           hospital_name: el("d_hname").value.trim(),
           dob: el("d_dob").value,
-          hospital_code: Math.random().toString(36).substring(2, 8).toUpperCase() };
+          hospital_code: Math.random().toString(36).substring(2, 8).toUpperCase()
+        };
       }
 
-      const { error: pe } = await sb.from("profiles").upsert(meta);
-      if (pe) throw "프로필 저장 실패: " + pe.message;
+      const { data, error } = await sb.auth.signUp({
+        email, password: pw,
+        options: { data: signUpMeta }
+      });
+      if (error) throw error.message;
+      if (!data.user) throw "가입 요청 실패.";
 
       setMsg("authMsg", "가입 성공! 잠시 후 이동합니다...", "ok");
       setTimeout(() => location.reload(), 1500);
