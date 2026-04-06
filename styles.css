@@ -816,25 +816,46 @@ body {
 }
 .result-table tbody tr.desc-row:hover td { background: #fafcfd !important; }
 
-/* 공존장애 선별 특수 행 */
+/* 섹션 설명 블록 (section-level description, between title bar and table header) */
+.section-desc-block {
+  font-size: 12px;
+  color: #445566;
+  line-height: 1.75;
+  padding: 8px 14px 10px 14px;
+  border-bottom: 2px solid #c8d6db;
+  border-left: 1.5px solid #c8d6db;
+  border-right: 1.5px solid #c8d6db;
+  background: #f5fafb;
+  word-break: keep-all;
+  word-wrap: break-word;
+}
+
+/* 공존장애 선별 특수 행 — 2-row layout: label+headers / empty+values */
 .comorbid-label-row td.comorbid-label {
   background: #eef6f8;
   font-weight: 700;
   font-size: 13px;
   padding: 8px 12px;
   color: #1a5566;
-  border-bottom: 1px solid #c8d6db;
+  border-bottom: 1px solid #dce6e9;
+  border-right: 1px solid #dce6e9;
+  white-space: nowrap;
 }
-.comorbid-header-row th.comorbid-th {
+.comorbid-label-row th.comorbid-th {
   background: #f5fafb;
   font-size: 11px;
   font-weight: 700;
   text-align: center;
-  padding: 6px 8px;
+  padding: 8px 6px;
   border-bottom: 1px solid #dce6e9;
   border-right: 1px solid #dce6e9;
   color: #2d5566;
   min-width: 70px;
+}
+.comorbid-value-row td.comorbid-empty {
+  background: #fff;
+  border-right: 1px solid #eef2f4;
+  border-bottom: 1px solid #eef2f4;
 }
 .comorbid-val {
   text-align: center;
@@ -842,6 +863,8 @@ body {
   font-size: 15px;
   padding: 8px;
   min-width: 70px;
+  border-right: 1px solid #eef2f4;
+  border-bottom: 1px solid #eef2f4;
 }
 .comorbid-positive { color: #FF5C7A; }
 .comorbid-negative { color: #2B3CFF; }
@@ -978,6 +1001,16 @@ body {
   /* 공존장애 선별 */
   .comorbid-positive { color: #c0392b !important; }
   .comorbid-negative { color: #1a4080 !important; }
+
+  /* 섹션 설명 블록 인쇄 */
+  .section-desc-block {
+    font-size: 7pt !important;
+    line-height: 1.5 !important;
+    padding: 4px 8px 6px 8px !important;
+    background: #f5fafb !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
 
   /* rank-cell 색상 인쇄 보존 */
   .rank-cell {

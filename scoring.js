@@ -223,7 +223,7 @@ export function calculateScores(answers) {
   let asrsScreen = 0;
   for (let i = 1; i <= 3; i++) { if (get(`adhd${i}`) >= 3) asrsScreen++; }
   for (let i = 4; i <= 6; i++) { if (get(`adhd${i}`) >= 2) asrsScreen++; }
-  const asrsResult = asrsScreen >= 4 ? "성인ADHD의심됨" : "해당없음";
+  const asrsResult = asrsScreen >= 4 ? `성인ADHD의심됨, 6개중${asrsScreen}항목` : `성인ADHD의심되지않음, 6개중${asrsScreen}항목`;
   const asrsTotal  = sum('adhd', 1, 18);
 
   // WURS
@@ -353,25 +353,25 @@ export function generateReport(scores, answers) {
   {
     const tempsDesc = "정서기질은 기분장애와 관련이 높은 다섯 가지 기질을 어느 정도 갖고 있는지 알아보는 검사입니다. \"순환성기질 (환자군평균 6.5, 정상군평균 4.7, 간이결과기준)\"은 감정의 기복이나 변동이 심한 특성이며, \"우울기질 (환자군평균 3.6, 정상군평균 2.1)\"은 에너지가 낮고 기분이 저하되는 특성, \"과민성기질 (환자군평균 2.3, 정상군평균 1.7)\"은 주변의 사소한 일에도 쉽게 화를 내고 짜증이 나고 예민해지는 특성을 말합니다. \"과잉기질 (환자군평균 2.7, 정상군평균 2.9)\"은 에너지가 많고 기분이 고양되기 쉬운 기질이며, \"불안기질 (환자군평균 1.4, 정상군평균 1.4)\"은 걱정이 많고 쉽게 초조해지고 긴장을 느끼는 기질입니다.";
     const rows = [];
-    rows.push(makeRow("순환성기질", scores.TEMPS.cyc, 'TEMPS_Cyc', tempsDesc));
+    rows.push(makeRow("순환성기질", scores.TEMPS.cyc, 'TEMPS_Cyc', ""));
     rows.push(makeRow("우울기질",   scores.TEMPS.dep, 'TEMPS_Dep', ""));
     rows.push(makeRow("과민성기질", scores.TEMPS.irr, 'TEMPS_Irr', ""));
     rows.push(makeRow("과잉기질",   scores.TEMPS.hyp, 'TEMPS_Hyp', ""));
     rows.push(makeRow("불안기질",   scores.TEMPS.anx, 'TEMPS_Anx', ""));
-    sections.push({ title: "정서기질", rows: rows.filter(Boolean), specialRows: [] });
+    sections.push({ title: "정서기질", sectionDescription: tempsDesc, rows: rows.filter(Boolean), specialRows: [] });
   }
 
   // ── 섹션 3: 기분안정성기질 ──
   {
     const miqtDesc = "기분변동성 기질은 기분 변화 및 기복, 그에 따른 행동 양상이 반영된 개인의 안정적인 특성(trait)을 알아보는 검사입니다  (환자군평균 29.8, 정상군평균 21.8). \"기분기복 (환자군평균 7.6, 정상군평균 4.9)\"은 기분과 에너지, 인지 및 사회적인 행동의 변동성을 나타내는 특성이고,  \"기분하향 (환자군평균 6.8, 정상군평균 4.8)\"은 우울감 및 불안, 짜증을 느끼기 쉬운 특성이고, \"기분상승 (환자군평균 5.6, 정상군평균 4.7)\"은 긍정적이고 에너지가 넘치는 느낌에 대한 특성입니다. \"소아기 기분변동성 (환자군평균 3.0, 정상군평균 2.6)\"은 아동기에 형성된 애착 유형과 정서처리 방식이 현재 대인관계 유형에 얼마나 영향을 끼치는지 알아보는 특성이고, \"계절 기분변동성 (환자군평균 3.5, 정상군평균 3.7)\"은 계절 변화에 따라 달라지는 기분, 에너지, 행동 양상에 대한 특성입니다.";
     const rows = [];
-    rows.push(makeRow("기분변동성 기질 총점",    scores.MIQT.total,  'MIQT_Total',  miqtDesc));
+    rows.push(makeRow("기분변동성 기질 총점",    scores.MIQT.total,  'MIQT_Total',  ""));
     rows.push(makeRow("  기분기복",               scores.MIQT.labil,  'MIQT_Labil',  ""));
     rows.push(makeRow("  기분하향",               scores.MIQT.down,   'MIQT_Down',   ""));
     rows.push(makeRow("  기분상승",               scores.MIQT.up,     'MIQT_Up',     ""));
     rows.push(makeRow("  계절 기분변동성",         scores.MIQT.season, 'MIQT_Season', ""));
     rows.push(makeRow("  소아기 기분변동성",       scores.MIQT.child,  'MIQT_Child',  ""));
-    sections.push({ title: "기분안정성기질", rows: rows.filter(Boolean), specialRows: [] });
+    sections.push({ title: "기분안정성기질", sectionDescription: miqtDesc, rows: rows.filter(Boolean), specialRows: [] });
   }
 
   // ── 섹션 4: 아동기외상, 대인관계민감성, 회복탄력성 ──

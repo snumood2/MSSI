@@ -1166,7 +1166,6 @@ function renderReportHTML(report, container) {
       grouped[r.category].push(r);
     });
     const catNames = {
-      "선별": "선별 검사", "상태": "현재 기분 상태", "공존": "공존 장애 선별",
       "기질": "정서기질", "특성": "기분안정성기질",
       "외상": "아동기외상, 대인관계민감성, 회복탄력성", "대인": "아동기외상, 대인관계민감성, 회복탄력성",
       "자원": "정서조절, 행동패턴, 음주, 수면양상", "패턴": "정서조절, 행동패턴, 음주, 수면양상",
@@ -1178,9 +1177,10 @@ function renderReportHTML(report, container) {
     };
     container.innerHTML = catOrder.map(cat => {
       const rows = grouped[cat];
+      const title = catNames[cat] || cat;
       return `
         <div class="result-category">
-          <div class="result-section-title">${catNames[cat] || cat}</div>
+          <div class="result-section-title">${title}</div>
           <div class="result-table-wrap">
             <table class="result-table">
               <thead><tr>
@@ -1196,14 +1196,16 @@ function renderReportHTML(report, container) {
                   const nameClass = r.name && r.name.startsWith("  ") ? "sub-item" : "";
                   let scoreDisp = r.score !== undefined && r.score !== null ? r.score : "-";
                   if (typeof scoreDisp === 'number') scoreDisp = Number.isInteger(scoreDisp) ? scoreDisp : parseFloat(scoreDisp.toFixed(2));
-                  const rows2 = `<tr>
+                  let scoreDisplay = String(scoreDisp);
+                  if (r.extra) scoreDisplay = scoreDisp + "점: " + r.extra;
+                  const dataRow = `<tr>
                     <td class="name-cell ${nameClass}">${r.name || ""}</td>
-                    <td class="score-cell">${scoreDisp}</td>
+                    <td class="score-cell">${scoreDisplay}</td>
                     <td class="rank-cell" style="color:${r.pat_color||'inherit'}">${pRank}</td>
                     <td class="rank-cell" style="color:${r.nor_color||'inherit'}">${nRank}</td>
                   </tr>`;
                   const descRow = r.description ? `<tr class="desc-row"><td colspan="4" class="desc-cell-block">${r.description}</td></tr>` : '';
-                  return rows2 + descRow;
+                  return dataRow + descRow;
                 }).join("")}
               </tbody>
             </table>
@@ -1211,6 +1213,14 @@ function renderReportHTML(report, container) {
         </div>`;
     }).join("");
     return;
+  }
+
+  // 헬퍼: 점수 표시 포맷
+  function fmtScore(r) {
+    let scoreDisp = r.score !== undefined && r.score !== null ? r.score : "-";
+    if (typeof scoreDisp === 'number') scoreDisp = Number.isInteger(scoreDisp) ? scoreDisp : parseFloat(scoreDisp.toFixed(2));
+    if (r.extra) return scoreDisp + "점: " + r.extra;
+    return String(scoreDisp);
   }
 
   // 구조화된 섹션 형식 (신규) — 4열 레이아웃, 설명은 별도 행
@@ -1224,13 +1234,19 @@ function renderReportHTML(report, container) {
       const isSubItem = r.name && r.name.startsWith("  ");
       const nameClass = isSubItem ? "sub-item" : "";
       const displayName = r.name ? r.name.trim() : "";
+      const scoreDisplay = fmtScore(r);
 
-      let scoreDisp = r.score !== undefined && r.score !== null ? r.score : "-";
-      if (typeof scoreDisp === 'number') scoreDisp = Number.isInteger(scoreDisp) ? scoreDisp : parseFloat(scoreDisp.toFixed(2));
-
-      // extra 표시 (아침/저녁형 분류, SPAQ 분류 등)
-      let scoreDisplay = String(scoreDisp);
-      if (r.extra) scoreDisplay += ` (${r.extra})`;
+      // 성인기 주의집중문제 (adhd_screening): 선별결과만 표시, 순위 없음
+      if (r.special === "adhd_screening") {
+        dataRowsHTML += `<tr>
+          <td class="name-cell">${displayName}</td>
+          <td class="score-cell" colspan="3" style="text-align:left;font-size:13px;">${scoreDisplay}</td>
+        </tr>`;
+        if (r.description) {
+          dataRowsHTML += `<tr class="desc-row"><td colspan="4" class="desc-cell-block">${r.description}</td></tr>`;
+        }
+        return;
+      }
 
       dataRowsHTML += `<tr>
         <td class="name-cell ${nameClass}">${displayName}</td>
@@ -1239,30 +1255,30 @@ function renderReportHTML(report, container) {
         <td class="rank-cell" style="color:${r.nor_color || 'inherit'}">${nRank}</td>
       </tr>`;
 
-      // 설명 행 — sub-item이 아닌 항목에서 description이 있을 때만
+      // 설명 행 — non-sub-item에서 description이 있을 때
       if (!isSubItem && r.description) {
         dataRowsHTML += `<tr class="desc-row"><td colspan="4" class="desc-cell-block">${r.description}</td></tr>`;
       }
     });
 
-    // 특수행 HTML 생성 (공존장애 선별 등)
+    // 특수행 HTML 생성 (공존장애 선별)
     const specialHTML = (section.specialRows || []).map(sp => {
       if (sp.type === "comorbidity") {
+        // 2-row layout: label+headers row, then values row
+        // Row 1: "공존장애 선별" label cell + header cells
         const headerCells = sp.headers.map(h => `<th class="comorbid-th">${h}</th>`).join("");
+        // Row 2: empty label + value cells
         const valueCells = sp.values.map(v => {
           const cls = v === 'O' ? 'comorbid-positive' : 'comorbid-negative';
           return `<td class="comorbid-val ${cls}">${v}</td>`;
         }).join("");
         return `
           <tr class="comorbid-label-row">
-            <td colspan="4" class="comorbid-label">${sp.label}</td>
-          </tr>
-          <tr class="comorbid-header-row">
-            <td></td>
+            <td class="comorbid-label">${sp.label}</td>
             ${headerCells}
           </tr>
           <tr class="comorbid-value-row">
-            <td></td>
+            <td class="comorbid-empty"></td>
             ${valueCells}
           </tr>`;
       }
@@ -1272,6 +1288,7 @@ function renderReportHTML(report, container) {
     return `
       <div class="result-category">
         <div class="result-section-title">${section.title}</div>
+        ${section.sectionDescription ? `<div class="section-desc-block">${section.sectionDescription}</div>` : ""}
         <div class="result-table-wrap">
           <table class="result-table">
             <thead>
