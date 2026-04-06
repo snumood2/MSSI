@@ -455,7 +455,25 @@ function initDoctor() {
   if (info) info.innerHTML = `
     <span style="font-weight:800;">${p.doctor_name || "-"} 선생님</span>
     &nbsp;<span class="text-sub">${p.hospital_name || ""}</span>
-    &nbsp;<span class="badge">병원코드: ${p.hospital_code || "없음"}</span>`;
+    &nbsp;<span class="badge" id="doctorHcodeBadge">병원코드: ${p.hospital_code || "없음"}</span>
+    &nbsp;<button class="btn secondary sm" id="btnEditHcode" style="font-size:12px;padding:4px 10px;">변경</button>`;
+
+  el("btnEditHcode")?.addEventListener("click", async () => {
+    const newCode = prompt("새 병원코드를 입력하세요 (영숫자 4~8자):", state.profile.hospital_code || "");
+    if (!newCode) return;
+    const code = newCode.toUpperCase().replace(/[^A-Z0-9]/g, "");
+    if (code.length < 4 || code.length > 8) return alert("병원코드는 4~8자 영숫자여야 합니다.");
+    // 중복 확인
+    const { data: existing } = await sb.from("profiles").select("id").eq("hospital_code", code).neq("id", state.user.id).maybeSingle();
+    if (existing) return alert(`'${code}'는 이미 사용 중인 코드입니다.`);
+    const { error } = await sb.from("profiles").update({ hospital_code: code }).eq("id", state.user.id);
+    if (error) return alert("오류: " + error.message);
+    state.profile.hospital_code = code;
+    const badge = el("doctorHcodeBadge");
+    if (badge) badge.textContent = `병원코드: ${code}`;
+    alert(`병원코드가 '${code}'로 변경되었습니다.`);
+  });
+
   loadDoctorPatientList();
 }
 
@@ -492,6 +510,19 @@ async function searchPatient() {
 }
 
 function renderDoctorResult(row, container) {
+  // report가 없으면 answers에서 재계산
+  let report = row.report;
+  if (!report && row.answers) {
+    try {
+      const scores = calculateScores(row.answers);
+      report = generateReport(scores, row.answers);
+    } catch (e) { console.error("재계산 실패:", e); }
+  }
+  if (!report) {
+    container.innerHTML = `<p class="text-sub" style="padding:20px 0;">결과 데이터가 없습니다.</p>`;
+    return;
+  }
+
   const meta = `
     <div class="patient-result-meta">
       <div class="meta-item"><span class="meta-label">환자번호</span><span class="meta-value">${row.patient_number || "-"}</span></div>
@@ -509,22 +540,16 @@ function renderDoctorResult(row, container) {
       </div>
     </div>`;
 
-  renderReportHTML(row.report, el("drReportContent"));
+  renderReportHTML(report, el("drReportContent"));
 }
 
-// 환자 목록 (의사 병원코드 기준)
+// 환자 목록 (RPC 호출 — SECURITY DEFINER로 병원코드 자동 필터)
 async function loadDoctorPatientList() {
   const list = el("doctorPatientList");
   if (!list) return;
   list.innerHTML = `<p class="text-sub mt-8">로딩 중...</p>`;
-  const hCode = state.profile?.hospital_code;
-  if (!hCode) { list.innerHTML = `<p class="text-sub mt-8">병원코드가 없습니다.</p>`; return; }
 
-  const { data, error } = await sb.from("survey_responses")
-    .select("id, patient_number, status, completed_at, created_at")
-    .eq("hospital_code", hCode)
-    .eq("status", "completed")
-    .order("completed_at", { ascending: false });
+  const { data, error } = await sb.rpc("doctor_list_patients");
 
   if (error || !data?.length) {
     list.innerHTML = `<p class="text-sub mt-8" style="padding:20px 0;">완료된 설문이 없습니다.</p>`;
@@ -544,6 +569,13 @@ async function loadDoctorPatientList() {
 
 window.viewResponseById = async (responseId) => {
   const { data } = await sb.from("survey_responses").select("*").eq("id", responseId).single();
+  // report가 없으면 answers에서 재계산
+  if (!data?.report && data?.answers) {
+    try {
+      const scores = calculateScores(data.answers);
+      data.report = generateReport(scores, data.answers);
+    } catch (e) { console.error("재계산 실패:", e); }
+  }
   if (!data?.report) return alert("결과를 찾을 수 없습니다.");
   
   // 결과 화면으로 이동
@@ -663,9 +695,19 @@ el("btnResumeSurvey")?.addEventListener("click", () => renderSurvey());
 el("btnViewMyResult")?.addEventListener("click", () => viewMyResult(state.responseId));
 
 window.viewMyResult = async (rid) => {
-  const { data } = await sb.from("survey_responses").select("report, completed_at, patient_number").eq("id", rid).single();
-  if (!data?.report) return alert("결과를 찾을 수 없습니다.");
-  renderResultView(data.report, data.completed_at, data.patient_number);
+  const { data } = await sb.from("survey_responses").select("report, scores, answers, completed_at, patient_number").eq("id", rid).single();
+  let report = data?.report;
+  // report가 없으면 answers에서 재계산 시도
+  if (!report && data?.answers) {
+    try {
+      const scores = calculateScores(data.answers);
+      report = generateReport(scores, data.answers);
+      // DB에도 저장
+      await sb.from("survey_responses").update({ scores, report }).eq("id", rid);
+    } catch (e) { console.error("재계산 실패:", e); }
+  }
+  if (!report) return alert("결과를 찾을 수 없습니다.");
+  renderResultView(report, data.completed_at, data.patient_number);
   show("view-result");
   el("btnBack").onclick = () => { show("view-patient"); refreshPatientStatus(); };
 };
