@@ -118,35 +118,35 @@ el("btnToggleSignup")?.addEventListener("click", () => {
   renderAuthMode();
 });
 
-// 병원코드 중복 확인
-let hcodeVerified = false;
-el("d_hcode")?.addEventListener("input", () => {
-  hcodeVerified = false;
-  const msg = el("hcodeMsg");
-  if (msg) msg.className = "status-msg";
-});
-
-el("btnCheckHcode")?.addEventListener("click", async () => {
-  const code = el("d_hcode")?.value.trim();
-  const msg = el("hcodeMsg");
-  if (!code || code.length < 4) {
-    msg.className = "status-msg show error";
-    msg.textContent = "4자 이상 입력해주세요.";
-    return;
+// 병원명에서 병원코드 자동 생성
+const CONSONANT_MAP = {
+  'ㄱ':'G','ㄴ':'N','ㄷ':'D','ㄹ':'R','ㅁ':'M','ㅂ':'B','ㅅ':'S',
+  'ㅇ':null,'ㅈ':'J','ㅊ':'C','ㅋ':'K','ㅌ':'T','ㅍ':'P','ㅎ':'H'
+};
+function extractConsonants(str) {
+  let result = '';
+  for (const ch of str) {
+    const code = ch.charCodeAt(0);
+    if (code >= 0xAC00 && code <= 0xD7A3) {
+      const idx = Math.floor((code - 0xAC00) / 28 / 21);
+      const cons = ['ㄱ','ㄲ','ㄴ','ㄷ','ㄸ','ㄹ','ㅁ','ㅂ','ㅃ','ㅅ','ㅆ','ㅇ','ㅈ','ㅉ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'][idx];
+      const mapped = CONSONANT_MAP[cons];
+      if (mapped) result += mapped;
+    }
   }
-  msg.className = "status-msg show info";
-  msg.textContent = "확인 중...";
-  const { data } = await sb.from("profiles").select("id").eq("hospital_code", code).maybeSingle();
-  if (data) {
-    hcodeVerified = false;
-    msg.className = "status-msg show error";
-    msg.textContent = `'${code}'는 이미 사용 중인 코드입니다. 다른 코드를 입력해주세요.`;
-  } else {
-    hcodeVerified = true;
-    msg.className = "status-msg show ok";
-    msg.textContent = `'${code}' 사용 가능한 코드입니다.`;
+  return result;
+}
+async function generateHospitalCode(hospitalName) {
+  const consonants = extractConsonants(hospitalName || '').slice(0, 4);
+  const base = consonants || 'HOSP';
+  for (let attempt = 0; attempt < 10; attempt++) {
+    const digits = String(Math.floor(Math.random() * 90) + 10);
+    const code = base + digits;
+    const { data } = await sb.from('profiles').select('id').eq('hospital_code', code).maybeSingle();
+    if (!data) return code;
   }
-});
+  return base + String(Date.now()).slice(-4);
+}
 
 function renderAuthMode() {
   el("authTitle").textContent  = authMode === "login" ? "로그인" : "회원가입";
@@ -156,10 +156,6 @@ function renderAuthMode() {
   if (selectedRole === "doctor" && loginOnly)
     loginOnly.style.display = authMode === "signup" ? "none" : "block";
   clearMsg("authMsg");
-  // 탭/모드 전환 시 코드 확인 상태 초기화
-  hcodeVerified = false;
-  const hcodeMsg = el("hcodeMsg");
-  if (hcodeMsg) hcodeMsg.className = "status-msg";
 }
 
 // ── 로그인 / 가입 처리 ──
@@ -229,15 +225,15 @@ el("btnLoginAction")?.addEventListener("click", async () => {
           patient_number: el("p_pnum").value.trim()
         };
       } else {
-        const hcode = el("d_hcode")?.value.trim();
-        if (!hcode || hcode.length < 4) throw "병원코드를 4자 이상 입력해주세요.";
-        if (!hcodeVerified) throw "병원코드 중복 확인을 먼저 해주세요.";
+        const hospitalName = el("d_hname").value.trim();
+        if (!hospitalName) throw "병원명을 입력해주세요.";
+        const hcode = await generateHospitalCode(hospitalName);
         signUpMeta = {
           role: "doctor_pending",
           username: rawId,
           contact_email: email,
           doctor_name: el("d_name").value.trim(),
-          hospital_name: el("d_hname").value.trim(),
+          hospital_name: hospitalName,
           dob: el("d_dob").value,
           hospital_code: hcode
         };
@@ -455,24 +451,7 @@ function initDoctor() {
   if (info) info.innerHTML = `
     <span style="font-weight:800;">${p.doctor_name || "-"} 선생님</span>
     &nbsp;<span class="text-sub">${p.hospital_name || ""}</span>
-    &nbsp;<span class="badge" id="doctorHcodeBadge">병원코드: ${p.hospital_code || "없음"}</span>
-    &nbsp;<button class="btn secondary sm" id="btnEditHcode" style="font-size:12px;padding:4px 10px;">변경</button>`;
-
-  el("btnEditHcode")?.addEventListener("click", async () => {
-    const newCode = prompt("새 병원코드를 입력하세요 (영숫자 4~8자):", state.profile.hospital_code || "");
-    if (!newCode) return;
-    const code = newCode.toUpperCase().replace(/[^A-Z0-9]/g, "");
-    if (code.length < 4 || code.length > 8) return alert("병원코드는 4~8자 영숫자여야 합니다.");
-    // 중복 확인
-    const { data: existing } = await sb.from("profiles").select("id").eq("hospital_code", code).neq("id", state.user.id).maybeSingle();
-    if (existing) return alert(`'${code}'는 이미 사용 중인 코드입니다.`);
-    const { error } = await sb.from("profiles").update({ hospital_code: code }).eq("id", state.user.id);
-    if (error) return alert("오류: " + error.message);
-    state.profile.hospital_code = code;
-    const badge = el("doctorHcodeBadge");
-    if (badge) badge.textContent = `병원코드: ${code}`;
-    alert(`병원코드가 '${code}'로 변경되었습니다.`);
-  });
+    &nbsp;<span class="badge">병원코드: ${p.hospital_code || "없음"}</span>`;
 
   loadDoctorPatientList();
 }
@@ -1158,6 +1137,19 @@ function renderResultView(report, completedAt, patientNumber) {
   const instructions = (report && report.instructions) ? report.instructions : getGlobalInstructions();
   el("resultInstructions").textContent = instructions;
 
+  // 환자 정보 표시 (성별, 출생연도, 병원코드, 환자번호)
+  const infoEl = el("resultPatientInfo");
+  if (infoEl && state.profile) {
+    const p = state.profile;
+    const genderStr = p.gender === "male" ? "남성" : (p.gender === "female" ? "여성" : "-");
+    const dobYear = p.dob ? p.dob.slice(0, 4) : "-";
+    infoEl.innerHTML = `
+      <span class="meta-label">성별:</span> <span class="meta-value">${genderStr}</span>
+      &nbsp;&nbsp;<span class="meta-label">출생연도:</span> <span class="meta-value">${dobYear}</span>
+      &nbsp;&nbsp;<span class="meta-label">병원코드:</span> <span class="meta-value">${p.hospital_code || "-"}</span>
+      &nbsp;&nbsp;<span class="meta-label">환자번호:</span> <span class="meta-value">${p.patient_number || "-"}</span>`;
+  }
+
   const content = el("resultTableContent");
   renderReportHTML(report, content);
 }
@@ -1175,32 +1167,43 @@ function renderReportHTML(report, container) {
     });
     const catNames = {
       "선별": "선별 검사", "상태": "현재 기분 상태", "공존": "공존 장애 선별",
-      "기질": "정서 기질 (TEMPS-A)", "특성": "기분변동성 기질 (MIQ-T)",
-      "외상": "아동기 외상 (CTQ)", "대인": "대인관계 민감도 (IPSM)",
-      "자원": "회복 자원", "패턴": "행동 패턴 (BIS/BAS)",
-      "중독": "음주 경향 (AUDIT)", "수면": "수면/일주기 유형",
-      "계절": "계절성 우울", "주의": "주의집중 (ADHD)",
-      "성격": "성격 특성", "신체": "생리 주기 관련 (PMS)"
+      "기질": "정서기질", "특성": "기분안정성기질",
+      "외상": "아동기외상, 대인관계민감성, 회복탄력성", "대인": "아동기외상, 대인관계민감성, 회복탄력성",
+      "자원": "정서조절, 행동패턴, 음주, 수면양상", "패턴": "정서조절, 행동패턴, 음주, 수면양상",
+      "중독": "정서조절, 행동패턴, 음주, 수면양상", "수면": "정서조절, 행동패턴, 음주, 수면양상",
+      "계절": "계절성 우울증, 집중력, 경계선 성격, 행동문제, 성격특성",
+      "주의": "계절성 우울증, 집중력, 경계선 성격, 행동문제, 성격특성",
+      "성격": "계절성 우울증, 집중력, 경계선 성격, 행동문제, 성격특성",
+      "신체": "생리주기에 따른 변화 (여성만 해당됩니다)"
     };
     container.innerHTML = catOrder.map(cat => {
       const rows = grouped[cat];
       return `
         <div class="result-category">
-          <div class="result-category-title">${catNames[cat] || cat}</div>
+          <div class="result-section-title">${catNames[cat] || cat}</div>
           <div class="result-table-wrap">
             <table class="result-table">
-              <thead><tr><th>검사명</th><th>결과</th><th>환자군 백분위</th><th>정상군 백분위</th><th>설명</th></tr></thead>
+              <thead><tr>
+                <th class="col-name">검사명</th>
+                <th class="col-score">응답결과</th>
+                <th class="col-rank">환자비교백분위</th>
+                <th class="col-rank">정상군비교백분위</th>
+              </tr></thead>
               <tbody>
                 ${rows.map(r => {
                   const pRank = typeof r.pat_rank === "number" ? r.pat_rank + "등" : (r.pat_rank || "-");
                   const nRank = typeof r.nor_rank === "number" ? r.nor_rank + "등" : (r.nor_rank || "-");
-                  return `<tr>
-                    <td>${r.name}</td>
-                    <td class="score-cell">${r.score}</td>
+                  const nameClass = r.name && r.name.startsWith("  ") ? "sub-item" : "";
+                  let scoreDisp = r.score !== undefined && r.score !== null ? r.score : "-";
+                  if (typeof scoreDisp === 'number') scoreDisp = Number.isInteger(scoreDisp) ? scoreDisp : parseFloat(scoreDisp.toFixed(2));
+                  const rows2 = `<tr>
+                    <td class="name-cell ${nameClass}">${r.name || ""}</td>
+                    <td class="score-cell">${scoreDisp}</td>
                     <td class="rank-cell" style="color:${r.pat_color||'inherit'}">${pRank}</td>
                     <td class="rank-cell" style="color:${r.nor_color||'inherit'}">${nRank}</td>
-                    <td class="desc-cell">${r.description || ""}</td>
                   </tr>`;
+                  const descRow = r.description ? `<tr class="desc-row"><td colspan="4" class="desc-cell-block">${r.description}</td></tr>` : '';
+                  return rows2 + descRow;
                 }).join("")}
               </tbody>
             </table>
@@ -1210,25 +1213,37 @@ function renderReportHTML(report, container) {
     return;
   }
 
-  // 구조화된 섹션 형식 (신규)
+  // 구조화된 섹션 형식 (신규) — 4열 레이아웃, 설명은 별도 행
   const sections = report.sections || [];
   container.innerHTML = sections.map(section => {
     // 일반 데이터 행 HTML 생성
-    const dataRowsHTML = section.rows.map((r, idx) => {
+    let dataRowsHTML = "";
+    section.rows.forEach((r) => {
       const pRank = typeof r.pat_rank === "number" ? r.pat_rank + "등" : (r.pat_rank || "-");
       const nRank = typeof r.nor_rank === "number" ? r.nor_rank + "등" : (r.nor_rank || "-");
-      const nameClass = r.name && r.name.startsWith("  ") ? "sub-item" : "";
-      const descCell = r.description
-        ? `<td class="desc-cell" rowspan="1">${r.description}</td>`
-        : `<td class="desc-cell"></td>`;
-      return `<tr>
-        <td class="name-cell ${nameClass}">${r.name || ""}</td>
-        <td class="score-cell">${r.score !== undefined && r.score !== null ? r.score : "-"}</td>
+      const isSubItem = r.name && r.name.startsWith("  ");
+      const nameClass = isSubItem ? "sub-item" : "";
+      const displayName = r.name ? r.name.trim() : "";
+
+      let scoreDisp = r.score !== undefined && r.score !== null ? r.score : "-";
+      if (typeof scoreDisp === 'number') scoreDisp = Number.isInteger(scoreDisp) ? scoreDisp : parseFloat(scoreDisp.toFixed(2));
+
+      // extra 표시 (아침/저녁형 분류, SPAQ 분류 등)
+      let scoreDisplay = String(scoreDisp);
+      if (r.extra) scoreDisplay += ` (${r.extra})`;
+
+      dataRowsHTML += `<tr>
+        <td class="name-cell ${nameClass}">${displayName}</td>
+        <td class="score-cell">${scoreDisplay}</td>
         <td class="rank-cell" style="color:${r.pat_color || 'inherit'}">${pRank}</td>
         <td class="rank-cell" style="color:${r.nor_color || 'inherit'}">${nRank}</td>
-        ${descCell}
       </tr>`;
-    }).join("");
+
+      // 설명 행 — sub-item이 아닌 항목에서 description이 있을 때만
+      if (!isSubItem && r.description) {
+        dataRowsHTML += `<tr class="desc-row"><td colspan="4" class="desc-cell-block">${r.description}</td></tr>`;
+      }
+    });
 
     // 특수행 HTML 생성 (공존장애 선별 등)
     const specialHTML = (section.specialRows || []).map(sp => {
@@ -1240,7 +1255,7 @@ function renderReportHTML(report, container) {
         }).join("");
         return `
           <tr class="comorbid-label-row">
-            <td colspan="5" class="comorbid-label">${sp.label}</td>
+            <td colspan="4" class="comorbid-label">${sp.label}</td>
           </tr>
           <tr class="comorbid-header-row">
             <td></td>
@@ -1265,7 +1280,6 @@ function renderReportHTML(report, container) {
                 <th class="col-score">응답결과</th>
                 <th class="col-rank">환자비교백분위</th>
                 <th class="col-rank">정상군비교백분위</th>
-                <th class="col-desc">검사설명</th>
               </tr>
             </thead>
             <tbody>
