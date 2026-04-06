@@ -489,9 +489,10 @@ async function searchPatient() {
 }
 
 function renderDoctorResult(row, container) {
-  // report가 없으면 answers에서 재계산
   let report = row.report;
-  if (!report && row.answers) {
+  // report가 없거나 옵날 형식이면 재계산
+  const needsRecalc = !report || !report.sections?.[0]?.groups;
+  if (needsRecalc && row.answers) {
     try {
       const scores = calculateScores(row.answers);
       report = generateReport(scores, row.answers);
@@ -549,8 +550,9 @@ async function loadDoctorPatientList() {
 
 window.viewResponseById = async (responseId) => {
   const { data } = await sb.from("survey_responses").select("*").eq("id", responseId).single();
-  // report가 없으면 answers에서 재계산
-  if (!data?.report && data?.answers) {
+  // report가 없거나 옵날 형식이면 재계산
+  const needsRecalc = !data?.report || !data.report.sections?.[0]?.groups;
+  if (needsRecalc && data?.answers) {
     try {
       const scores = calculateScores(data.answers);
       data.report = generateReport(scores, data.answers);
@@ -677,12 +679,12 @@ el("btnViewMyResult")?.addEventListener("click", () => viewMyResult(state.respon
 window.viewMyResult = async (rid) => {
   const { data } = await sb.from("survey_responses").select("report, scores, answers, completed_at, patient_number").eq("id", rid).single();
   let report = data?.report;
-  // report가 없으면 answers에서 재계산 시도
-  if (!report && data?.answers) {
+  // report가 없거나 옵날 형식(groups 없음)이면 재계산
+  const needsRecalc = !report || !report.sections?.[0]?.groups;
+  if (needsRecalc && data?.answers) {
     try {
       const scores = calculateScores(data.answers);
       report = generateReport(scores, data.answers);
-      // DB에도 저장
       await sb.from("survey_responses").update({ scores, report }).eq("id", rid);
     } catch (e) { console.error("재계산 실패:", e); }
   }
