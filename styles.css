@@ -701,6 +701,275 @@ body {
   .card { box-shadow: none; border: none; }
 }
 
+/* ════════════════════════════════════════════════
+   결과지 테이블 스타일 (Excel 결과지 완전 일치)
+   ════════════════════════════════════════════════ */
+
+/* 섹션 제목 (teal 배경, 흰색 굵은 텍스트) */
+.result-section-title {
+  background: #1a7a8a;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 800;
+  padding: 10px 16px;
+  border-radius: 6px 6px 0 0;
+  letter-spacing: 0.02em;
+}
+
+/* 테이블 컨테이너 */
+.result-category {
+  margin-bottom: 28px;
+}
+.result-table-wrap {
+  overflow-x: auto;
+  border: 1.5px solid #c8d6db;
+  border-top: none;
+  border-radius: 0 0 6px 6px;
+}
+
+/* 결과 테이블 */
+.result-table {
+  width: 100%;
+  min-width: 620px;
+  border-collapse: collapse;
+  font-size: 13px;
+  background: #fff;
+}
+
+/* 헤더 행 */
+.result-table thead th {
+  background: #f0f5f7;
+  padding: 9px 12px;
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
+  border-bottom: 2px solid #c8d6db;
+  border-right: 1px solid #dce6e9;
+  color: #2d5566;
+  letter-spacing: 0.03em;
+}
+.result-table thead th.col-name,
+.result-table thead th:first-child { text-align: left; }
+.result-table thead th:last-child { border-right: none; }
+
+/* 데이터 행 */
+.result-table tbody td {
+  padding: 10px 12px;
+  border-bottom: 1px solid #eef2f4;
+  border-right: 1px solid #eef2f4;
+  vertical-align: top;
+  line-height: 1.5;
+}
+.result-table tbody td:last-child { border-right: none; }
+.result-table tbody tr:last-child td { border-bottom: none; }
+.result-table tbody tr:hover td { background: #f8fcfd; }
+
+/* 검사명 컬럼 */
+.result-table tbody td.name-cell {
+  font-weight: 700;
+  min-width: 160px;
+  color: #1a2e38;
+}
+.result-table tbody td.name-cell.sub-item {
+  font-weight: 500;
+  color: #3d5a68;
+  padding-left: 24px;
+}
+
+/* 점수 컬럼 */
+.result-table tbody td.score-cell {
+  text-align: center;
+  font-weight: 700;
+  font-size: 15px;
+  min-width: 70px;
+  color: #1a2e38;
+}
+
+/* 백분위 컬럼 */
+.result-table tbody td.rank-cell {
+  text-align: center;
+  font-weight: 700;
+  font-size: 14px;
+  min-width: 90px;
+}
+
+/* 설명 컬럼 */
+.result-table tbody td.desc-cell {
+  font-size: 12px;
+  color: #445566;
+  line-height: 1.75;
+  min-width: 220px;
+  word-break: keep-all;
+  word-wrap: break-word;
+}
+
+/* 공존장애 선별 특수 행 */
+.comorbid-label-row td.comorbid-label {
+  background: #eef6f8;
+  font-weight: 700;
+  font-size: 13px;
+  padding: 8px 12px;
+  color: #1a5566;
+  border-bottom: 1px solid #c8d6db;
+}
+.comorbid-header-row th.comorbid-th {
+  background: #f5fafb;
+  font-size: 11px;
+  font-weight: 700;
+  text-align: center;
+  padding: 6px 8px;
+  border-bottom: 1px solid #dce6e9;
+  border-right: 1px solid #dce6e9;
+  color: #2d5566;
+  min-width: 70px;
+}
+.comorbid-val {
+  text-align: center;
+  font-weight: 700;
+  font-size: 15px;
+  padding: 8px;
+  min-width: 70px;
+}
+.comorbid-positive { color: #FF5C7A; }
+.comorbid-negative { color: #2B3CFF; }
+
+/* 결과 안내 문구 박스 */
+.result-instructions {
+  background: var(--accent-light, #e8f3ff);
+  border-radius: 10px;
+  padding: 16px 20px;
+  font-size: 13px;
+  line-height: 1.8;
+  color: #333;
+  margin-bottom: 28px;
+  word-break: keep-all;
+}
+
+/* ════════════════════════════════════════════════
+   인쇄 전용 CSS (A4, 결과지 최적화)
+   ════════════════════════════════════════════════ */
+@media print {
+  /* 결과 뷰만 표시 */
+  body * { visibility: hidden; }
+  #view-result, #view-result *, .patient-result-card, .patient-result-card * {
+    visibility: visible;
+  }
+
+  /* 불필요 요소 숨김 */
+  #mainHeader,
+  .survey-nav,
+  .print-btn-wrap,
+  #btnBack,
+  #btnPrintResult,
+  .doctor-tabs,
+  .header-right,
+  .auth-tabs,
+  nav,
+  footer {
+    display: none !important;
+  }
+
+  /* 페이지 레이아웃 */
+  @page {
+    size: A4 portrait;
+    margin: 12mm 10mm 12mm 12mm;
+  }
+
+  body {
+    background: #fff !important;
+    font-size: 9pt;
+    color: #000;
+  }
+
+  /* 컨테이너 전체 너비 */
+  .container {
+    max-width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  /* 카드 그림자/테두리 제거 */
+  .card {
+    box-shadow: none !important;
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border-radius: 0 !important;
+  }
+
+  /* 섹션 제목 */
+  .result-section-title {
+    background: #1a7a8a !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    color: #fff !important;
+    font-size: 10pt;
+    padding: 6px 10px;
+  }
+
+  /* 결과 테이블 */
+  .result-table {
+    font-size: 8pt !important;
+    min-width: 0 !important;
+    width: 100% !important;
+  }
+  .result-table thead th {
+    font-size: 8pt !important;
+    padding: 5px 7px !important;
+    background: #f0f5f7 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .result-table tbody td {
+    font-size: 8pt !important;
+    padding: 5px 7px !important;
+  }
+  .result-table tbody td.desc-cell {
+    font-size: 7pt !important;
+    line-height: 1.5 !important;
+  }
+  .result-table tbody td.score-cell {
+    font-size: 9pt !important;
+  }
+  .result-table tbody td.rank-cell {
+    font-size: 8pt !important;
+  }
+
+  /* 섹션 간 페이지 나누기 방지/허용 */
+  .result-category {
+    page-break-inside: avoid;
+    margin-bottom: 12px !important;
+  }
+  .result-category:nth-child(4n) {
+    page-break-after: always;
+  }
+
+  /* 안내 문구 */
+  .result-instructions {
+    font-size: 7.5pt !important;
+    padding: 8px 10px !important;
+    margin-bottom: 12px !important;
+    background: #e8f3ff !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* 공존장애 선별 */
+  .comorbid-positive { color: #c0392b !important; }
+  .comorbid-negative { color: #1a4080 !important; }
+
+  /* rank-cell 색상 인쇄 보존 */
+  .rank-cell {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* 결과 제목 */
+  #resultDate, #resultPatNum {
+    font-size: 9pt !important;
+  }
+}
+
 /* ─── 구분선 ─── */
 .divider { height: 1px; background: var(--border); margin: 28px 0; }
 .text-sub { color: var(--text-sub); font-size: 14px; }

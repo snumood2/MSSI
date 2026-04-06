@@ -529,11 +529,15 @@ function renderDoctorResult(row, container) {
       <div class="meta-item"><span class="meta-label">완료일</span><span class="meta-value">${fmtDate(row.completed_at)}</span></div>
     </div>`;
 
+  // 검사 안내 문구 (구조화 report 또는 레거시 모두 지원)
+  const instructions = (report && report.instructions) ? report.instructions : getGlobalInstructions();
+
   container.innerHTML = `
     <div class="patient-result-card">
       <div class="divider" style="margin-top:0;"></div>
       <h3 style="font-size:18px;font-weight:800;margin-bottom:16px;">검사 결과</h3>
       ${meta}
+      <div class="result-instructions" style="margin-bottom:20px;">${instructions}</div>
       <div id="drReportContent"></div>
       <div class="print-btn-wrap">
         <button class="btn secondary" onclick="window.print()">인쇄</button>
@@ -1149,7 +1153,10 @@ window.submitSurvey = submitSurvey;
 function renderResultView(report, completedAt, patientNumber) {
   el("resultDate").textContent    = fmtDate(completedAt);
   el("resultPatNum").textContent  = patientNumber ? `환자번호: ${patientNumber}` : "";
-  el("resultInstructions").textContent = getGlobalInstructions();
+
+  // 구조화된 report (sections) 또는 레거시 배열 모두 지원
+  const instructions = (report && report.instructions) ? report.instructions : getGlobalInstructions();
+  el("resultInstructions").textContent = instructions;
 
   const content = el("resultTableContent");
   renderReportHTML(report, content);
@@ -1158,53 +1165,112 @@ function renderResultView(report, completedAt, patientNumber) {
 function renderReportHTML(report, container) {
   if (!container || !report) return;
 
-  // 카테고리별 그룹핑
-  const grouped = {};
-  const catOrder = [];
-  report.forEach(r => {
-    if (!grouped[r.category]) { grouped[r.category] = []; catOrder.push(r.category); }
-    grouped[r.category].push(r);
-  });
-
-  const catNames = {
-    "선별": "선별 검사", "상태": "현재 기분 상태", "공존": "공존 장애 선별",
-    "기질": "정서 기질 (TEMPS-A)", "특성": "기분변동성 기질 (MIQ-T)",
-    "외상": "아동기 외상 (CTQ)", "대인": "대인관계 민감도 (IPSM)",
-    "자원": "회복 자원", "패턴": "행동 패턴 (BIS/BAS)",
-    "중독": "음주 경향 (AUDIT)", "수면": "수면/일주기 유형",
-    "계절": "계절성 우울", "주의": "주의집중 (ADHD)",
-    "성격": "성격 특성", "신체": "생리 주기 관련 (PMS)"
-  };
-
-  container.innerHTML = catOrder.map(cat => {
-    const rows = grouped[cat];
-    return `
-      <div class="result-category">
-        <div class="result-category-title">${catNames[cat] || cat}</div>
-        <div class="result-table-wrap">
-          <table class="result-table">
-            <thead>
-              <tr>
-                <th>검사명</th>
-                <th>결과</th>
-                <th>환자군 백분위</th>
-                <th>정상군 백분위</th>
-                <th>설명</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${rows.map(r => {
-                const pRank = typeof r.pat_rank === "number" ? r.pat_rank + "등" : r.pat_rank;
-                const nRank = typeof r.nor_rank === "number" ? r.nor_rank + "등" : r.nor_rank;
-                return `
-                  <tr>
+  // 레거시 배열 형식 지원 (이전 버전 호환)
+  if (Array.isArray(report)) {
+    const grouped = {};
+    const catOrder = [];
+    report.forEach(r => {
+      if (!grouped[r.category]) { grouped[r.category] = []; catOrder.push(r.category); }
+      grouped[r.category].push(r);
+    });
+    const catNames = {
+      "선별": "선별 검사", "상태": "현재 기분 상태", "공존": "공존 장애 선별",
+      "기질": "정서 기질 (TEMPS-A)", "특성": "기분변동성 기질 (MIQ-T)",
+      "외상": "아동기 외상 (CTQ)", "대인": "대인관계 민감도 (IPSM)",
+      "자원": "회복 자원", "패턴": "행동 패턴 (BIS/BAS)",
+      "중독": "음주 경향 (AUDIT)", "수면": "수면/일주기 유형",
+      "계절": "계절성 우울", "주의": "주의집중 (ADHD)",
+      "성격": "성격 특성", "신체": "생리 주기 관련 (PMS)"
+    };
+    container.innerHTML = catOrder.map(cat => {
+      const rows = grouped[cat];
+      return `
+        <div class="result-category">
+          <div class="result-category-title">${catNames[cat] || cat}</div>
+          <div class="result-table-wrap">
+            <table class="result-table">
+              <thead><tr><th>검사명</th><th>결과</th><th>환자군 백분위</th><th>정상군 백분위</th><th>설명</th></tr></thead>
+              <tbody>
+                ${rows.map(r => {
+                  const pRank = typeof r.pat_rank === "number" ? r.pat_rank + "등" : (r.pat_rank || "-");
+                  const nRank = typeof r.nor_rank === "number" ? r.nor_rank + "등" : (r.nor_rank || "-");
+                  return `<tr>
                     <td>${r.name}</td>
                     <td class="score-cell">${r.score}</td>
                     <td class="rank-cell" style="color:${r.pat_color||'inherit'}">${pRank}</td>
                     <td class="rank-cell" style="color:${r.nor_color||'inherit'}">${nRank}</td>
                     <td class="desc-cell">${r.description || ""}</td>
                   </tr>`;
-              }).join("")}
+                }).join("")}
+              </tbody>
+            </table>
+          </div>
+        </div>`;
+    }).join("");
+    return;
+  }
+
+  // 구조화된 섹션 형식 (신규)
+  const sections = report.sections || [];
+  container.innerHTML = sections.map(section => {
+    // 일반 데이터 행 HTML 생성
+    const dataRowsHTML = section.rows.map((r, idx) => {
+      const pRank = typeof r.pat_rank === "number" ? r.pat_rank + "등" : (r.pat_rank || "-");
+      const nRank = typeof r.nor_rank === "number" ? r.nor_rank + "등" : (r.nor_rank || "-");
+      const nameClass = r.name && r.name.startsWith("  ") ? "sub-item" : "";
+      const descCell = r.description
+        ? `<td class="desc-cell" rowspan="1">${r.description}</td>`
+        : `<td class="desc-cell"></td>`;
+      return `<tr>
+        <td class="name-cell ${nameClass}">${r.name || ""}</td>
+        <td class="score-cell">${r.score !== undefined && r.score !== null ? r.score : "-"}</td>
+        <td class="rank-cell" style="color:${r.pat_color || 'inherit'}">${pRank}</td>
+        <td class="rank-cell" style="color:${r.nor_color || 'inherit'}">${nRank}</td>
+        ${descCell}
+      </tr>`;
+    }).join("");
+
+    // 특수행 HTML 생성 (공존장애 선별 등)
+    const specialHTML = (section.specialRows || []).map(sp => {
+      if (sp.type === "comorbidity") {
+        const headerCells = sp.headers.map(h => `<th class="comorbid-th">${h}</th>`).join("");
+        const valueCells = sp.values.map(v => {
+          const cls = v === 'O' ? 'comorbid-positive' : 'comorbid-negative';
+          return `<td class="comorbid-val ${cls}">${v}</td>`;
+        }).join("");
+        return `
+          <tr class="comorbid-label-row">
+            <td colspan="5" class="comorbid-label">${sp.label}</td>
+          </tr>
+          <tr class="comorbid-header-row">
+            <td></td>
+            ${headerCells}
+          </tr>
+          <tr class="comorbid-value-row">
+            <td></td>
+            ${valueCells}
+          </tr>`;
+      }
+      return "";
+    }).join("");
+
+    return `
+      <div class="result-category">
+        <div class="result-section-title">${section.title}</div>
+        <div class="result-table-wrap">
+          <table class="result-table">
+            <thead>
+              <tr>
+                <th class="col-name">검사명</th>
+                <th class="col-score">응답결과</th>
+                <th class="col-rank">환자비교백분위</th>
+                <th class="col-rank">정상군비교백분위</th>
+                <th class="col-desc">검사설명</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${dataRowsHTML}
+              ${specialHTML}
             </tbody>
           </table>
         </div>
