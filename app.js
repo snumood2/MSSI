@@ -502,21 +502,18 @@ function renderDoctorResult(row, container) {
     return;
   }
 
-  const meta = `
-    <div class="patient-result-meta">
-      <div class="meta-item"><span class="meta-label">환자번호</span><span class="meta-value">${row.patient_number || "-"}</span></div>
-      <div class="meta-item"><span class="meta-label">완료일</span><span class="meta-value">${fmtDate(row.completed_at)}</span></div>
-    </div>`;
-
-  // 검사 안내 문구 (구조화 report 또는 레거시 모두 지원)
   const instructions = (report && report.instructions) ? report.instructions : getGlobalInstructions();
+  const dateStr = fmtDate(row.completed_at);
+  const patNum = row.patient_number || "-";
 
   container.innerHTML = `
     <div class="patient-result-card">
       <div class="divider" style="margin-top:0;"></div>
-      <h3 style="font-size:18px;font-weight:800;margin-bottom:16px;">검사 결과</h3>
-      ${meta}
-      <div class="result-instructions" style="margin-bottom:20px;">${instructions}</div>
+      <div class="result-header-block">
+        <h2 class="report-main-title">기분장애 임상평가 결과지</h2>
+        <p class="report-date-line">${dateStr}&nbsp;&nbsp;환자번호: ${patNum}</p>
+      </div>
+      <div class="result-instructions">${instructions}</div>
       <div id="drReportContent"></div>
       <div class="print-btn-wrap">
         <button class="btn secondary" onclick="window.print()">인쇄</button>
@@ -1133,7 +1130,6 @@ function renderResultView(report, completedAt, patientNumber) {
   el("resultDate").textContent    = fmtDate(completedAt);
   el("resultPatNum").textContent  = patientNumber ? `환자번호: ${patientNumber}` : "";
 
-  // 구조화된 report (sections) 또는 레거시 배열 모두 지원
   const instructions = (report && report.instructions) ? report.instructions : getGlobalInstructions();
   el("resultInstructions").textContent = instructions;
 
@@ -1144,10 +1140,10 @@ function renderResultView(report, completedAt, patientNumber) {
     const genderStr = p.gender === "male" ? "남성" : (p.gender === "female" ? "여성" : "-");
     const dobYear = p.dob ? p.dob.slice(0, 4) : "-";
     infoEl.innerHTML = `
-      <span class="meta-label">성별:</span> <span class="meta-value">${genderStr}</span>
-      &nbsp;&nbsp;<span class="meta-label">출생연도:</span> <span class="meta-value">${dobYear}</span>
-      &nbsp;&nbsp;<span class="meta-label">병원코드:</span> <span class="meta-value">${p.hospital_code || "-"}</span>
-      &nbsp;&nbsp;<span class="meta-label">환자번호:</span> <span class="meta-value">${p.patient_number || "-"}</span>`;
+      <span class="meta-label">성별:</span><span class="meta-value">${genderStr}</span>
+      &nbsp;&nbsp;<span class="meta-label">출생연도:</span><span class="meta-value">${dobYear}</span>
+      &nbsp;&nbsp;<span class="meta-label">병원코드:</span><span class="meta-value">${p.hospital_code || "-"}</span>
+      &nbsp;&nbsp;<span class="meta-label">환자번호:</span><span class="meta-value">${p.patient_number || "-"}</span>`;
   }
 
   const content = el("resultTableContent");
@@ -1157,154 +1153,140 @@ function renderResultView(report, completedAt, patientNumber) {
 function renderReportHTML(report, container) {
   if (!container || !report) return;
 
-  // 레거시 배열 형식 지원 (이전 버전 호환)
-  if (Array.isArray(report)) {
-    const grouped = {};
-    const catOrder = [];
-    report.forEach(r => {
-      if (!grouped[r.category]) { grouped[r.category] = []; catOrder.push(r.category); }
-      grouped[r.category].push(r);
-    });
-    const catNames = {
-      "기질": "정서기질", "특성": "기분안정성기질",
-      "외상": "아동기외상, 대인관계민감성, 회복탄력성", "대인": "아동기외상, 대인관계민감성, 회복탄력성",
-      "자원": "정서조절, 행동패턴, 음주, 수면양상", "패턴": "정서조절, 행동패턴, 음주, 수면양상",
-      "중독": "정서조절, 행동패턴, 음주, 수면양상", "수면": "정서조절, 행동패턴, 음주, 수면양상",
-      "계절": "계절성 우울증, 집중력, 경계선 성격, 행동문제, 성격특성",
-      "주의": "계절성 우울증, 집중력, 경계선 성격, 행동문제, 성격특성",
-      "성격": "계절성 우울증, 집중력, 경계선 성격, 행동문제, 성격특성",
-      "신체": "생리주기에 따른 변화 (여성만 해당됩니다)"
-    };
-    container.innerHTML = catOrder.map(cat => {
-      const rows = grouped[cat];
-      const title = catNames[cat] || cat;
-      return `
-        <div class="result-category">
-          <div class="result-section-title">${title}</div>
-          <div class="result-table-wrap">
-            <table class="result-table">
-              <thead><tr>
-                <th class="col-name">검사명</th>
-                <th class="col-score">응답결과</th>
-                <th class="col-rank">환자비교백분위</th>
-                <th class="col-rank">정상군비교백분위</th>
-              </tr></thead>
-              <tbody>
-                ${rows.map(r => {
-                  const pRank = typeof r.pat_rank === "number" ? r.pat_rank + "등" : (r.pat_rank || "-");
-                  const nRank = typeof r.nor_rank === "number" ? r.nor_rank + "등" : (r.nor_rank || "-");
-                  const nameClass = r.name && r.name.startsWith("  ") ? "sub-item" : "";
-                  let scoreDisp = r.score !== undefined && r.score !== null ? r.score : "-";
-                  if (typeof scoreDisp === 'number') scoreDisp = Number.isInteger(scoreDisp) ? scoreDisp : parseFloat(scoreDisp.toFixed(2));
-                  let scoreDisplay = String(scoreDisp);
-                  if (r.extra) scoreDisplay = scoreDisp + "점: " + r.extra;
-                  const dataRow = `<tr>
-                    <td class="name-cell ${nameClass}">${r.name || ""}</td>
-                    <td class="score-cell">${scoreDisplay}</td>
-                    <td class="rank-cell" style="color:${r.pat_color||'inherit'}">${pRank}</td>
-                    <td class="rank-cell" style="color:${r.nor_color||'inherit'}">${nRank}</td>
-                  </tr>`;
-                  const descRow = r.description ? `<tr class="desc-row"><td colspan="4" class="desc-cell-block">${r.description}</td></tr>` : '';
-                  return dataRow + descRow;
-                }).join("")}
-              </tbody>
-            </table>
-          </div>
-        </div>`;
-    }).join("");
-    return;
+  // 헬퍼: 점수 포맷
+  function fmtScore(val) {
+    if (val === undefined || val === null) return "-";
+    if (typeof val === 'number') return Number.isInteger(val) ? String(val) : parseFloat(val.toFixed(2)).toString();
+    return String(val);
   }
 
-  // 헬퍼: 점수 표시 포맷
-  function fmtScore(r) {
-    let scoreDisp = r.score !== undefined && r.score !== null ? r.score : "-";
-    if (typeof scoreDisp === 'number') scoreDisp = Number.isInteger(scoreDisp) ? scoreDisp : parseFloat(scoreDisp.toFixed(2));
-    if (r.extra) return scoreDisp + "점: " + r.extra;
-    return String(scoreDisp);
+  // 헬퍼: 백분위 등 표시
+  function fmtRank(r) {
+    return typeof r === "number" ? r + "등" : (r || "-");
   }
 
-  // 구조화된 섹션 형식 (신규) — 4열 레이아웃, 설명은 별도 행
+  // 간단 구조 취다보기: groups 없으면 rows/specialRows를 group으로 율교
   const sections = report.sections || [];
+
   container.innerHTML = sections.map(section => {
-    // 일반 데이터 행 HTML 생성
-    let dataRowsHTML = "";
-    section.rows.forEach((r) => {
-      const pRank = typeof r.pat_rank === "number" ? r.pat_rank + "등" : (r.pat_rank || "-");
-      const nRank = typeof r.nor_rank === "number" ? r.nor_rank + "등" : (r.nor_rank || "-");
-      const isSubItem = r.name && r.name.startsWith("  ");
-      const nameClass = isSubItem ? "sub-item" : "";
-      const displayName = r.name ? r.name.trim() : "";
-      const scoreDisplay = fmtScore(r);
+    const groups = section.groups || [];
 
-      // 성인기 주의집중문제 (adhd_screening): 선별결과만 표시, 순위 없음
-      if (r.special === "adhd_screening") {
-        dataRowsHTML += `<tr>
-          <td class="name-cell">${displayName}</td>
-          <td class="score-cell" colspan="3" style="text-align:left;font-size:13px;">${scoreDisplay}</td>
-        </tr>`;
-        if (r.description) {
-          dataRowsHTML += `<tr class="desc-row"><td colspan="4" class="desc-cell-block">${r.description}</td></tr>`;
-        }
-        return;
+    let groupsHTML = groups.map(group => {
+      let html = "";
+
+      // (a) Sub-section label
+      if (group.label && group.type !== "comorbidity") {
+        html += `<div class="group-label">${group.label}</div>`;
       }
 
-      dataRowsHTML += `<tr>
-        <td class="name-cell ${nameClass}">${displayName}</td>
-        <td class="score-cell">${scoreDisplay}</td>
-        <td class="rank-cell" style="color:${r.pat_color || 'inherit'}">${pRank}</td>
-        <td class="rank-cell" style="color:${r.nor_color || 'inherit'}">${nRank}</td>
-      </tr>`;
-
-      // 설명 행 — non-sub-item에서 description이 있을 때
-      if (!isSubItem && r.description) {
-        dataRowsHTML += `<tr class="desc-row"><td colspan="4" class="desc-cell-block">${r.description}</td></tr>`;
+      // (b) Description block
+      if (group.description) {
+        html += `<div class="section-desc-block">${group.description}</div>`;
       }
-    });
 
-    // 특수행 HTML 생성 (공존장애 선별)
-    const specialHTML = (section.specialRows || []).map(sp => {
-      if (sp.type === "comorbidity") {
-        // 2-row layout: label+headers row, then values row
-        // Row 1: "공존장애 선별" label cell + header cells
-        const headerCells = sp.headers.map(h => `<th class="comorbid-th">${h}</th>`).join("");
-        // Row 2: empty label + value cells
-        const valueCells = sp.values.map(v => {
-          const cls = v === 'O' ? 'comorbid-positive' : 'comorbid-negative';
-          return `<td class="comorbid-val ${cls}">${v}</td>`;
-        }).join("");
-        return `
-          <tr class="comorbid-label-row">
-            <td class="comorbid-label">${sp.label}</td>
-            ${headerCells}
-          </tr>
-          <tr class="comorbid-value-row">
-            <td class="comorbid-empty"></td>
-            ${valueCells}
-          </tr>`;
+      // (c) Comorbidity group (vertical list)
+      if (group.type === "comorbidity") {
+        const items = group.items || [];
+        html += `<div class="group-label">${group.label || ""}</div>`;
+        html += `<table class="result-table comorbidity-table"><tbody>`;
+        items.forEach(item => {
+          const cls = item.value === 'O' ? 'comorbid-positive' : 'comorbid-negative';
+          html += `<tr><td class="comorbid-name">${item.name}</td><td class="comorbid-val ${cls}">${item.value}</td></tr>`;
+        });
+        html += `</tbody></table>`;
+        return html;
       }
-      return "";
+
+      // (d) Data table
+      const rows = group.rows || [];
+      if (rows.length === 0) return html;
+
+      // Determine if any row uses specialCols (5-column)
+      const hasSpecial = rows.some(r => r.specialCols);
+
+      if (hasSpecial) {
+        // 5-column header: 검사명 | 결과 | 점수 | 환자비교백분위 | 정상군비교백분위
+        html += `<div class="result-table-wrap"><table class="result-table">
+          <thead><tr>
+            <th class="col-name">검사명</th>
+            <th class="col-score">결과</th>
+            <th class="col-score">점수</th>
+            <th class="col-rank">환자비교백분위</th>
+            <th class="col-rank">정상군비교백분위</th>
+          </tr></thead>
+          <tbody>`;
+        rows.forEach(r => {
+          const name = r.name || "";
+          const subCls = r.sub ? " sub-item" : "";
+          if (r.textOnly) {
+            html += `<tr><td class="name-cell${subCls}">${name}</td><td class="score-cell" colspan="4">${fmtScore(r.score)}</td></tr>`;
+          } else if (r.specialCols) {
+            const pRank = fmtRank(r.pat_rank);
+            const nRank = fmtRank(r.nor_rank);
+            html += `<tr>
+              <td class="name-cell${subCls}">${name}</td>
+              <td class="score-cell">${r.extra || ""}</td>
+              <td class="score-cell">${fmtScore(r.score)}</td>
+              <td class="rank-cell" style="color:${r.pat_color || 'inherit'}">${pRank}</td>
+              <td class="rank-cell" style="color:${r.nor_color || 'inherit'}">${nRank}</td>
+            </tr>`;
+            if (r.description) {
+              html += `<tr class="desc-row"><td colspan="5" class="desc-cell-block">${r.description}</td></tr>`;
+            }
+          } else {
+            const pRank = fmtRank(r.pat_rank);
+            const nRank = fmtRank(r.nor_rank);
+            html += `<tr>
+              <td class="name-cell${subCls}">${name}</td>
+              <td class="score-cell" colspan="2">${fmtScore(r.score)}</td>
+              <td class="rank-cell" style="color:${r.pat_color || 'inherit'}">${pRank}</td>
+              <td class="rank-cell" style="color:${r.nor_color || 'inherit'}">${nRank}</td>
+            </tr>`;
+            if (!r.sub && r.description) {
+              html += `<tr class="desc-row"><td colspan="5" class="desc-cell-block">${r.description}</td></tr>`;
+            }
+          }
+        });
+        html += `</tbody></table></div>`;
+      } else {
+        // Standard 4-column layout
+        html += `<div class="result-table-wrap"><table class="result-table">
+          <thead><tr>
+            <th class="col-name">검사명</th>
+            <th class="col-score">응답결과</th>
+            <th class="col-rank">환자비교백분위</th>
+            <th class="col-rank">정상군비교백분위</th>
+          </tr></thead>
+          <tbody>`;
+        rows.forEach(r => {
+          const name = r.name || "";
+          const subCls = r.sub ? " sub-item" : "";
+          if (r.textOnly) {
+            html += `<tr><td class="name-cell${subCls}">${name}</td><td class="score-cell" colspan="3">${fmtScore(r.score)}</td></tr>`;
+          } else {
+            const pRank = fmtRank(r.pat_rank);
+            const nRank = fmtRank(r.nor_rank);
+            html += `<tr>
+              <td class="name-cell${subCls}">${name}</td>
+              <td class="score-cell">${fmtScore(r.score)}</td>
+              <td class="rank-cell" style="color:${r.pat_color || 'inherit'}">${pRank}</td>
+              <td class="rank-cell" style="color:${r.nor_color || 'inherit'}">${nRank}</td>
+            </tr>`;
+            if (!r.sub && r.description) {
+              html += `<tr class="desc-row"><td colspan="4" class="desc-cell-block">${r.description}</td></tr>`;
+            }
+          }
+        });
+        html += `</tbody></table></div>`;
+      }
+
+      return html;
     }).join("");
 
     return `
       <div class="result-category">
         <div class="result-section-title">${section.title}</div>
-        ${section.sectionDescription ? `<div class="section-desc-block">${section.sectionDescription}</div>` : ""}
-        <div class="result-table-wrap">
-          <table class="result-table">
-            <thead>
-              <tr>
-                <th class="col-name">검사명</th>
-                <th class="col-score">응답결과</th>
-                <th class="col-rank">환자비교백분위</th>
-                <th class="col-rank">정상군비교백분위</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${dataRowsHTML}
-              ${specialHTML}
-            </tbody>
-          </table>
-        </div>
+        ${groupsHTML}
       </div>`;
   }).join("");
 }

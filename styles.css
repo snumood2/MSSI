@@ -881,6 +881,61 @@ body {
   word-break: keep-all;
 }
 
+/* 결과지 헤더 블록 */
+.result-header-block {
+  margin-bottom: 16px;
+}
+.report-main-title {
+  font-size: 22px;
+  font-weight: 900;
+  color: #1a2e38;
+  margin-bottom: 4px;
+}
+.report-date-line {
+  font-size: 13px;
+  color: #666;
+  margin-bottom: 2px;
+}
+
+/* 그룹 라벨 (서브 섹션 보더) */
+.group-label {
+  font-size: 14px;
+  font-weight: 800;
+  color: #1a2e38;
+  background: #edf4f7;
+  padding: 8px 16px;
+  margin-top: 10px;
+  border-left: 4px solid #1a7a8a;
+  border-radius: 0 4px 4px 0;
+}
+.result-category > .result-table-wrap:first-of-type,
+.result-category > div.result-table-wrap {
+  border-top: 1.5px solid #c8d6db;
+}
+
+/* 공존장애 선별 수직 리스트 */
+.comorbidity-table {
+  min-width: 180px !important;
+  max-width: 280px;
+}
+.comorbidity-table td.comorbid-name {
+  font-size: 13px;
+  font-weight: 600;
+  padding: 7px 14px;
+  border-right: 1px solid #eef2f4;
+  border-bottom: 1px solid #eef2f4;
+  min-width: 90px;
+  color: #1a2e38;
+}
+.comorbidity-table td.comorbid-val {
+  text-align: center;
+  font-weight: 800;
+  font-size: 15px;
+  padding: 7px 16px;
+  min-width: 50px;
+  border-bottom: 1px solid #eef2f4;
+}
+
 /* ════════════════════════════════════════════════
    인쇄 전용 CSS (A4, 결과지 최적화)
    ════════════════════════════════════════════════ */
