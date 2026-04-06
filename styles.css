@@ -270,8 +270,25 @@ body {
 .q-row {
   padding: 24px 0;
   border-bottom: 1px solid #f0f0f0;
+  transition: background 0.3s, border-color 0.3s;
 }
 .q-row:last-child { border-bottom: none; }
+
+/* 미응답 항목 하이라이트 */
+.q-row.unanswered {
+  background: #fff5f5;
+  border-left: 4px solid #ef4444;
+  padding-left: 20px;
+  border-radius: 8px;
+  margin: 4px -8px;
+  padding-right: 8px;
+}
+.q-row.unanswered .q-text::after {
+  content: " ← 응답 필요";
+  font-size: 12px;
+  font-weight: 600;
+  color: #ef4444;
+}
 .q-num {
   font-size: 12px;
   color: var(--accent);
@@ -312,6 +329,19 @@ body {
   transition: all 0.15s;
   white-space: nowrap;
   user-select: none;
+}
+
+/* 옵션이 5개 이상일 때 글자 크기 축소하여 한줄 표시 */
+.opts-row.compact .opt-chip label {
+  font-size: 12px;
+  padding: 8px 12px;
+  gap: 4px;
+}
+@media (max-width: 500px) {
+  .opts-row.compact .opt-chip label {
+    font-size: 11px;
+    padding: 7px 8px;
+  }
 }
 .opt-chip input:checked + label {
   border-color: var(--accent);
@@ -442,16 +472,30 @@ body {
 }
 .months-section-title { font-weight: 700; font-size: 15px; margin-bottom: 14px; }
 .months-grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px 6px;
 }
 .month-chip {
   display: flex;
   align-items: center;
-  gap: 6px;
-  font-size: 14px;
+  gap: 5px;
+  font-size: 13px;
   cursor: pointer;
+  white-space: nowrap;
+}
+/* 마지막 '차이없음'은 전체 너비 */
+.month-chip:nth-child(13) {
+  grid-column: 1 / -1;
+  justify-content: center;
+  padding-top: 4px;
+  border-top: 1px solid #e5e7eb;
+  margin-top: 4px;
+}
+@media (max-width: 500px) {
+  .months-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
 }
 .month-chip input { width: 18px; height: 18px; accent-color: var(--accent); cursor: pointer; }
 

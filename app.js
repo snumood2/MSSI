@@ -676,6 +676,12 @@ window.viewMyResult = async (rid) => {
 
 // 자동 저장
 let autoSaveTimer = null;
+function clearHighlight(key) {
+  // key에서 q_id 추출 (_yn, _freq, _sev, _0 등 접미사 제거)
+  const base = key.replace(/_(yn|freq|sev|r\d+_m\d+|\d+)$/g, '');
+  const row = document.getElementById(`q_${base}`) || document.getElementById(`q_${key}`);
+  if (row) row.classList.remove("unanswered");
+}
 function triggerAutoSave() {
   clearTimeout(autoSaveTimer);
   autoSaveTimer = setTimeout(async () => {
@@ -688,54 +694,74 @@ function triggerAutoSave() {
 }
 
 // 전역 답변 저장 함수 (인라인 onchange에서 호출)
-window.saveAns    = (k, v)   => { state.answers[k] = Number(v); triggerAutoSave(); };
-window.saveChk    = (k, v)   => { state.answers[k] = v ? 1 : 0; triggerAutoSave(); };
+window.saveAns    = (k, v)   => { state.answers[k] = Number(v); clearHighlight(k); triggerAutoSave(); };
+window.saveChk    = (k, v)   => { state.answers[k] = v ? 1 : 0; clearHighlight(k); triggerAutoSave(); };
 window.savePmsSkip = (v)     => { state.answers["pms_skip"] = Number(v); triggerAutoSave(); renderSurvey(); };
 window.handleComplexChange = (qid, val) => {
   state.answers[`${qid}_yn`] = parseInt(val);
+  clearHighlight(qid);
   triggerAutoSave();
   const sub = el(`sub_${qid}`);
   if (sub) sub.className = `mssi-sub ${val == 1 ? "open" : ""}`;
   if (val == 0) { state.answers[`${qid}_freq`] = 0; state.answers[`${qid}_sev`] = 0; }
 };
 
-// 유효성 검사
-function validateSection() {
+// 유효성 검사 — 미응답 항목 ID 배열 반환 (빈 배열이면 통과)
+function getUnanswered() {
   const section = SURVEY_SECTIONS[state.currentSectionIdx];
-  if (!section) return true;
+  if (!section) return [];
 
   const isPmsSection = section.title.includes("PMS") || section.title.includes("생리주기");
-  if (isPmsSection && state.profile?.gender === "male") return true;
-  if (isPmsSection && state.answers["pms_skip"] === 1)  return true;
-  if (isPmsSection && state.answers["pms_skip"] === undefined) return false; // 반드시 선택
+  if (isPmsSection && state.profile?.gender === "male") return [];
+  if (isPmsSection && state.answers["pms_skip"] === 1)  return [];
+  if (isPmsSection && state.answers["pms_skip"] === undefined) return ["pms_skip"];
 
+  const missing = [];
   for (const q of section.questions) {
     if (q.type === "info") continue;
 
     if (section.type === "matrix_complex" && q.id !== "mssi21") {
-      if (state.answers[`${q.id}_yn`] === undefined) return false;
+      if (state.answers[`${q.id}_yn`] === undefined) { missing.push(q.id); continue; }
       if (state.answers[`${q.id}_yn`] === 1) {
-        if (state.answers[`${q.id}_freq`] === undefined || state.answers[`${q.id}_sev`] === undefined) return false;
+        if (state.answers[`${q.id}_freq`] === undefined || state.answers[`${q.id}_sev`] === undefined) missing.push(q.id);
       }
     } else if (q.type === "matrix_months") {
-      // optional – 체크 없어도 허용
+      // optional
     } else if (q.type === "scale_matrix") {
       for (let r = 0; r < q.rows.length; r++) {
-        if (state.answers[`${q.id}_${r}`] === undefined) return false;
+        if (state.answers[`${q.id}_${r}`] === undefined) { missing.push(q.id); break; }
       }
     } else if (q.type === "matrix_season_sleep") {
       for (let r = 0; r < q.rows.length; r++) {
-        if (!state.answers[`${q.id}_${r}`] && state.answers[`${q.id}_${r}`] !== 0) return false;
+        if (!state.answers[`${q.id}_${r}`] && state.answers[`${q.id}_${r}`] !== 0) { missing.push(q.id); break; }
       }
     } else if (q.type === "custom_mdq") {
       for (const sq of q.questions) {
-        if (state.answers[sq.id] === undefined) return false;
+        if (state.answers[sq.id] === undefined) { missing.push(q.id); break; }
       }
     } else {
-      if (state.answers[q.id] === undefined) return false;
+      if (state.answers[q.id] === undefined) missing.push(q.id);
     }
   }
-  return true;
+  return missing;
+}
+
+function validateSection() { return getUnanswered().length === 0; }
+
+// 미응답 항목 하이라이트 + 첫 번째로 스크롤
+function highlightUnanswered(ids) {
+  // 이전 하이라이트 제거
+  document.querySelectorAll(".q-row.unanswered").forEach(el => el.classList.remove("unanswered"));
+  // 새 하이라이트 추가
+  ids.forEach(id => {
+    const row = document.getElementById(`q_${id}`);
+    if (row) row.classList.add("unanswered");
+  });
+  // 첫 번째 미응답 항목으로 스크롤
+  if (ids.length > 0) {
+    const first = document.getElementById(`q_${ids[0]}`);
+    if (first) first.scrollIntoView({ behavior: "smooth", block: "center" });
+  }
 }
 
 // ─── 설문 렌더링 ───
@@ -832,10 +858,11 @@ function renderStandard(q, section, qRow, qIdx) {
   if (!options.length) options = [{ v: 1, l: "예" }, { v: 0, l: "아니오" }];
 
   const longOpt = options.some(o => (o.l || "").length > 12);
+  const isCompact = !longOpt && options.length >= 5;
 
   qRow.innerHTML = `
     <div class="q-text">${cleanText(q.text)}</div>
-    <div class="${longOpt ? "opts-list" : "opts-row"}" id="opts_${q.id}"></div>`;
+    <div class="${longOpt ? "opts-list" : "opts-row"}${isCompact ? " compact" : ""}" id="opts_${q.id}"></div>`;
 
   const optsEl = qRow.querySelector(`#opts_${q.id}`);
 
@@ -862,6 +889,7 @@ function renderStandard(q, section, qRow, qIdx) {
           optsEl.querySelectorAll(".opt-list-item").forEach(l => l.classList.remove("checked"));
         }
         label.classList.toggle("checked", isMulti ? e.target.checked : true);
+        clearHighlight(q.id);
         triggerAutoSave();
       });
       optsEl.appendChild(label);
@@ -874,6 +902,7 @@ function renderStandard(q, section, qRow, qIdx) {
       chip.querySelector("input").addEventListener("change", () => {
         state.answers[q.id] = isMulti ? undefined : val;
         if (!isMulti) state.answers[q.id] = val;
+        clearHighlight(q.id);
         triggerAutoSave();
       });
       optsEl.appendChild(chip);
@@ -997,9 +1026,10 @@ function renderCustomMDQ(q, qRow) {
 
 // ─── 다음 버튼 ───
 el("btnNext")?.addEventListener("click", async () => {
-  if (!validateSection()) {
-    alert("응답하지 않은 문항이 있습니다.\n화면을 위로 올려 모든 항목에 응답해 주세요.");
-    window.scrollTo({ top: 0, behavior: "smooth" });
+  const missing = getUnanswered();
+  if (missing.length > 0) {
+    alert(`응답하지 않은 문항이 ${missing.length}개 있습니다.\n해당 항목으로 이동합니다.`);
+    highlightUnanswered(missing);
     return;
   }
   await sb.from("survey_responses").update({
