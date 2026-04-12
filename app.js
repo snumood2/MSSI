@@ -471,7 +471,7 @@ el("searchPNum")?.addEventListener("keydown", e => { if (e.key === "Enter") sear
 
 async function searchPatient() {
   const pNum = el("searchPNum").value.trim();
-  if (!pNum) return alert("환자번호를 입력하세요.");
+  if (!pNum) return alert("번호를 입력하세요.");
   setMsg("doctorSearchMsg", "검색 중...", "info");
   el("doctorResultArea").innerHTML = "";
 
@@ -512,7 +512,7 @@ function renderDoctorResult(row, container) {
       <div class="divider" style="margin-top:0;"></div>
       <div class="result-header-block">
         <h2 class="report-main-title">기분장애 임상평가 결과지</h2>
-        <p class="report-date-line">${dateStr}&nbsp;&nbsp;환자번호: ${patNum}</p>
+        <p class="report-date-line">${dateStr}&nbsp;&nbsp;번호: ${patNum}</p>
       </div>
       <div class="result-instructions">${instructions}</div>
       <div id="drReportContent"></div>
@@ -541,7 +541,7 @@ async function loadDoctorPatientList() {
     <div class="history-item" data-response-id="${r.id}" style="cursor:pointer;">
       <div class="history-dot"></div>
       <div class="history-info">
-        <div class="history-date">환자번호: ${r.patient_number || "미입력"}</div>
+        <div class="history-date">번호: ${r.patient_number || "미입력"}</div>
         <div class="history-sub">완료: ${fmtDate(r.completed_at)}</div>
       </div>
       <button class="btn secondary sm" onclick="viewResponseById('${r.id}')">결과보기</button>
@@ -1130,12 +1130,12 @@ window.submitSurvey = submitSurvey;
 // ══════════════════════════════════════════════════════════════
 function renderResultView(report, completedAt, patientNumber) {
   el("resultDate").textContent    = fmtDate(completedAt);
-  el("resultPatNum").textContent  = patientNumber ? `환자번호: ${patientNumber}` : "";
+  el("resultPatNum").textContent  = patientNumber ? `번호: ${patientNumber}` : "";
 
   const instructions = (report && report.instructions) ? report.instructions : getGlobalInstructions();
   el("resultInstructions").textContent = instructions;
 
-  // 환자 정보 표시 (성별, 출생연도, 병원코드, 환자번호)
+  // 환자 정보 표시 (성별, 출생연도, 병원코드, 번호)
   const infoEl = el("resultPatientInfo");
   if (infoEl && state.profile) {
     const p = state.profile;
@@ -1145,7 +1145,7 @@ function renderResultView(report, completedAt, patientNumber) {
       <span class="meta-label">성별:</span><span class="meta-value">${genderStr}</span>
       &nbsp;&nbsp;<span class="meta-label">출생연도:</span><span class="meta-value">${dobYear}</span>
       &nbsp;&nbsp;<span class="meta-label">병원코드:</span><span class="meta-value">${p.hospital_code || "-"}</span>
-      &nbsp;&nbsp;<span class="meta-label">환자번호:</span><span class="meta-value">${p.patient_number || "-"}</span>`;
+      &nbsp;&nbsp;<span class="meta-label">번호:</span><span class="meta-value">${p.patient_number || "-"}</span>`;
   }
 
   const content = el("resultTableContent");
