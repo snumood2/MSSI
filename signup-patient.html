@@ -145,7 +145,7 @@
         const hcode = $("s_hcode").value.trim();
         if (!hcode) throw "병원코드를 입력하세요.";
 
-        const { data: docProf } = await sb.from("profiles").select("id").eq("hospital_code", hcode).eq("role", "doctor").maybeSingle();
+        const { data: docProf } = await sb.from("profiles").select("id").eq("hospital_code", hcode).eq("role", "doctor").limit(1).limit(1).maybeSingle();
         if (!docProf) throw "존재하지 않거나 미승인된 병원코드입니다.";
 
         const email = `${id}@${PATIENT_EMAIL_DOMAIN}`;

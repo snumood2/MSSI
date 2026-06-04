@@ -153,7 +153,7 @@
       for (let a = 0; a < 10; a++) {
         const digits = String(Math.floor(Math.random() * 90) + 10);
         const code = base + digits;
-        const { data } = await sb.from("profiles").select("id").eq("hospital_code", code).maybeSingle();
+        const { data } = await sb.from("profiles").select("id").eq("hospital_code", code).limit(1).limit(1).maybeSingle();
         if (!data) return code;
       }
       return base + String(Date.now()).slice(-4);
