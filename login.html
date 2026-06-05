@@ -227,8 +227,7 @@ function toggleHamburger() {
       <h2>로그인</h2>
 
       <div class="auth-tabs">
-        <button class="auth-tab active" data-role="patient">응답자</button>
-        <button class="auth-tab" data-role="doctor">의사</button>
+        <button class="auth-tab active" data-role="doctor">의사</button>
         <button class="auth-tab" data-role="admin">관리자</button>
       </div>
 
@@ -300,7 +299,7 @@ function toggleHamburger() {
     const clearMsg = () => { $("authMsg").className = "status-msg"; };
 
     const urlRole = new URLSearchParams(location.search).get("role");
-    if (urlRole && ["patient", "doctor", "admin"].includes(urlRole)) {
+    if (urlRole && ["doctor", "admin"].includes(urlRole)) {
       selectedRole = urlRole;
       document.querySelectorAll(".auth-tab").forEach(b => b.classList.remove("active"));
       document.querySelector(`.auth-tab[data-role="${urlRole}"]`)?.classList.add("active");
@@ -308,27 +307,29 @@ function toggleHamburger() {
       document.querySelectorAll(".auth-tab").forEach(b => {
         if (b.dataset.role !== urlRole) b.style.display = "none";
       });
-      ["patient", "doctor", "admin"].forEach(r => {
+      ["doctor", "admin"].forEach(r => {
         $("form-" + r).style.display = selectedRole === r ? "block" : "none";
       });
-      const signupMap = { patient: "signup-patient.html", doctor: "signup-doctor.html", admin: "signup-patient.html" };
-      const href = signupMap[selectedRole] || "signup-patient.html";
+      const signupMap = { doctor: "signup-doctor.html", admin: "signup-patient.html" };
+      const href = signupMap[selectedRole] || "signup-doctor.html";
       $("signupLink").href = href;
       $("signupLink2").href = href;
       $("signupLink").style.display = selectedRole === "admin" ? "none" : "inline";
       $("signupLink2").style.display = selectedRole === "admin" ? "none" : "inline";
     } else {
+      // Hide patient form by default
+      $("form-patient").style.display = "none";
 
       document.querySelectorAll(".auth-tab").forEach(btn => {
         btn.addEventListener("click", () => {
           document.querySelectorAll(".auth-tab").forEach(b => b.classList.remove("active"));
           btn.classList.add("active");
           selectedRole = btn.dataset.role;
-          ["patient", "doctor", "admin"].forEach(r => {
+          ["doctor", "admin"].forEach(r => {
             $("form-" + r).style.display = selectedRole === r ? "block" : "none";
           });
-          const signupMap = { patient: "signup-patient.html", doctor: "signup-doctor.html", admin: "signup-patient.html" };
-          const href = signupMap[selectedRole] || "signup-patient.html";
+          const signupMap = { doctor: "signup-doctor.html", admin: "signup-patient.html" };
+          const href = signupMap[selectedRole] || "signup-doctor.html";
           $("signupLink").href = href;
           $("signupLink2").href = href;
           $("signupLink").style.display = selectedRole === "admin" ? "none" : "inline";

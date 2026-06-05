@@ -10,6 +10,5 @@ export const ADMIN_EMAIL = ENV.ADMIN_EMAIL || "snumood@gmail.com";
 
 export const GOOGLE_SHEETS_WEBHOOK_URL = ENV.GOOGLE_SHEETS_WEBHOOK_URL || "https://script.google.com/macros/s/AKfycbyOF1Fhb5I6vKC8mhWkxhXWCrlFalY8pKhoR0X2KynMkDpMK7B6fgIv5OAH-Usjxucp/exec";
 
-// Optional: set VITE_WEBHOOK_SECRET env var in GitHub Actions for extra webhook security
-// If empty, webhook is sent without token (backward compatible)
+// WEBHOOK_SECRET: loaded from env or empty (backward compatible)
 export const WEBHOOK_SECRET = ENV.VITE_WEBHOOK_SECRET || "";
