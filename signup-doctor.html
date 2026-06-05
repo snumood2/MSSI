@@ -59,7 +59,40 @@
     .info-badge { font-size: 12px; color: #555; background: #f0f4ff; padding: 10px 14px; border-radius: 8px; margin-bottom: 16px; line-height: 1.6; }
   </style>
 </head>
-<body>
+<body><!-- Hamburger Menu -->
+<button id="hamburgerBtn" class="hamburger-btn no-print" onclick="toggleHamburger()" aria-label="Menu" style="position:fixed;top:10px;left:10px;z-index:100;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,0.08);width:44px;height:44px;border:none;border-radius:12px;cursor:pointer;z-index:2000;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:5px;">
+  <span style="display:block;width:22px;height:2.5px;background:#333;border-radius:2px;transition:all 0.3s;"></span>
+  <span style="display:block;width:22px;height:2.5px;background:#333;border-radius:2px;transition:all 0.3s;"></span>
+  <span style="display:block;width:22px;height:2.5px;background:#333;border-radius:2px;transition:all 0.3s;"></span>
+</button>
+<div id="hamburgerOverlay" class="hamburger-overlay" onclick="toggleHamburger()" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.35);z-index:1500;"></div>
+<div id="hamburgerMenu" class="hamburger-menu" style="display:flex;flex-direction:column;position:fixed;top:0;left:-280px;width:260px;height:100%;background:#fff;z-index:2001;box-shadow:4px 0 20px rgba(0,0,0,0.1);transition:left 0.3s ease;">
+  <div class="hamburger-menu-header" style="display:flex;justify-content:space-between;align-items:center;padding:18px 20px;border-bottom:1px solid #eee;">
+    <strong style="font-size:16px;">📋 Menu</strong>
+    <button class="hamburger-menu-close" onclick="toggleHamburger()" style="width:36px;height:36px;border:none;background:#f5f5f5;border-radius:50%;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;">X</button>
+  </div>
+  <nav class="hamburger-menu-nav" style="display:flex;flex-direction:column;padding:12px 0;">
+    <a href="login.html" onclick="toggleHamburger()" style="display:flex;align-items:center;gap:10px;padding:14px 20px;color:#333;text-decoration:none;font-size:15px;font-weight:500;min-height:44px;">Login</a>
+    <a href="signup-patient.html" onclick="toggleHamburger()" style="display:flex;align-items:center;gap:10px;padding:14px 20px;color:#333;text-decoration:none;font-size:15px;font-weight:500;min-height:44px;">Patient Signup</a>
+    <a href="signup-doctor.html" onclick="toggleHamburger()" style="display:flex;align-items:center;gap:10px;padding:14px 20px;color:#333;text-decoration:none;font-size:15px;font-weight:500;min-height:44px;">Doctor Signup</a>
+    <a href="admin.html" onclick="toggleHamburger()" style="display:flex;align-items:center;gap:10px;padding:14px 20px;color:#333;text-decoration:none;font-size:15px;font-weight:500;min-height:44px;">Admin</a>
+  </nav>
+</div>
+<script>
+function toggleHamburger(){
+  var o=document.getElementById("hamburgerOverlay");
+  var m=document.getElementById("hamburgerMenu");
+  var b=document.getElementById("hamburgerBtn");
+  if(o&&m&&b){
+    o.classList.toggle("open");
+    m.classList.toggle("open");
+    b.classList.toggle("open");
+    if(o.style.display==="none"||o.style.display===""){o.style.display="block";}else{o.style.display="none";}
+    if(m.style.left==="0px"){m.style.left="-280px";}else{m.style.left="0px";}
+    document.body.style.overflow=document.body.style.overflow==="hidden"?"":"hidden";
+  }
+}
+</script>
   <div class="signup-wrapper">
     <div class="signup-header">
       <h1>🩺 의사 회원가입</h1>

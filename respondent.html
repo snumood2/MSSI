@@ -153,7 +153,8 @@ function handleLogout() {
 
       <div class="print-btn-wrap">
         <button id="btnBack" class="btn secondary">← 돌아가기</button>
-        <button id="btnPrintResult" class="btn primary">🖨️ 인쇄 / PDF 저장</button>
+        <button id="btnDownloadPdf" class="btn accent">📄 PDF 다운로드</button>
+        <button id="btnPrintResult" class="btn primary">🖨️ 인쇄</button>
       </div>
     </div>
   </div>
@@ -961,6 +962,42 @@ function renderReportHTML(report, container) {
   }).join("");
 }
 
+<!-- html2pdf.js (클라이언트 PDF 생성) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" integrity="sha512-GsLlZN/3F2ErC5ifS5QtgpiJtWd43JWSuIgh7mbzZ8zBps+dvLusV+eNQATqgA/HdeKFVgA5v3S/cIrLF7QnIg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script>
+el("btnDownloadPdf")?.addEventListener("click", async function () {
+  const btn = this;
+  btn.disabled = true;
+  btn.textContent = "⏳ PDF 생성 중...";
+
+  const content = el("view-result");
+  if (!content) { btn.disabled = false; btn.textContent = "📄 PDF 다운로드"; return; }
+
+  try {
+    const patNum = (el("resultPatNum")?.textContent || "").replace(/[^0-9]/g, "") || "result";
+    const dateStr = (el("resultDate")?.textContent || "").replace(/\s+/g, "_") || new Date().toISOString().slice(0, 10);
+
+    await html2pdf()
+      .set({
+        margin:       [10, 8, 10, 8],
+        filename:     `MSSI_결과지_${dateStr}_${patNum}.pdf`,
+        image:        { type: "jpeg", quality: 0.95 },
+        html2canvas:  { scale: 2, useCORS: true, logging: false, backgroundColor: "#ffffff" },
+        jsPDF:        { unit: "mm", format: "a4", orientation: "portrait" },
+        pagebreak:    { mode: ["avoid-all", "css", "legacy"] }
+      })
+      .from(content)
+      .save();
+
+    btn.textContent = "✅ PDF 다운로드 완료";
+    setTimeout(() => { btn.disabled = false; btn.textContent = "📄 PDF 다운로드"; }, 2000);
+  } catch (err) {
+    console.error("PDF 생성 오류:", err);
+    btn.textContent = "❌ 오류 발생";
+    setTimeout(() => { btn.disabled = false; btn.textContent = "📄 PDF 다운로드"; }, 3000);
+  }
+});
+</script>
 el("btnPrintResult")?.addEventListener("click", () => window.print());
 el("btnBack")?.addEventListener("click", () => { show("view-patient"); refreshPatientStatus(); });
 

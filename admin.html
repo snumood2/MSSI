@@ -145,7 +145,6 @@ function handleLogout() {
       <div class="admin-header">
         <h2>관리자 대시보드</h2>
         <div class="admin-header-actions">
-          <button id="btnExportAll" class="btn secondary sm" style="min-width:80px;">📥 전체 내보내기</button>
           <button id="btnAdminRefresh" class="btn primary sm" style="min-width:80px;">🔄 새로고침</button>
         </div>
       </div>
@@ -406,32 +405,6 @@ function handleLogout() {
     await loadAdminDoctors();
     btn.textContent = "새로고침";
     btn.disabled = false;
-  });
-
-  el("btnExportAll")?.addEventListener("click", async () => {
-    const btn = el("btnExportAll");
-    btn.disabled = true;
-    btn.textContent = "내보내는 중...";
-    const { data, error } = await sb
-      .from("survey_responses")
-      .select("*")
-      .or("status.eq.completed,completed.eq.true");
-    btn.disabled = false;
-    btn.textContent = "📥 전체 내보내기";
-    if (error) {
-      alert("내보내기 오류: " + error.message);
-      return;
-    }
-    if (!data || data.length === 0) {
-      alert("데이터가 없습니다.");
-      return;
-    }
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = `survey_export_${new Date().toISOString().slice(0, 10)}.json`;
-    a.click();
-    URL.revokeObjectURL(a.href);
   });
 
   function escapeHtml(str) {

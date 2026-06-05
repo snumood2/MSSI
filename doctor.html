@@ -423,7 +423,8 @@ document.addEventListener('DOMContentLoaded', function() {
         </details>
         <div id="drReportContent"></div>
         <div class="print-btn-wrap">
-          <button class="btn secondary sm" onclick="window.print()">🖨️ 인쇄 / PDF 저장</button>
+          <button class="btn secondary sm btn-dr-pdf" data-patnum="${patNum}" data-date="${dateStr}">📄 PDF 다운로드</button>
+          <button class="btn primary sm" onclick="window.print()">🖨️ 인쇄</button>
         </div>
       </div>`;
 
@@ -586,5 +587,42 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 </script>
 
+<!-- html2pdf.js (클라이언트 PDF 생성) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" integrity="sha512-GsLlZN/3F2ErC5ifS5QtgpiJtWd43JWSuIgh7mbzZ8zBps+dvLusV+eNQATqgA/HdeKFVgA5v3S/cIrLF7QnIg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script>
+document.addEventListener("click", function (e) {
+  const btn = e.target.closest(".btn-dr-pdf");
+  if (!btn) return;
+
+  const card = btn.closest(".patient-result-card");
+  if (!card) return;
+
+  btn.disabled = true;
+  btn.textContent = "⏳ 생성 중...";
+
+  const patNum = btn.dataset.patnum || "result";
+  const dateStr = (btn.dataset.date || new Date().toISOString().slice(0, 10)).replace(/\s+/g, "_");
+
+  html2pdf()
+    .set({
+      margin:       [10, 8, 10, 8],
+      filename:     `MSSI_결과지_${dateStr}_${patNum}.pdf`,
+      image:        { type: "jpeg", quality: 0.95 },
+      html2canvas:  { scale: 2, useCORS: true, logging: false, backgroundColor: "#ffffff" },
+      jsPDF:        { unit: "mm", format: "a4", orientation: "portrait" },
+      pagebreak:    { mode: ["avoid-all", "css", "legacy"] }
+    })
+    .from(card)
+    .save()
+    .then(() => {
+      btn.textContent = "✅ PDF 완료";
+      setTimeout(() => { btn.disabled = false; btn.textContent = "📄 PDF 다운로드"; }, 2000);
+    })
+    .catch(() => {
+      btn.textContent = "❌ 오류";
+      setTimeout(() => { btn.disabled = false; btn.textContent = "📄 PDF 다운로드"; }, 3000);
+    });
+});
+</script>
 </body>
 </html>

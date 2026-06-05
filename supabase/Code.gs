@@ -1,6 +1,23 @@
+// MSSI Webhook - Google Apps Script
+// 배포: Supabase Script Editor에 붙여넣기 → 배포 → 웹 앱 URL 복사
+
+// ========== 설정 ==========
+// Script Properties에서 WEBHOOK_SECRET 설정 (선택)
+// 스크립트 편집기 → 프로젝트 설정 → 스크립트 속성 → 추가
+const CONFIG = {
+  TOKEN: PropertiesService.getScriptProperties().getProperty('WEBHOOK_SECRET') || ''
+};
 
 function doPost(e) {
   try {
+    // === 토큰 검증 (선택) ===
+    const token = (e.parameter && e.parameter.token) || '';
+    if (CONFIG.TOKEN && token !== CONFIG.TOKEN) {
+      return ContentService
+        .createTextOutput(JSON.stringify({ status: 'error', message: 'Invalid token' }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
     const params = JSON.parse(e.postData.contents);
     const ss = SpreadsheetApp.getActiveSpreadsheet();
 
@@ -61,7 +78,6 @@ function buildRow(params, sheet) {
         row.push(params.hospitalNickname || '');
         break;
       default:
-
         row.push(params.answers && params.answers[h] !== undefined ? params.answers[h] : '');
     }
   }

@@ -1,7 +1,7 @@
 const ENV = typeof window !== 'undefined' ? window.__ENV__ || {} : {};
 
 export const SUPABASE_URL = ENV.VITE_SUPABASE_URL || "https://gcjdxyauirbugbugltmv.supabase.co";
-export const SUPABASE_ANON_KEY = ENV.VITE_SUPABASE_ANON_KEY || "eyJhbG...RjGM";
+export const SUPABASE_ANON_KEY = ENV.VITE_SUPABASE_ANON_KEY || "sb_publishable_3l7U25p2cC6pWiddxhlZlw_4vjqeDmz";
 
 export const PATIENT_EMAIL_DOMAIN = "patient.local";
 export const DOCTOR_EMAIL_DOMAIN  = "doctor.local";
