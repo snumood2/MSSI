@@ -114,48 +114,16 @@
 <body>
 
 <header id="mainHeader">
-  <div style="display:flex;align-items:center;gap:8px;">
-    <button id="hamburgerBtn" class="hamburger-btn no-print" onclick="toggleHamburger()" aria-label="메뉴 열기">
-      <span></span><span></span><span></span>
-    </button>
-    <h1>기분장애 임상평가 설문</h1>
-  </div>
-  <div class="header-right">
-    <span id="userBadge" class="user-badge" style="display:none;">의사</span>
-    <button id="btnLogout" class="btn secondary sm" onclick="handleLogout()">로그아웃</button>
+  <h1>기분장애 임상평가 설문</h1>
+  <div class="header-nav">
+    <a href="doctor.html" class="active">대시보드</a>
+    <a href="doctor.html?tab=search">환자검색</a>
+    <a href="doctor.html?tab=list">환자목록</a>
+    <button id="btnLogout" class="btn secondary sm" style="margin-left:8px;">로그아웃</button>
   </div>
 </header>
 
-<!-- Hamburger Menu -->
-<div id="hamburgerOverlay" class="hamburger-overlay" onclick="toggleHamburger()"></div>
-<div id="hamburgerMenu" class="hamburger-menu">
-  <div class="hamburger-menu-header">
-    <h2>메뉴</h2>
-    <button class="hamburger-menu-close" onclick="toggleHamburger()">✕</button>
-  </div>
-  <nav class="hamburger-menu-nav">
-    <a href="doctor.html" onclick="toggleHamburger()"><span class="nav-icon">🏠</span> 대시보드</a>
-    <a href="doctor.html?tab=search" onclick="toggleHamburger()"><span class="nav-icon">🔍</span> 환자검색</a>
-    <a href="doctor.html?tab=list" onclick="toggleHamburger()"><span class="nav-icon">📋</span> 환자목록</a>
-    <a href="login.html" onclick="toggleHamburger()"><span class="nav-icon">🔑</span> 로그인</a>
-  </nav>
-  <div class="hamburger-menu-footer">
-    <button onclick="handleLogout()" class="nav-logout"><span class="nav-icon">🚪</span> 로그아웃</button>
-  </div>
-</div>
-
 <script>
-function toggleHamburger() {
-  document.getElementById('hamburgerOverlay').classList.toggle('open');
-  document.getElementById('hamburgerMenu').classList.toggle('open');
-  document.getElementById('hamburgerBtn').classList.toggle('open');
-  document.body.style.overflow = document.body.style.overflow === 'hidden' ? '' : 'hidden';
-}
-function handleLogout() {
-  toggleHamburger();
-  const btn = document.getElementById('btnLogout');
-  if (btn) btn.click();
-}
 // Parse URL params for tab
 document.addEventListener('DOMContentLoaded', function() {
   const params = new URLSearchParams(window.location.search);

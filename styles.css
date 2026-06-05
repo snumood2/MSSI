@@ -1202,3 +1202,99 @@ body {
   .hamburger-btn { display: flex; }
   #mainHeader h1 { font-size: 14px; }
 }
+
+/* =============================================
+   AUTH PAGE (로그인/회원가입) 공통 스타일
+   ============================================= */
+.auth-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-base);
+  padding: 24px 16px;
+}
+.auth-wrapper {
+  width: 100%;
+  max-width: 420px;
+}
+.auth-header {
+  text-align: center;
+  margin-bottom: 28px;
+}
+.auth-header h1 {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--text-main);
+  margin: 0 0 6px;
+  letter-spacing: -0.5px;
+}
+.auth-header p {
+  font-size: 14px;
+  color: var(--text-sub);
+  margin: 0;
+}
+.auth-card {
+  background: var(--bg-card);
+  border-radius: var(--radius);
+  padding: 32px 28px;
+  box-shadow: var(--shadow);
+  border: 1px solid var(--border);
+}
+.auth-card h2 {
+  font-size: 18px;
+  font-weight: 700;
+  text-align: center;
+  margin: 0 0 24px;
+  color: var(--text-main);
+}
+.auth-link {
+  text-align: center;
+  margin-top: 20px;
+}
+.auth-link a {
+  font-size: 14px;
+  color: var(--accent);
+  text-decoration: none;
+  font-weight: 600;
+  display: inline-block;
+  padding: 10px 8px;
+}
+.auth-link a:hover {
+  text-decoration: underline;
+}
+
+/* =============================================
+   HEADER NAV (햄버거 대체 인라인 네비게이션)
+   ============================================= */
+.header-nav {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.header-nav a,
+.header-nav button {
+  background: transparent;
+  border: none;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-sub);
+  cursor: pointer;
+  border-radius: 8px;
+  text-decoration: none;
+  transition: all 0.15s;
+  font-family: inherit;
+  white-space: nowrap;
+}
+.header-nav a:hover,
+.header-nav button:hover {
+  background: var(--bg-base);
+  color: var(--text-main);
+}
+.header-nav a.active,
+.header-nav button.active {
+  background: var(--accent-light);
+  color: var(--accent);
+}

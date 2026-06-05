@@ -37,52 +37,12 @@
 </div>
 
 <header id="mainHeader" class="hidden">
-  <div style="display:flex;align-items:center;gap:8px;">
-    <button id="hamburgerBtn" class="hamburger-btn no-print" onclick="toggleHamburger()" aria-label="메뉴 열기">
-      <span></span><span></span><span></span>
-    </button>
-    <h1>기분장애 임상평가 설문</h1>
-  </div>
+  <h1>기분장애 임상평가 설문</h1>
   <div class="header-right">
-    <span id="userBadge" class="user-badge" style="display:none;"></span>
-    <button id="btnLogout" class="btn secondary sm" style="display:none;" onclick="handleLogout()">로그아웃</button>
+    <span id="userBadge" class="user-badge" style="display:none;">응답자</span>
+    <button id="btnLogout" class="btn secondary sm" style="display:none;">로그아웃</button>
   </div>
 </header>
-
-<!-- Hamburger Menu -->
-<div id="hamburgerOverlay" class="hamburger-overlay" onclick="toggleHamburger()"></div>
-<div id="hamburgerMenu" class="hamburger-menu">
-  <div class="hamburger-menu-header">
-    <h2>메뉴</h2>
-    <button class="hamburger-menu-close" onclick="toggleHamburger()">✕</button>
-  </div>
-  <nav class="hamburger-menu-nav">
-    <a href="respondent.html" onclick="toggleHamburger()"><span class="nav-icon">📝</span> 설문</a>
-    <a href="login.html" onclick="toggleHamburger()"><span class="nav-icon">🔑</span> 로그인</a>
-  </nav>
-  <div class="hamburger-menu-footer">
-    <button onclick="handleLogout()" class="nav-logout"><span class="nav-icon">🚪</span> 로그아웃</button>
-  </div>
-</div>
-
-<script>
-function toggleHamburger() {
-  const overlay = document.getElementById('hamburgerOverlay');
-  const menu = document.getElementById('hamburgerMenu');
-  const btn = document.getElementById('hamburgerBtn');
-  if (overlay && menu && btn) {
-    overlay.classList.toggle('open');
-    menu.classList.toggle('open');
-    btn.classList.toggle('open');
-    document.body.style.overflow = document.body.style.overflow === 'hidden' ? '' : 'hidden';
-  }
-}
-function handleLogout() {
-  toggleHamburger();
-  const btn = document.getElementById('btnLogout');
-  if (btn) btn.click();
-}
-</script>
 
 <div class="container" id="appContainer" style="display:none;">
 

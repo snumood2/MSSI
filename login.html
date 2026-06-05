@@ -5,428 +5,196 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
   <title>로그인 — 기분장애 임상평가 설문</title>
   <link rel="stylesheet" href="styles.css">
-  <style>
-
-    body {
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      background: linear-gradient(135deg, #f0f7ff 0%, #e8f5e9 100%);
-    }
-    .login-wrapper {
-      width: 100%;
-      max-width: 420px;
-      margin: 0 16px;
-    }
-    .login-header {
-      text-align: center;
-      margin-bottom: 32px;
-    }
-    .login-header h1 {
-      font-size: 22px;
-      font-weight: 800;
-      color: #1a237e;
-      margin: 0 0 8px;
-      letter-spacing: -0.5px;
-    }
-    .login-header p {
-      font-size: 14px;
-      color: #666;
-      margin: 0;
-    }
-    .login-card {
-      background: #fff;
-      border-radius: 20px;
-      padding: 32px 28px;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.08);
-    }
-    .login-card h2 {
-      font-size: 18px;
-      font-weight: 700;
-      text-align: center;
-      margin: 0 0 24px;
-      color: #333;
-    }
-    .auth-tabs {
-      display: flex;
-      gap: 6px;
-      background: #f5f5f5;
-      border-radius: 12px;
-      padding: 4px;
-      margin-bottom: 28px;
-    }
-    .auth-tab {
-      flex: 1;
-      border: none;
-      background: transparent;
-      padding: 10px 0;
-      border-radius: 10px;
-      font-size: 14px;
-      font-weight: 600;
-      color: #888;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-    .auth-tab.active {
-      background: #fff;
-      color: #333;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-    }
-    .auth-tab:hover:not(.active) { color: #555; }
-    .form-group {
-      margin-bottom: 18px;
-    }
-    .form-group label {
-      display: block;
-      font-size: 13px;
-      font-weight: 600;
-      color: #555;
-      margin-bottom: 6px;
-    }
-    .form-group input {
-      width: 100%;
-      padding: 12px 14px;
-      border: 1.5px solid #e0e0e0;
-      border-radius: 10px;
-      font-size: 15px;
-      outline: none;
-      transition: border-color 0.2s;
-      box-sizing: border-box;
-    }
-    .form-group input:focus {
-      border-color: #4263eb;
-      box-shadow: 0 0 0 3px rgba(66,99,235,0.1);
-    }
-    .form-actions {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 20px;
-    }
-    .save-id {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 13px;
-      color: #666;
-      cursor: pointer;
-    }
-    .save-id input[type=checkbox] {
-      width: 16px;
-      height: 16px;
-      cursor: pointer;
-    }
-    .save-id input[type=checkbox]:checked {
-      accent-color: #4263eb;
-    }
-    .link-signup {
-      font-size: 14px;
-      color: #4263eb;
-      text-decoration: none;
-      font-weight: 600;
-      display: inline-block;
-      padding: 10px 6px;
-    }
-    .link-signup:hover { text-decoration: underline; }
-    .btn-login {
-      width: 100%;
-      padding: 14px;
-      background: #4263eb;
-      color: #fff;
-      border: none;
-      border-radius: 10px;
-      font-size: 16px;
-      font-weight: 700;
-      font-family: inherit;
-      cursor: pointer;
-      transition: background 0.2s, transform 0.1s;
-    }
-    .btn-login:hover { background: #364fc7; }
-    .btn-login:active { transform: scale(0.98); }
-    .btn-login:disabled {
-      background: #a5b4fc;
-      cursor: not-allowed;
-      transform: none;
-    }
-    .status-msg {
-      font-size: 13px;
-      padding: 10px 14px;
-      border-radius: 8px;
-      margin-bottom: 16px;
-      display: none;
-    }
-    .status-msg.show { display: block; }
-    .status-msg.error { background: #fee2e2; color: #b91c1c; }
-    .status-msg.ok    { background: #d1fae5; color: #065f46; }
-    .status-msg.info  { background: #dbeafe; color: #1e40af; }
-    .login-footer {
-      text-align: center;
-      margin-top: 20px;
-    }
-    .login-footer a {
-      font-size: 13px;
-      color: #777;
-      text-decoration: none;
-      display: inline-block;
-      padding: 10px 8px;
-    }
-    .login-footer a:hover { color: #555; }
-    .form-admin-note {
-      font-size: 12px;
-      color: #888;
-      text-align: center;
-      margin-bottom: 16px;
-      padding: 8px 12px;
-      background: #f8f9fa;
-      border-radius: 8px;
-    }
-    @media (max-width: 480px) {
-      .login-card { padding: 24px 20px; }
-      .login-header h1 { font-size: 19px; }
-    }
-  </style>
 </head>
-<body>
-<button id="hamburgerBtn" class="hamburger-btn no-print" onclick="toggleHamburger()" aria-label="메뉴 열기" style="position:fixed;top:10px;left:10px;z-index:100;background:#fff;box-shadow:0 2px 8px rgba(0,0,0,0.08);">
-  <span></span><span></span><span></span>
-</button>
+<body class="auth-page">
 
-<!-- Hamburger Menu -->
-<div id="hamburgerOverlay" class="hamburger-overlay" onclick="toggleHamburger()"></div>
-<div id="hamburgerMenu" class="hamburger-menu">
-  <div class="hamburger-menu-header">
-    <h2>메뉴</h2>
-    <button class="hamburger-menu-close" onclick="toggleHamburger()">✕</button>
+<div class="auth-wrapper">
+  <div class="auth-header">
+    <h1>📋 기분장애 임상평가 설문</h1>
+    <p>Mood Disorder Self-Report Assessment</p>
   </div>
-  <nav class="hamburger-menu-nav">
-    <a href="login.html" onclick="toggleHamburger()"><span class="nav-icon">🔑</span> 로그인</a>
-    <a href="signup-patient.html" onclick="toggleHamburger()"><span class="nav-icon">📝</span> 환자 회원가입</a>
-    <a href="signup-doctor.html" onclick="toggleHamburger()"><span class="nav-icon">👨‍⚕️</span> 의사 회원가입</a>
-    <a href="admin.html" onclick="toggleHamburger()"><span class="nav-icon">⚙️</span> 관리자</a>
-  </nav>
+
+  <div class="auth-card">
+    <h2>로그인</h2>
+    <div id="authMsg" class="status-msg"></div>
+
+    <!-- 환자 로그인 -->
+    <div id="form-patient">
+      <div class="form-group">
+        <label>아이디</label>
+        <input type="text" id="p_id" placeholder="아이디 입력" autocomplete="username">
+      </div>
+      <div class="form-group">
+        <label>비밀번호</label>
+        <input type="password" id="p_pw" placeholder="비밀번호" autocomplete="current-password">
+      </div>
+    </div>
+
+    <!-- 의사 로그인 -->
+    <div id="form-doctor" style="display:none;">
+      <div class="form-group">
+        <label>아이디</label>
+        <input type="text" id="d_id" placeholder="아이디 입력" autocomplete="username">
+      </div>
+      <div class="form-group">
+        <label>비밀번호</label>
+        <input type="password" id="d_pw" placeholder="비밀번호" autocomplete="current-password">
+      </div>
+    </div>
+
+    <!-- 관리자 로그인 -->
+    <div id="form-admin" style="display:none;">
+      <div class="form-group">
+        <label>관리자 이메일</label>
+        <input type="email" id="a_email" placeholder="snumood@gmail.com">
+      </div>
+      <div class="form-group">
+        <label>비밀번호</label>
+        <input type="password" id="a_pw" placeholder="비밀번호" autocomplete="current-password">
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <label class="save-id">
+        <input type="checkbox" id="saveIdCheck">
+        아이디 저장
+      </label>
+    </div>
+
+    <button id="btnLogin" class="btn primary">로그인</button>
+
+    <div class="auth-link">
+      <a id="signupLink" href="signup-patient.html">처음 사용하시나요? 회원가입</a>
+    </div>
+  </div>
 </div>
 
-<script>
-function toggleHamburger() {
-  document.getElementById('hamburgerOverlay').classList.toggle('open');
-  document.getElementById('hamburgerMenu').classList.toggle('open');
-  document.getElementById('hamburgerBtn').classList.toggle('open');
-  document.body.style.overflow = document.body.style.overflow === 'hidden' ? '' : 'hidden';
-}
+<script type="module">
+  import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
+  import { SUPABASE_URL, SUPABASE_ANON_KEY, PATIENT_EMAIL_DOMAIN, DOCTOR_EMAIL_DOMAIN, ADMIN_EMAIL } from "./config.js";
+
+  const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  let selectedRole = "patient";
+
+  const $ = id => document.getElementById(id);
+  const setMsg = (msg, type) => {
+    const el = $("authMsg");
+    el.className = `status-msg show ${type}`;
+    el.textContent = msg;
+  };
+  const clearMsg = () => { $("authMsg").className = "status-msg"; };
+
+  // URL role 파라미터에 따라 역할 결정
+  const urlRole = new URLSearchParams(location.search).get("role");
+  if (urlRole === "doctor") {
+    selectedRole = "doctor";
+    $("form-patient").style.display = "none";
+    $("form-doctor").style.display = "block";
+    $("signupLink").href = "signup-doctor.html";
+    $("signupLink").textContent = "처음 사용하시나요? 의사 회원가입";
+  } else if (urlRole === "admin") {
+    selectedRole = "admin";
+    $("form-patient").style.display = "none";
+    $("form-admin").style.display = "block";
+    $("signupLink").style.display = "none";
+  } else {
+    // 기본: 환자 로그인 (role=patient 또는 파라미터 없음)
+    selectedRole = "patient";
+    $("signupLink").href = "signup-patient.html";
+    $("signupLink").textContent = "처음 사용하시나요? 회원가입";
+  }
+
+  // 저장된 아이디 복원
+  const saved = localStorage.getItem("saved_id") || "";
+  if (saved) {
+    const el = selectedRole === "patient" ? $("p_id") : $("d_id");
+    const chk = $("saveIdCheck");
+    if (el) el.value = saved;
+    if (chk) chk.checked = true;
+  }
+
+  $("btnLogin").addEventListener("click", async () => {
+    clearMsg();
+    let email, pw;
+
+    try {
+      if (selectedRole === "patient") {
+        const id = $("p_id").value.trim();
+        if (!id) throw "아이디를 입력하세요.";
+        if (id.length < 2) throw "아이디는 2자 이상이어야 합니다.";
+        email = `${id}@${PATIENT_EMAIL_DOMAIN}`;
+        pw = $("p_pw").value;
+      } else if (selectedRole === "doctor") {
+        const id = $("d_id").value.trim();
+        if (!id) throw "아이디를 입력하세요.";
+        email = `${id}@${DOCTOR_EMAIL_DOMAIN}`;
+        pw = $("d_pw").value;
+      } else {
+        const val = $("a_email").value.trim();
+        if (!val) throw "이메일을 입력하세요.";
+        if (val.toLowerCase() !== ADMIN_EMAIL) throw "관리자 계정이 아닙니다.";
+        email = val;
+        pw = $("a_pw").value;
+      }
+
+      if (!pw) throw "비밀번호를 입력하세요.";
+
+      const saveId = $("saveIdCheck").checked ? email.split("@")[0] : null;
+      if (saveId) localStorage.setItem("saved_id", saveId);
+      else localStorage.removeItem("saved_id");
+
+      setMsg("로그인 중...", "info");
+      $("btnLogin").disabled = true;
+
+      const { error } = await sb.auth.signInWithPassword({ email, password: pw });
+      if (error) throw "로그인 실패. 정보를 확인하세요.";
+
+      // 로그인 성공 시 onAuthStateChange가 리디렉션 처리
+    } catch (e) {
+      setMsg(typeof e === "string" ? e : (e.message || "오류 발생"), "error");
+      $("btnLogin").disabled = false;
+    }
+  });
+
+  // Enter 키로 로그인
+  document.querySelectorAll("input").forEach(inp => {
+    inp.addEventListener("keydown", e => {
+      if (e.key === "Enter") $("btnLogin").click();
+    });
+  });
+
+  // 로그인 성공 후 리디렉션
+  const redirectMap = {
+    patient: "respondent.html",
+    doctor: "doctor.html",
+    admin: "admin.html"
+  };
+
+  sb.auth.onAuthStateChange((event, session) => {
+    if (event === "SIGNED_IN") {
+      const user = session?.user;
+      if (!user) return;
+
+      if (user.email?.toLowerCase() === ADMIN_EMAIL) {
+        window.location.href = "admin.html";
+        return;
+      }
+
+      setTimeout(async () => {
+        let prof = null;
+        for (let i = 0; i < 5; i++) {
+          const { data } = await sb.from("profiles").select("role").eq("id", user.id).maybeSingle();
+          if (data) { prof = data; break; }
+          await new Promise(r => setTimeout(r, 500));
+        }
+        if (prof) {
+          const target = redirectMap[prof.role] || "respondent.html";
+          if (prof.role === "doctor_pending") target = "signup-doctor.html?pending=1";
+          window.location.href = target;
+        }
+      }, 300);
+    }
+  });
 </script>
-
-  <div class="login-wrapper">
-    <div class="login-header">
-      <h1>📋 기분장애 임상평가 설문</h1>
-      <p>Mood Disorder Self-Report Assessment</p>
-    </div>
-
-    <div class="login-card">
-      <h2>로그인</h2>
-
-      <div class="auth-tabs">
-        <button class="auth-tab active" data-role="doctor">의사</button>
-        <button class="auth-tab" data-role="admin">관리자</button>
-      </div>
-
-      <div id="authMsg" class="status-msg"></div>
-
-      <div id="form-patient">
-        <div class="form-group">
-          <label>아이디</label>
-          <input type="text" id="p_id" placeholder="아이디 입력" autocomplete="username">
-        </div>
-        <div class="form-group">
-          <label>비밀번호</label>
-          <input type="password" id="p_pw" placeholder="비밀번호" autocomplete="current-password">
-        </div>
-      </div>
-
-      <div id="form-doctor" style="display:none;">
-        <div class="form-group">
-          <label>아이디</label>
-          <input type="text" id="d_id" placeholder="아이디 입력" autocomplete="username">
-        </div>
-        <div class="form-group">
-          <label>비밀번호</label>
-          <input type="password" id="d_pw" placeholder="비밀번호" autocomplete="current-password">
-        </div>
-      </div>
-
-      <div id="form-admin" style="display:none;">
-        <div class="form-admin-note">관리자만 접근 가능합니다</div>
-        <div class="form-group">
-          <label>이메일</label>
-          <input type="email" id="a_email" placeholder="관리자 이메일">
-        </div>
-        <div class="form-group">
-          <label>비밀번호</label>
-          <input type="password" id="a_pw" placeholder="비밀번호" autocomplete="current-password">
-        </div>
-      </div>
-
-      <div class="form-actions">
-        <label class="save-id">
-          <input type="checkbox" id="saveIdCheck">
-          아이디 저장
-        </label>
-        <a id="signupLink" href="signup-patient.html" class="link-signup">회원가입 →</a>
-      </div>
-
-      <button id="btnLogin" class="btn-login">로그인</button>
-
-      <div class="login-footer">
-        <a id="signupLink2" href="signup-patient.html">처음 사용하시나요? 회원가입</a>
-      </div>
-    </div>
-  </div>
-
-  <script type="module">
-    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
-    import { SUPABASE_URL, SUPABASE_ANON_KEY, PATIENT_EMAIL_DOMAIN, DOCTOR_EMAIL_DOMAIN, ADMIN_EMAIL } from "./config.js";
-
-    const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    let selectedRole = "patient";
-
-    const $ = id => document.getElementById(id);
-    const setMsg = (msg, type) => {
-      const el = $("authMsg");
-      el.className = `status-msg show ${type}`;
-      el.textContent = msg;
-    };
-    const clearMsg = () => { $("authMsg").className = "status-msg"; };
-
-    const urlRole = new URLSearchParams(location.search).get("role");
-    if (urlRole && ["doctor", "admin"].includes(urlRole)) {
-      selectedRole = urlRole;
-      document.querySelectorAll(".auth-tab").forEach(b => b.classList.remove("active"));
-      document.querySelector(`.auth-tab[data-role="${urlRole}"]`)?.classList.add("active");
-
-      document.querySelectorAll(".auth-tab").forEach(b => {
-        if (b.dataset.role !== urlRole) b.style.display = "none";
-      });
-      ["doctor", "admin"].forEach(r => {
-        $("form-" + r).style.display = selectedRole === r ? "block" : "none";
-      });
-      const signupMap = { doctor: "signup-doctor.html", admin: "signup-patient.html" };
-      const href = signupMap[selectedRole] || "signup-doctor.html";
-      $("signupLink").href = href;
-      $("signupLink2").href = href;
-      $("signupLink").style.display = selectedRole === "admin" ? "none" : "inline";
-      $("signupLink2").style.display = selectedRole === "admin" ? "none" : "inline";
-    } else {
-      // Hide patient form by default
-      $("form-patient").style.display = "none";
-
-      document.querySelectorAll(".auth-tab").forEach(btn => {
-        btn.addEventListener("click", () => {
-          document.querySelectorAll(".auth-tab").forEach(b => b.classList.remove("active"));
-          btn.classList.add("active");
-          selectedRole = btn.dataset.role;
-          ["doctor", "admin"].forEach(r => {
-            $("form-" + r).style.display = selectedRole === r ? "block" : "none";
-          });
-          const signupMap = { doctor: "signup-doctor.html", admin: "signup-patient.html" };
-          const href = signupMap[selectedRole] || "signup-doctor.html";
-          $("signupLink").href = href;
-          $("signupLink2").href = href;
-          $("signupLink").style.display = selectedRole === "admin" ? "none" : "inline";
-          $("signupLink2").style.display = selectedRole === "admin" ? "none" : "inline";
-          clearMsg();
-        });
-      });
-    }
-
-    $("btnLogin").addEventListener("click", async () => {
-      clearMsg();
-      let email, pw;
-
-      try {
-        if (selectedRole === "patient") {
-          const id = $("p_id").value.trim();
-          if (!id) throw "아이디를 입력하세요.";
-          email = `${id}@${PATIENT_EMAIL_DOMAIN}`;
-          pw = $("p_pw").value;
-        } else if (selectedRole === "doctor") {
-          const id = $("d_id").value.trim();
-          if (!id) throw "아이디를 입력하세요.";
-          email = `${id}@${DOCTOR_EMAIL_DOMAIN}`;
-          pw = $("d_pw").value;
-        } else {
-          const val = $("a_email").value.trim();
-          if (!val) throw "이메일을 입력하세요.";
-          if (val.toLowerCase() !== ADMIN_EMAIL) throw "관리자 계정이 아닙니다.";
-          email = val;
-          pw = $("a_pw").value;
-        }
-
-        if (!pw) throw "비밀번호를 입력하세요.";
-
-        const saveId = $("saveIdCheck").checked ? email.split("@")[0] : null;
-        if (saveId) localStorage.setItem("saved_id", saveId);
-        else localStorage.removeItem("saved_id");
-
-        setMsg("로그인 중...", "info");
-        $("btnLogin").disabled = true;
-
-        const { error } = await sb.auth.signInWithPassword({ email, password: pw });
-        if (error) throw "로그인 실패. 정보를 확인하세요.";
-
-      } catch (e) {
-        setMsg(typeof e === "string" ? e : (e.message || "오류 발생"), "error");
-        $("btnLogin").disabled = false;
-      }
-    });
-
-    document.querySelectorAll("input").forEach(inp => {
-      inp.addEventListener("keydown", e => {
-        if (e.key === "Enter") $("btnLogin").click();
-      });
-    });
-
-    const saved = localStorage.getItem("saved_id") || "";
-    if (saved) {
-      ["p_id", "d_id"].forEach(id => {
-        const el = $(id);
-        if (el) el.value = saved;
-      });
-      $("saveIdCheck").checked = true;
-    }
-
-    const redirectMap = {
-      patient: "respondent.html",
-      doctor: "doctor.html",
-      admin: "admin.html"
-    };
-
-    sb.auth.onAuthStateChange((event, session) => {
-      if (event === "SIGNED_IN" || event === "INITIAL_SESSION") {
-        const user = session?.user;
-        if (!user) return;
-
-        if (user.email?.toLowerCase() === ADMIN_EMAIL) {
-          window.location.href = "admin.html";
-          return;
-        }
-
-        setTimeout(async () => {
-          let prof = null;
-          for (let i = 0; i < 5; i++) {
-            const { data } = await sb.from("profiles").select("role").eq("id", user.id).maybeSingle();
-            if (data) { prof = data; break; }
-            await new Promise(r => setTimeout(r, 500));
-          }
-          if (prof) {
-            const target = redirectMap[prof.role] || "respondent.html";
-            if (prof.role === "doctor_pending") target = "signup.html?pending=1";
-            window.location.href = target;
-          }
-        }, 300);
-      }
-    });
-
-  </script>
 </body>
 </html>
