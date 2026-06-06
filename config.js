@@ -8,7 +8,7 @@ export const DOCTOR_EMAIL_DOMAIN  = "doctor.local";
 
 export const ADMIN_EMAIL = ENV.ADMIN_EMAIL || "snumood@gmail.com";
 
-export const GOOGLE_SHEETS_WEBHOOK_URL = ENV.GOOGLE_SHEETS_WEBHOOK_URL || "https://script.google.com/macros/s/AKfycbyOF1Fhb5I6vKC8mhWkxhXWCrlFalY8pKhoR0X2KynMkDpMK7B6fgIv5OAH-Usjxucp/exec";
+export const GOOGLE_SHEETS_WEBHOOK_URL = ENV.GOOGLE_SHEETS_WEBHOOK_URL || "https://script.google.com/macros/s/AKfycbzpDUM-M_RayX6zp7c24defOC5IUIRcA5FJQio5zwifZBkM46FYL8cnFAQhkjJhT0NR/exec";
 
 // WEBHOOK_SECRET: loaded from env or empty (backward compatible)
 export const WEBHOOK_SECRET = ENV.VITE_WEBHOOK_SECRET || "";
