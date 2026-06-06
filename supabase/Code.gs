@@ -1,4 +1,5 @@
 const CONFIG = {
+  SPREADSHEET_ID: '1mHaUquO0qdv7bpj9T7LIPVfyUsUlX87uyHiAS_dyG78',
   RAW_DATA_GID: 1056247064,
   CALC_GID: 1563113795,
   REPORT_GID: 1440639532,
@@ -27,7 +28,7 @@ function doPost(e) {
     const params = parsePayload_(e);
     verifySecret_(params);
 
-    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const ss = getSpreadsheet_();
     const rawSheet = getSheetByGid_(ss, CONFIG.RAW_DATA_GID) || getOrCreateSheet_(ss, CONFIG.RAW_FALLBACK_NAME);
     const calcSheet = getSheetByGid_(ss, CONFIG.CALC_GID);
     const reportSheet = getSheetByGid_(ss, CONFIG.REPORT_GID);
@@ -54,7 +55,7 @@ function doPost(e) {
 }
 
 function doGet() {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const ss = getSpreadsheet_();
   return json_({
     status: 'ok',
     rawSheet: sheetInfo_(getSheetByGid_(ss, CONFIG.RAW_DATA_GID)),
@@ -81,6 +82,15 @@ function verifySecret_(params) {
   if (expected && params.secret !== expected) {
     throw new Error('Invalid webhook secret.');
   }
+}
+
+function getSpreadsheet_() {
+  if (CONFIG.SPREADSHEET_ID) {
+    return SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
+  }
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  if (!ss) throw new Error('No active spreadsheet and CONFIG.SPREADSHEET_ID is empty.');
+  return ss;
 }
 
 function getSheetByGid_(ss, gid) {

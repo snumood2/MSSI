@@ -11,7 +11,7 @@
 
 ## Apps Script 배포
 
-1. 대상 Google Sheet에서 `확장 프로그램 > Apps Script`를 엽니다.
+1. Apps Script 프로젝트를 엽니다. 대상 Google Sheet의 `확장 프로그램 > Apps Script`에서 열어도 되고, 새 standalone Apps Script 프로젝트를 만들어도 됩니다.
 2. [`Code.gs`](./Code.gs)의 전체 내용을 Apps Script 편집기에 붙여넣습니다.
 3. 선택 사항으로 웹훅 secret을 설정합니다.
    - Apps Script `프로젝트 설정 > 스크립트 속성`에 `MSSI_WEBHOOK_SECRET` 추가
@@ -32,7 +32,7 @@ VITE_WEBHOOK_SECRET=...   # 선택 사항
 ADMIN_EMAIL=...
 ```
 
-현재 [`config.js`](../config.js)는 환경변수가 없으면 저장소의 기본 Supabase URL, anon key, Apps Script URL을 사용합니다.
+현재 [`config.js`](../config.js)는 환경변수가 없으면 저장소의 기본 Supabase URL, anon key, Apps Script URL을 사용합니다. Apps Script는 `CONFIG.SPREADSHEET_ID`로 대상 스프레드시트를 열기 때문에 standalone 프로젝트에서도 동작합니다.
 
 ## 동작 확인
 
