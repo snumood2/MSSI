@@ -1,6 +1,6 @@
 
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
-import { SUPABASE_URL, SUPABASE_ANON_KEY, PATIENT_EMAIL_DOMAIN, DOCTOR_EMAIL_DOMAIN, ADMIN_EMAIL, GOOGLE_SHEETS_WEBHOOK_URL } from "./config.js";
+import { SUPABASE_URL, SUPABASE_ANON_KEY, PATIENT_EMAIL_DOMAIN, DOCTOR_EMAIL_DOMAIN, ADMIN_EMAIL, GOOGLE_SHEETS_WEBHOOK_URL, WEBHOOK_SECRET } from "./config.js";
 import { SURVEY_SECTIONS } from "./questions.js";
 import { calculateScores, generateReport, getGlobalInstructions } from "./scoring.js";
 
@@ -1057,18 +1057,24 @@ async function submitSurvey() {
       try {
         const gsPayload = {
           timestamp: new Date().toISOString(),
+          responseId: state.responseId || '',
           patientId: state.profile.id || state.user?.id || '',
           dob: state.profile.dob || '',
           hospitalCode: state.profile.hospital_code || '',
           patientNumber: state.profile.patient_number || '',
           doctorNickname: state.profile.doctor_name || '',
           hospitalNickname: state.profile.hospital_name || '',
-          answers: state.answers
+          answers: state.answers,
+          scores,
+          report,
+          scoresJson: JSON.stringify(scores),
+          reportJson: JSON.stringify(report)
         };
+        if (WEBHOOK_SECRET) gsPayload.secret = WEBHOOK_SECRET;
         fetch(GOOGLE_SHEETS_WEBHOOK_URL, {
           method: 'POST',
           mode: 'no-cors',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
           body: JSON.stringify(gsPayload)
         }).catch(e => console.warn('Google Sheets 전송 실패(무시됨):', e));
       } catch (e) {

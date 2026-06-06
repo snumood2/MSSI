@@ -1,76 +1,180 @@
+const CONFIG = {
+  RAW_DATA_GID: 1056247064,
+  CALC_GID: 1563113795,
+  REPORT_GID: 1440639532,
+  RAW_FALLBACK_NAME: 'RAW_DATA',
+  WEBHOOK_SECRET_PROPERTY: 'MSSI_WEBHOOK_SECRET'
+};
+
+const FIXED_HEADERS = [
+  'timestamp',
+  'response_id',
+  'patient_id',
+  'dob',
+  'hospital_code',
+  'patient_number',
+  'doctor_nickname',
+  'hospital_nickname',
+  'scores_json',
+  'report_json'
+];
 
 function doPost(e) {
+  const lock = LockService.getDocumentLock();
+  lock.waitLock(30000);
+
   try {
-    const params = JSON.parse(e.postData.contents);
+    const params = parsePayload_(e);
+    verifySecret_(params);
+
     const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const rawSheet = getSheetByGid_(ss, CONFIG.RAW_DATA_GID) || getOrCreateSheet_(ss, CONFIG.RAW_FALLBACK_NAME);
+    const calcSheet = getSheetByGid_(ss, CONFIG.CALC_GID);
+    const reportSheet = getSheetByGid_(ss, CONFIG.REPORT_GID);
 
-    let rawSheet = ss.getSheetByName('RAW_DATA');
-    if (!rawSheet) {
-      rawSheet = ss.insertSheet('RAW_DATA');
+    const headers = ensureHeaders_(rawSheet, params);
+    const rowValues = buildRow_(params, headers);
+    rawSheet.appendRow(rowValues);
 
-      const headers = buildHeaders(params);
-      rawSheet.getRange(1, 1, 1, headers.length).setValues([headers]);
-      rawSheet.setFrozenRows(1);
-    }
+    const appendedRow = rawSheet.getLastRow();
+    SpreadsheetApp.flush();
 
-    const newRow = buildRow(params, rawSheet);
-    rawSheet.appendRow(newRow);
-
-    return ContentService
-      .createTextOutput(JSON.stringify({ status: 'ok', row: rawSheet.getLastRow() }))
-      .setMimeType(ContentService.MimeType.JSON);
-
+    return json_({
+      status: 'ok',
+      row: appendedRow,
+      rawSheet: rawSheet.getName(),
+      calcSheet: calcSheet ? calcSheet.getName() : null,
+      reportSheet: reportSheet ? reportSheet.getName() : null
+    });
   } catch (err) {
-    return ContentService
-      .createTextOutput(JSON.stringify({ status: 'error', message: err.toString() }))
-      .setMimeType(ContentService.MimeType.JSON);
+    return json_({ status: 'error', message: err && err.message ? err.message : String(err) });
+  } finally {
+    lock.releaseLock();
   }
 }
 
-function buildHeaders(params) {
-  const fixed = ['timestamp', 'patient_id', 'dob', 'hospital_code', 'patient_number', 'doctor_nickname', 'hospital_nickname'];
-  const qIds = Object.keys(params.answers || {}).sort();
-  return [...fixed, ...qIds];
+function doGet() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  return json_({
+    status: 'ok',
+    rawSheet: sheetInfo_(getSheetByGid_(ss, CONFIG.RAW_DATA_GID)),
+    calcSheet: sheetInfo_(getSheetByGid_(ss, CONFIG.CALC_GID)),
+    reportSheet: sheetInfo_(getSheetByGid_(ss, CONFIG.REPORT_GID))
+  });
 }
 
-function buildRow(params, sheet) {
-  const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
-  const row = [];
-
-  for (let h of headers) {
-    switch (h) {
-      case 'timestamp':
-        row.push(params.timestamp || new Date().toISOString());
-        break;
-      case 'patient_id':
-        row.push(params.patientId || '');
-        break;
-      case 'dob':
-        row.push(params.dob || '');
-        break;
-      case 'hospital_code':
-        row.push(params.hospitalCode || '');
-        break;
-      case 'patient_number':
-        row.push(params.patientNumber || '');
-        break;
-      case 'doctor_nickname':
-        row.push(params.doctorNickname || '');
-        break;
-      case 'hospital_nickname':
-        row.push(params.hospitalNickname || '');
-        break;
-      default:
-
-        row.push(params.answers && params.answers[h] !== undefined ? params.answers[h] : '');
-    }
-  }
-
-  return row;
-}
-
-function doOptions(e) {
+function doOptions() {
   return ContentService
     .createTextOutput('')
     .setMimeType(ContentService.MimeType.TEXT);
+}
+
+function parsePayload_(e) {
+  if (!e || !e.postData || !e.postData.contents) {
+    throw new Error('POST body is empty.');
+  }
+  return JSON.parse(e.postData.contents);
+}
+
+function verifySecret_(params) {
+  const expected = PropertiesService.getScriptProperties().getProperty(CONFIG.WEBHOOK_SECRET_PROPERTY);
+  if (expected && params.secret !== expected) {
+    throw new Error('Invalid webhook secret.');
+  }
+}
+
+function getSheetByGid_(ss, gid) {
+  const sheets = ss.getSheets();
+  for (let i = 0; i < sheets.length; i++) {
+    if (sheets[i].getSheetId() === gid) return sheets[i];
+  }
+  return null;
+}
+
+function getOrCreateSheet_(ss, name) {
+  return ss.getSheetByName(name) || ss.insertSheet(name);
+}
+
+function ensureHeaders_(sheet, params) {
+  if (sheet.getLastRow() === 0) {
+    sheet.appendRow(FIXED_HEADERS);
+    sheet.setFrozenRows(1);
+  }
+
+  let lastColumn = Math.max(sheet.getLastColumn(), 1);
+  let headers = sheet.getRange(1, 1, 1, lastColumn).getValues()[0].map(String);
+  const required = buildHeaders_(params);
+  const seen = {};
+
+  headers.forEach((header) => {
+    if (header) seen[header] = true;
+  });
+
+  const additions = required.filter((header) => !seen[header]);
+  if (additions.length) {
+    sheet.getRange(1, headers.length + 1, 1, additions.length).setValues([additions]);
+    headers = headers.concat(additions);
+    sheet.setFrozenRows(1);
+  }
+
+  return headers;
+}
+
+function buildHeaders_(params) {
+  const answers = params.answers || {};
+  const answerHeaders = Object.keys(answers).sort(naturalSort_);
+  return FIXED_HEADERS.concat(answerHeaders);
+}
+
+function buildRow_(params, headers) {
+  const answers = params.answers || {};
+  const scoresJson = params.scoresJson || JSON.stringify(params.scores || {});
+  const reportJson = params.reportJson || JSON.stringify(params.report || {});
+
+  return headers.map((header) => {
+    switch (header) {
+      case 'timestamp':
+        return params.timestamp || new Date().toISOString();
+      case 'response_id':
+        return params.responseId || '';
+      case 'patient_id':
+        return params.patientId || '';
+      case 'dob':
+        return params.dob || '';
+      case 'hospital_code':
+        return params.hospitalCode || '';
+      case 'patient_number':
+        return params.patientNumber || '';
+      case 'doctor_nickname':
+        return params.doctorNickname || '';
+      case 'hospital_nickname':
+        return params.hospitalNickname || '';
+      case 'scores_json':
+        return scoresJson;
+      case 'report_json':
+        return reportJson;
+      default:
+        return Object.prototype.hasOwnProperty.call(answers, header) ? answers[header] : '';
+    }
+  });
+}
+
+function naturalSort_(a, b) {
+  return String(a).localeCompare(String(b), undefined, { numeric: true, sensitivity: 'base' });
+}
+
+function sheetInfo_(sheet) {
+  if (!sheet) return null;
+  return {
+    name: sheet.getName(),
+    gid: sheet.getSheetId(),
+    rows: sheet.getLastRow(),
+    columns: sheet.getLastColumn()
+  };
+}
+
+function json_(obj) {
+  return ContentService
+    .createTextOutput(JSON.stringify(obj))
+    .setMimeType(ContentService.MimeType.JSON);
 }
