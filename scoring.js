@@ -128,12 +128,13 @@ export function calculateScores(answers) {
   const miqtSeason= [4, 9, 14].reduce((a, c) => a + get(`mt${c}`), 0);
   const miqtChild = [5, 10, 15].reduce((a, c) => a + get(`mt${c}`), 0);
 
-  const ctqRevItems = [2, 5, 7, 10, 13, 16, 19, 22, 26, 28];
+  const ctqRevItems = [2, 5, 7, 13, 19, 26, 28];
   const ctqItems = Array.from({length: 28}, (_, i) => {
     const v = get(`ctq${i+1}`);
     return ctqRevItems.includes(i+1) ? (6 - v) : v;
   });
-  const ctqTotal    = ctqItems.reduce((a, b) => a + b, 0);
+  const ctqMinimization = [10, 16, 22];
+  const ctqTotal    = ctqItems.reduce((a, b, i) => a + (ctqMinimization.includes(i + 1) ? 0 : b), 0);
   const ctqEA       = [3, 8, 14, 18, 25].reduce((a, c) => a + ctqItems[c-1], 0);
   const ctqPA       = [9, 11, 12, 15, 17].reduce((a, c) => a + ctqItems[c-1], 0);
   const ctqSA       = [20, 21, 23, 24, 27].reduce((a, c) => a + ctqItems[c-1], 0);
@@ -166,9 +167,9 @@ export function calculateScores(answers) {
   const ersqModify  = avg(['er25','er26','er27']);
 
   const bis = [1, 6, 10, 13, 15, 18, 20].reduce((a, c) => a + ([1, 18].includes(c) ? (5 - get(`bb${c}`)) : get(`bb${c}`)), 0);
-  const basReward = [5, 14, 19, 22].reduce((a, c) => a + get(`bb${c}`), 0);
-  const basDrive  = [3, 9, 12, 21].reduce((a, c) => a + get(`bb${c}`), 0);
-  const basFun    = [4, 8, 16, 23].reduce((a, c) => a + get(`bb${c}`), 0);
+  const basReward = [3, 5, 11, 14, 19].reduce((a, c) => a + get(`bb${c}`), 0);
+  const basDrive  = [2, 7, 9, 17].reduce((a, c) => a + get(`bb${c}`), 0);
+  const basFun    = [4, 8, 12, 16].reduce((a, c) => a + get(`bb${c}`), 0);
   const bas = basReward + basDrive + basFun;
 
   const bapqAloof  = sum('ba', 1, 12) / 12;
@@ -178,7 +179,7 @@ export function calculateScores(answers) {
 
   const audit = sum('au', 1, 10);
 
-  const cms = sum('cms', 1, 13);
+  const cms = sum('cms', 1, 13) || sum('csm', 1, 13);
   let cmsClass;
   if (cms >= 41) cmsClass = "아침형";
   else if (cms <= 26) cmsClass = "저녁형";
@@ -199,10 +200,15 @@ export function calculateScores(answers) {
 
   const wurs = sum('wurs', 1, 25);
 
-  const bor = sum('bor', 1, 24);
+  const borRevItems = [7, 12, 14, 19, 20, 24];
+  const bor = Array.from({length: 24}, (_, i) => {
+    const item = i + 1;
+    const v = get(`bor${item}`);
+    return borRevItems.includes(item) ? (4 - v) : (v - 1);
+  }).reduce((a, b) => a + b, 0);
 
-  const pmsSym  = sum('pms', 1, 14);
-  const pmsFunc = sum('pms_imp', 1, 5);
+  const pmsSym  = sum('pms', 1, 14) - 14;
+  const pmsFunc = sum('pms_imp', 1, 5) - 5;
   const pmsDiag = (pmsSym >= 10 && pmsFunc >= 3) ? "PMS" : "no-PMS";
 
   const diag = {

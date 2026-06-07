@@ -130,6 +130,21 @@
         </div>
         <div id="adminDoctorList"></div>
       </div>
+
+      <div class="section-body">
+        <div class="section-header">
+          <div class="list-section-title">환자 결과 조회</div>
+        </div>
+        <div class="form-group" style="max-width:360px;">
+          <label>환자 번호</label>
+          <div style="display:flex;gap:8px;">
+            <input type="text" id="adminSearchPNum" placeholder="예: 36496934">
+            <button id="btnAdminSearchResult" class="btn primary sm" style="min-width:72px;">검색</button>
+          </div>
+        </div>
+        <div id="adminResultMsg" class="status-msg"></div>
+        <div id="adminResultArea"></div>
+      </div>
     </div>
   </div>
 
@@ -139,6 +154,7 @@
 
   import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
   import { SUPABASE_URL, SUPABASE_ANON_KEY, ADMIN_EMAIL } from "./config.js";
+  import { calculateScores, generateReport, getGlobalInstructions } from "./scoring.js";
 
   const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -371,6 +387,124 @@
     await loadAdminDoctors();
     btn.textContent = "새로고침";
     btn.disabled = false;
+  });
+
+  function fmtDate(d) {
+    if (!d) return "";
+    try {
+      return new Date(d).toLocaleDateString("ko-KR", { year: "numeric", month: "long", day: "numeric" });
+    } catch { return String(d); }
+  }
+
+  function renderReportHTML(report, container) {
+    if (!container || !report) return;
+    const fmtScore = val => {
+      if (val === undefined || val === null) return "-";
+      if (typeof val === "number") return Number.isInteger(val) ? String(val) : parseFloat(val.toFixed(2)).toString();
+      return String(val);
+    };
+    const fmtRank = r => typeof r === "number" ? r + "등" : (r || "-");
+
+    container.innerHTML = (report.sections || []).map(section => {
+      const groupsHTML = (section.groups || []).map(group => {
+        let html = "";
+        if (group.label && group.type !== "comorbidity") html += `<div class="group-label">${group.label}</div>`;
+        if (group.description) html += `<div class="section-desc-block">${group.description}</div>`;
+        if (group.type === "comorbidity") {
+          html += `<div class="group-label">${group.label || ""}</div><table class="result-table comorbidity-table"><tbody>`;
+          (group.items || []).forEach(item => {
+            const cls = item.value === "O" ? "comorbid-positive" : "comorbid-negative";
+            html += `<tr><td class="comorbid-name">${item.name}</td><td class="comorbid-val ${cls}">${item.value}</td></tr>`;
+          });
+          return html + `</tbody></table>`;
+        }
+        const rows = group.rows || [];
+        if (!rows.length) return html;
+        const hasSpecial = rows.some(r => r.specialCols);
+        html += `<div class="result-table-wrap"><table class="result-table"><thead><tr>`;
+        html += hasSpecial
+          ? `<th class="col-name">검사명</th><th class="col-score">결과</th><th class="col-score">점수</th><th class="col-rank">환자비교백분위</th><th class="col-rank">정상군비교백분위</th>`
+          : `<th class="col-name">검사명</th><th class="col-score">응답결과</th><th class="col-rank">환자비교백분위</th><th class="col-rank">정상군비교백분위</th>`;
+        html += `</tr></thead><tbody>`;
+        rows.forEach(r => {
+          const subCls = r.sub ? " sub-item" : "";
+          if (r.textOnly) {
+            html += `<tr><td class="name-cell${subCls}">${r.name || ""}</td><td class="score-cell" colspan="${hasSpecial ? 4 : 3}">${fmtScore(r.score)}</td></tr>`;
+          } else if (hasSpecial) {
+            html += `<tr><td class="name-cell${subCls}">${r.name || ""}</td><td class="score-cell">${r.extra || ""}</td><td class="score-cell">${fmtScore(r.score)}</td><td class="rank-cell" style="color:${r.pat_color || "inherit"}">${fmtRank(r.pat_rank)}</td><td class="rank-cell" style="color:${r.nor_color || "inherit"}">${fmtRank(r.nor_rank)}</td></tr>`;
+            if (r.description) html += `<tr class="desc-row"><td colspan="5" class="desc-cell-block">${r.description}</td></tr>`;
+          } else {
+            html += `<tr><td class="name-cell${subCls}">${r.name || ""}</td><td class="score-cell">${fmtScore(r.score)}</td><td class="rank-cell" style="color:${r.pat_color || "inherit"}">${fmtRank(r.pat_rank)}</td><td class="rank-cell" style="color:${r.nor_color || "inherit"}">${fmtRank(r.nor_rank)}</td></tr>`;
+            if (!r.sub && r.description) html += `<tr class="desc-row"><td colspan="4" class="desc-cell-block">${r.description}</td></tr>`;
+          }
+        });
+        return html + `</tbody></table></div>`;
+      }).join("");
+      return `<div class="result-category"><div class="result-section-title">${section.title}</div>${groupsHTML}</div>`;
+    }).join("");
+  }
+
+  function renderAdminResult(row) {
+    let report = row.report;
+    if ((!report || !report.sections?.[0]?.groups) && row.answers) {
+      const scores = calculateScores(row.answers);
+      report = generateReport(scores, row.answers);
+    }
+    if (!report) {
+      el("adminResultArea").innerHTML = `<div class="admin-empty">결과 데이터가 없습니다.</div>`;
+      return;
+    }
+    const instructions = report.instructions || getGlobalInstructions();
+    const contentId = "adminReportContent";
+    el("adminResultArea").innerHTML = `
+      <div class="patient-result-card">
+        <div class="divider" style="margin-top:0;"></div>
+        <div class="result-header-block">
+          <h2 class="report-main-title">기분장애 임상평가 결과지</h2>
+          <p class="report-date-line">${fmtDate(row.completed_at)}&nbsp;&nbsp;번호: ${row.patient_number || "-"}</p>
+        </div>
+        <details style="margin-bottom:24px;">
+          <summary style="cursor:pointer;font-size:14px;font-weight:700;color:var(--accent);padding:12px 16px;background:var(--accent-light);border-radius:10px;">
+            📋 결과 해석 안내 (클릭하여 펼치기)
+          </summary>
+          <div class="result-instructions" style="margin-top:8px;">${instructions}</div>
+        </details>
+        <div id="${contentId}"></div>
+      </div>`;
+    renderReportHTML(report, el(contentId));
+  }
+
+  async function searchAdminResult() {
+    const pNum = el("adminSearchPNum").value.trim();
+    if (!pNum) {
+      setMsg("adminResultMsg", "환자 번호를 입력해주세요.", "warn");
+      return;
+    }
+    setMsg("adminResultMsg", "검색 중...", "info");
+    el("adminResultArea").innerHTML = "";
+    const { data, error } = await sb
+      .from("survey_responses")
+      .select("*")
+      .eq("patient_number", pNum)
+      .or("status.eq.completed,completed.eq.true")
+      .order("completed_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (error) {
+      setMsg("adminResultMsg", "오류: " + error.message, "error");
+      return;
+    }
+    if (!data) {
+      setMsg("adminResultMsg", `'${pNum}' 완료 결과가 없습니다.`, "warn");
+      return;
+    }
+    clearMsg("adminResultMsg");
+    renderAdminResult(data);
+  }
+
+  el("btnAdminSearchResult")?.addEventListener("click", searchAdminResult);
+  el("adminSearchPNum")?.addEventListener("keydown", e => {
+    if (e.key === "Enter") searchAdminResult();
   });
 
   function escapeHtml(str) {
