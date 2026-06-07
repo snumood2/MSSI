@@ -51,6 +51,12 @@ assert.match(migration, /patient_can_use_hospital/);
 assert.match(migration, /can_patient_write_survey/);
 assert.match(migration, /public\.can_patient_write_survey\(patient_id, hospital_code\)/);
 
+const codeGs = readFileSync('./supabase/Code.gs', 'utf8');
+assert.match(codeGs, /mode: 'legacy_raw_with_hospital_code_lookup'/);
+assert.match(codeGs, /const RAW_HEADERS = \[[\s\S]*'hospital_code'[\s\S]*'patient_number'[\s\S]*'dob'[\s\S]*'sex'/);
+assert.match(codeGs, /const LEGACY_WIDTH = 878/);
+assert.match(codeGs, /row\[1\] = params\.dob \? "'" \+ String\(params\.dob\) : '';/);
+
 const workflowExists = existsSync('./.github/workflows/deploy-pages.yml');
 if (workflowExists) {
   const workflow = readFileSync('./.github/workflows/deploy-pages.yml', 'utf8');
