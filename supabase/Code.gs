@@ -21,7 +21,7 @@ const FIXED_HEADERS = [
 ];
 
 function doPost(e) {
-  const lock = LockService.getDocumentLock();
+  const lock = LockService.getDocumentLock() || LockService.getScriptLock();
   lock.waitLock(30000);
 
   try {
