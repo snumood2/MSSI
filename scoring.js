@@ -207,9 +207,22 @@ export function calculateScores(answers) {
     return borRevItems.includes(item) ? (4 - v) : (v - 1);
   }).reduce((a, b) => a + b, 0);
 
-  const pmsSym  = sum('pms', 1, 14) - 14;
-  const pmsFunc = sum('pms_imp', 1, 5) - 5;
-  const pmsDiag = (pmsSym >= 10 && pmsFunc >= 3) ? "PMS" : "no-PMS";
+  const pmsSkipped = get('pms_skip') === 1;
+  const hasPmsSymptoms = Array.from({ length: 14 }, (_, i) => `pms1_${i + 1}`).some((key) => answers[key] !== undefined);
+  const hasPmsImpairment = Array.from({ length: 5 }, (_, i) => `pms_imp${i + 1}`).some((key) => answers[key] !== undefined);
+  const pmsSym = (!pmsSkipped && hasPmsSymptoms)
+    ? Array.from({ length: 14 }, (_, i) => get(`pms1_${i + 1}`)).reduce((a, b) => a + b, 0) - 14
+    : '';
+  const pmsFunc = (!pmsSkipped && hasPmsImpairment)
+    ? sum('pms_imp', 1, 5) - 5
+    : '';
+  const pmsDiag = (pmsSym === '' || pmsFunc === '')
+    ? ''
+    : ((Math.max(get('pms1_1'), get('pms1_2'), get('pms1_3'), get('pms1_4')) === 4
+      && Array.from({ length: 14 }, (_, i) => get(`pms1_${i + 1}`)).filter((value) => value >= 3).length >= 5
+      && Math.max(get('pms_imp1'), get('pms_imp2'), get('pms_imp3'), get('pms_imp4'), get('pms_imp5')) > 2)
+        ? "PMS"
+        : "no-PMS");
 
   const diag = {
     suicide: get('ds1') ? 'O' : 'X',
