@@ -52,10 +52,11 @@ assert.match(migration, /can_patient_write_survey/);
 assert.match(migration, /public\.can_patient_write_survey\(patient_id, hospital_code\)/);
 
 const codeGs = readFileSync('./supabase/Code.gs', 'utf8');
-assert.match(codeGs, /mode: 'legacy_raw_with_hospital_code_lookup'/);
-assert.match(codeGs, /const RAW_HEADERS = \[[\s\S]*'hospital_code'[\s\S]*'patient_number'[\s\S]*'dob'[\s\S]*'sex'/);
-assert.match(codeGs, /const LEGACY_WIDTH = 878/);
-assert.match(codeGs, /row\[1\] = params\.dob \? "'" \+ String\(params\.dob\) : '';/);
+assert.match(codeGs, /mode: 'raw_dynamic_full_payload'/);
+assert.match(codeGs, /const FIXED_HEADERS = \[[\s\S]*'timestamp'[\s\S]*'hospital_code'[\s\S]*'patient_number'[\s\S]*'dob'[\s\S]*'sex'/);
+assert.match(codeGs, /flattenObject_\(record, '', params\.answers \|\| \{\}\);/);
+assert.match(codeGs, /flattenObject_\(record, 'score_', params\.scores \|\| \{\}\);/);
+assert.match(codeGs, /dob: params\.dob \? "'" \+ String\(params\.dob\) : ''/);
 
 const workflowExists = existsSync('./.github/workflows/deploy-pages.yml');
 if (workflowExists) {

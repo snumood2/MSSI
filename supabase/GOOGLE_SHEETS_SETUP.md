@@ -1,13 +1,15 @@
 # Google Sheets 연동 설정
 
-이 프로젝트는 설문 제출 시 브라우저에서 Google Apps Script Web App으로 payload를 전송하고, Apps Script가 지정 스프레드시트의 `RAWDATA` 탭에 한 행을 추가합니다. 계산 탭과 검사지 출력 탭은 `병원코드 + 의사에게 받은 번호` 조합으로 `RAWDATA`를 조회합니다.
+이 프로젝트는 설문 제출 시 브라우저에서 Google Apps Script Web App으로 payload를 전송하고, Apps Script가 지정 스프레드시트의 `RAWDATA` 탭에 한 행을 추가합니다. 이후 Google Sheets 수식이 `RAWDATA -> DB2SHEET -> SHEET2REPORT -> 검사결과지` 순서로 데이터를 정리하고 결과지를 출력합니다.
 
 ## 대상 스프레드시트
 
 - Spreadsheet ID: `1mHaUquO0qdv7bpj9T7LIPVfyUsUlX87uyHiAS_dyG78`
-- 원자료 탭 gid: `1056247064`
-- 결과계산 탭 gid: `1563113795`
-- 검사지 출력 탭 gid: `1440639532`
+- `RAWDATA` gid: `1056247064`
+- `DB2SHEET` gid: `8856437`
+- `SHEET2REPORT` gid: `1977304621`
+- `결과계산(2)` gid: `1563113795`
+- `검사결과지` gid: `1440639532`
 
 ## Apps Script 배포
 
@@ -41,14 +43,15 @@ Apps Script Web App URL을 브라우저에서 GET으로 열면 아래와 비슷�
 ```json
 {
   "status": "ok",
-  "mode": "legacy_raw_with_hospital_code_lookup",
+  "mode": "raw_dynamic_full_payload",
   "rawSheet": { "gid": 1056247064 },
-  "calcSheet": { "gid": 1563113795 },
+  "db2Sheet": { "gid": 8856437 },
+  "sheet2Report": { "gid": 1977304621 },
   "reportSheet": { "gid": 1440639532 }
 }
 ```
 
-설문 제출 후 `RAWDATA` 탭에는 아래 구조로 한 행이 추가됩니다.
+설문 제출 후 `RAWDATA` 탭에는 동적 헤더 구조로 한 행이 추가됩니다. 고정 컬럼 뒤에 설문 응답 변수와 계산 점수가 변수명 기준으로 이어집니다.
 
 - A열: `timestamp`
 - B열: `patient_id`
@@ -56,6 +59,7 @@ Apps Script Web App URL을 브라우저에서 GET으로 열면 아래와 비슷�
 - D열: `patient_number`
 - E열: `dob`
 - F열: `sex`
-- G열 이후: 기존 Google Sheet 수식이 기대하는 legacy RAWDATA 문항 위치
+- G열 이후: `response_id`, `doctor_nickname`, `hospital_nickname`, `scores_json`, `report_json`
+- 이후 컬럼: `z1`, `t1`, `au1`, `csm1`, `spaq2_0` 같은 설문 응답 변수와 `score_ZUNG`, `score_TEMPS_cyc`, `score_PMS_diag` 같은 계산 점수
 
-`검사결과지!H4`에는 `patient_number`, `검사결과지!J4`에는 `hospital_code`를 넣어야 해당 조합의 결과가 조회됩니다. `결과계산(2)`도 같은 조합을 참조합니다.
+`DB2SHEET`는 1행에 DB 변수명, 2행에 설문지 질문/점수 설명, 3행부터 데이터를 표시합니다. `SHEET2REPORT!A4`에는 `patient_number`, `SHEET2REPORT!B4`에는 `hospital_code`를 넣어야 해당 조합의 결과가 조회됩니다. `검사결과지`는 `SHEET2REPORT`의 결과값을 참조하므로 웹앱과 Google Sheet 양쪽에서 같은 `병원코드 + 의사에게 받은 번호` 조합으로 조회됩니다.
