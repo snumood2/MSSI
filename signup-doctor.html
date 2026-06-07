@@ -109,10 +109,10 @@
 
     <div class="signup-card" id="cardPending" style="display:none;">
       <div style="text-align:center;padding:20px 0;">
-        <div style="font-size:40px;margin-bottom:12px;">⏳</div>
-        <h3 style="font-size:18px;margin:0 0 8px;">승인 대기 중</h3>
-        <p style="font-size:14px;color:#666;margin:0 0 6px;"><strong id="pendingName"></strong> 선생님의 가입이 접수되었습니다.</p>
-        <p style="font-size:14px;color:#666;">관리자 승인 후 로그인하실 수 있습니다.</p>
+        <div id="pendingIcon" style="font-size:40px;margin-bottom:12px;">⏳</div>
+        <h3 id="pendingTitle" style="font-size:18px;margin:0 0 8px;">승인 대기 중</h3>
+        <p id="pendingLead" style="font-size:14px;color:#666;margin:0 0 6px;"><strong id="pendingName"></strong> 선생님의 가입이 접수되었습니다.</p>
+        <p id="pendingDesc" style="font-size:14px;color:#666;">관리자 승인 후 로그인하실 수 있습니다.</p>
         <div style="margin-top:24px;">
           <a href="login.html?role=doctor" style="display:inline-block;padding:12px 32px;background:#4263eb;color:#fff;border-radius:10px;text-decoration:none;font-weight:700;font-size:14px;">로그인으로 이동</a>
         </div>
@@ -128,6 +128,18 @@
     const $ = id => document.getElementById(id);
     const setMsg = (msg, type) => { const el = $("signupMsg"); el.className = `status-msg show ${type}`; el.textContent = msg; };
     const clearMsg = () => { $("signupMsg").className = "status-msg"; };
+
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("pending") === "1" || params.get("revoked") === "1") {
+      $("cardPending").style.display = "block";
+      document.querySelector(".signup-card:not(#cardPending)").style.display = "none";
+      if (params.get("revoked") === "1") {
+        $("pendingIcon").textContent = "!";
+        $("pendingTitle").textContent = "승인취소 상태";
+        $("pendingLead").textContent = "관리자가 의사 계정 승인을 취소했습니다.";
+        $("pendingDesc").textContent = "계정과 병원코드는 유지되며, 관리자가 다시 승인하면 로그인하실 수 있습니다.";
+      }
+    }
 
     const CONSONANT_MAP = {
       'ㄱ':'G','ㄴ':'N','ㄷ':'D','ㄹ':'R','ㅁ':'M','ㅂ':'B','ㅅ':'S',

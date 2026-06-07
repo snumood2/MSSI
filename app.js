@@ -279,13 +279,14 @@ async function handleAuthUser(user) {
   }
 
   state.profile = prof;
-  const roleLabel = { patient: "응답자", doctor: "의사", admin: "관리자", doctor_pending: "승인대기" };
+  const roleLabel = { patient: "응답자", doctor: "의사", admin: "관리자", doctor_pending: "승인대기", doctor_revoked: "승인취소" };
   if (userBadge) { userBadge.textContent = roleLabel[prof.role] || prof.role; userBadge.style.display = "block"; }
 
   if (prof.role === "admin")               initAdmin();
   else if (prof.role === "patient")        initPatient();
   else if (prof.role === "doctor")         initDoctor();
   else if (prof.role === "doctor_pending") showPendingScreen();
+  else if (prof.role === "doctor_revoked") showPendingScreen("revoked");
 }
 
 sb.auth.onAuthStateChange((event, session) => {
@@ -320,10 +321,14 @@ el("btnLogout")?.addEventListener("click", async () => {
   location.reload();
 });
 
-function showPendingScreen() {
+function showPendingScreen(mode = "pending") {
   show("view-pending");
   const name = state.profile?.doctor_name || state.profile?.username || "선생님";
   const pendName = el("pendingName"); if (pendName) pendName.textContent = name;
+  if (mode === "revoked") {
+    const title = document.querySelector("#view-pending h2, #view-pending h3");
+    if (title) title.textContent = "승인취소 상태";
+  }
 }
 el("btnPendingRefresh")?.addEventListener("click", () => location.reload());
 

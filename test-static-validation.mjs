@@ -39,6 +39,10 @@ assert.match(doctor, /btn-dr-pdf/);
 
 const admin = readFileSync('./admin.html', 'utf8');
 assert.match(admin, /id="userBadge"/);
+assert.match(admin, /id="adminSearchHCode"/);
+assert.match(admin, /\.eq\("hospital_code", hCode\)/);
+assert.match(admin, /doctor_revoked/);
+assert.match(admin, /revoke_doctor_approval/);
 
 const workflowExists = existsSync('./.github/workflows/deploy-pages.yml');
 if (workflowExists) {

@@ -89,6 +89,7 @@ try {
     await page.click("#btnLogin");
   }
   await page.waitForSelector("#view-admin", { state: "visible", timeout: 30000 });
+  await page.fill("#adminSearchHCode", report.doctor.hospital_code);
   await page.fill("#adminSearchPNum", firstPatient.patient_number);
   await page.click("#btnAdminSearchResult");
   await waitText(page, "기분장애 임상평가 결과지");

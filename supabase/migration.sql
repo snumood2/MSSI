@@ -14,8 +14,8 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   created_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
 
-  --역할 (patient, doctor, doctor_pending, admin)
-  role          TEXT NOT NULL DEFAULT 'patient' CHECK (role IN ('patient','doctor','doctor_pending','admin')),
+  --역할 (patient, doctor, doctor_pending, doctor_revoked, admin)
+  role          TEXT NOT NULL DEFAULT 'patient' CHECK (role IN ('patient','doctor','doctor_pending','doctor_revoked','admin')),
 
   --공통
   email         TEXT,
@@ -200,11 +200,33 @@ BEGIN
   SET role = 'doctor',
       approved_at = now()
   WHERE id = p_doctor_id
-    AND role = 'doctor_pending';
+    AND role IN ('doctor_pending', 'doctor_revoked');
 END;
 $$;
 
---5b. 비밀번호 초기화 (admin)
+--5b. 의사 승인취소 (admin → doctor_revoked)
+CREATE OR REPLACE FUNCTION public.revoke_doctor_approval(p_doctor_id UUID)
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_admin_role TEXT;
+BEGIN
+  SELECT role INTO v_admin_role FROM public.profiles WHERE id = auth.uid();
+  IF v_admin_role IS DISTINCT FROM 'admin' THEN
+    RAISE EXCEPTION '권한이 없습니다.';
+  END IF;
+
+  UPDATE public.profiles
+  SET role = 'doctor_revoked'
+  WHERE id = p_doctor_id
+    AND role = 'doctor';
+END;
+$$;
+
+--5c. 비밀번호 초기화 (admin)
 CREATE OR REPLACE FUNCTION public.admin_reset_password(target_user_id UUID, new_password TEXT)
 RETURNS void
 LANGUAGE plpgsql

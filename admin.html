@@ -133,14 +133,26 @@
 
       <div class="section-body">
         <div class="section-header">
+          <div class="list-section-title">승인취소 의사</div>
+          <button id="btnRefreshRevokedDoctors" class="btn secondary sm" style="min-width:70px;">새로고침</button>
+        </div>
+        <div id="adminRevokedDoctorList"></div>
+      </div>
+
+      <div class="section-body">
+        <div class="section-header">
           <div class="list-section-title">환자 결과 조회</div>
         </div>
-        <div class="form-group" style="max-width:360px;">
-          <label>환자 번호</label>
-          <div style="display:flex;gap:8px;">
-            <input type="text" id="adminSearchPNum" placeholder="예: 36496934">
-            <button id="btnAdminSearchResult" class="btn primary sm" style="min-width:72px;">검색</button>
+        <div class="form-row" style="max-width:640px;align-items:flex-end;">
+          <div class="form-group">
+            <label>병원 코드</label>
+            <input type="text" id="adminSearchHCode" placeholder="예: SNUBH01" autocomplete="off">
           </div>
+          <div class="form-group">
+            <label>환자 번호</label>
+            <input type="text" id="adminSearchPNum" placeholder="예: 36496934" autocomplete="off">
+          </div>
+          <button id="btnAdminSearchResult" class="btn primary sm" style="min-width:72px;margin-bottom:16px;">검색</button>
         </div>
         <div id="adminResultMsg" class="status-msg"></div>
         <div id="adminResultArea"></div>
@@ -196,6 +208,7 @@
       el("btnLogout").style.display = "inline-flex";
       await loadAdminPending();
       await loadAdminDoctors();
+      await loadAdminRevokedDoctors();
       return session;
     }
 
@@ -236,6 +249,7 @@
       el("btnLogout").style.display = "inline-flex";
       await loadAdminPending();
       await loadAdminDoctors();
+      await loadAdminRevokedDoctors();
     } else {
       await sb.auth.signOut();
       setMsg("authMsg", "관리자 계정으로 로그인해주세요.", "error");
@@ -289,7 +303,7 @@
     const { data, error } = await sb
       .from("profiles")
       .select("*")
-      .in("role", ["doctor", "doctor_pending"])
+      .eq("role", "doctor")
       .order("doctor_name", { ascending: true });
     if (error) {
       list.innerHTML = `<div class="admin-error">오류: ${error.message}</div>`;
@@ -300,23 +314,56 @@
       return;
     }
     list.innerHTML = data.map(d => {
-      const roleLabel = d.role === "doctor" ? "승인됨" : "대기";
-      const roleClass = d.role === "doctor" ? "green" : "yellow";
       return `
       <div class="list-row">
         <div class="list-info">
           <div class="name" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
             ${escapeHtml(d.doctor_name) || "-"}
-            <span class="badge ${roleClass}">${roleLabel}</span>
+            <span class="badge green">승인됨</span>
             <span class="badge gray">${escapeHtml(d.hospital_code) || "코드없음"}</span>
           </div>
           <div class="sub">${escapeHtml(d.hospital_name) || "-"}</div>
         </div>
         <div class="list-actions">
+          <button class="btn secondary sm revoke-btn" data-id="${d.id}" data-name="${escapeAttr(d.doctor_name)}">승인취소</button>
           <button class="btn secondary sm reset-btn" data-id="${d.id}">비밀번호 초기화</button>
         </div>
       </div>`;
     }).join("");
+  }
+
+  async function loadAdminRevokedDoctors() {
+    const list = el("adminRevokedDoctorList");
+    if (!list) return;
+    list.innerHTML = `<div class="admin-loading">로딩 중...</div>`;
+    const { data, error } = await sb
+      .from("profiles")
+      .select("*")
+      .eq("role", "doctor_revoked")
+      .order("doctor_name", { ascending: true });
+    if (error) {
+      list.innerHTML = `<div class="admin-error">오류: ${error.message}</div>`;
+      return;
+    }
+    if (!data || data.length === 0) {
+      list.innerHTML = `<div class="admin-empty">승인취소된 의사가 없습니다.</div>`;
+      return;
+    }
+    list.innerHTML = data.map(d => `
+      <div class="list-row">
+        <div class="list-info">
+          <div class="name" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+            ${escapeHtml(d.doctor_name) || "-"}
+            <span class="badge red">승인취소</span>
+            <span class="badge gray">${escapeHtml(d.hospital_code) || "코드없음"}</span>
+          </div>
+          <div class="sub">${escapeHtml(d.hospital_name) || "-"} &nbsp;|&nbsp; ${escapeHtml(d.email) || "-"}</div>
+        </div>
+        <div class="list-actions">
+          <button class="btn primary sm approve-btn" data-id="${d.id}" data-name="${escapeAttr(d.doctor_name)}">다시 승인</button>
+          <button class="btn secondary sm reset-btn" data-id="${d.id}">비밀번호 초기화</button>
+        </div>
+      </div>`).join("");
   }
 
   document.addEventListener("click", async (e) => {
@@ -337,6 +384,27 @@
       alert("승인 완료!");
       await loadAdminPending();
       await loadAdminDoctors();
+      await loadAdminRevokedDoctors();
+      return;
+    }
+
+    if (e.target.matches(".revoke-btn")) {
+      const id = e.target.dataset.id;
+      const name = e.target.dataset.name || "해당";
+      if (!confirm(`${name} 의사의 승인을 취소하시겠습니까? 기존 병원코드와 결과 DB는 유지됩니다.`)) return;
+      e.target.disabled = true;
+      e.target.textContent = "처리 중...";
+      const { error } = await sb.rpc("revoke_doctor_approval", { p_doctor_id: id });
+      e.target.disabled = false;
+      e.target.textContent = "승인취소";
+      if (error) {
+        alert("승인취소 오류: " + error.message);
+        return;
+      }
+      alert("승인취소 완료");
+      await loadAdminPending();
+      await loadAdminDoctors();
+      await loadAdminRevokedDoctors();
       return;
     }
 
@@ -365,7 +433,7 @@
     const btn = el("btnAdminRefresh");
     btn.disabled = true;
     btn.textContent = "로딩 중...";
-    await Promise.all([loadAdminPending(), loadAdminDoctors()]);
+    await Promise.all([loadAdminPending(), loadAdminDoctors(), loadAdminRevokedDoctors()]);
     btn.textContent = "🔄 새로고침";
     btn.disabled = false;
   }
@@ -377,6 +445,15 @@
     btn.disabled = true;
     btn.textContent = "로딩 중...";
     await loadAdminPending();
+    btn.textContent = "새로고침";
+    btn.disabled = false;
+  });
+
+  el("btnRefreshRevokedDoctors")?.addEventListener("click", async () => {
+    const btn = el("btnRefreshRevokedDoctors");
+    btn.disabled = true;
+    btn.textContent = "로딩 중...";
+    await loadAdminRevokedDoctors();
     btn.textContent = "새로고침";
     btn.disabled = false;
   });
@@ -480,16 +557,19 @@
   }
 
   async function searchAdminResult() {
+    const hCode = el("adminSearchHCode").value.trim().toUpperCase();
     const pNum = el("adminSearchPNum").value.trim();
-    if (!pNum) {
-      setMsg("adminResultMsg", "환자 번호를 입력해주세요.", "warn");
+    if (!hCode || !pNum) {
+      setMsg("adminResultMsg", "병원 코드와 환자 번호를 모두 입력해주세요.", "warn");
       return;
     }
+    el("adminSearchHCode").value = hCode;
     setMsg("adminResultMsg", "검색 중...", "info");
     el("adminResultArea").innerHTML = "";
     const { data, error } = await sb
       .from("survey_responses")
       .select("*")
+      .eq("hospital_code", hCode)
       .eq("patient_number", pNum)
       .or("status.eq.completed,completed.eq.true")
       .order("completed_at", { ascending: false })
@@ -500,7 +580,7 @@
       return;
     }
     if (!data) {
-      setMsg("adminResultMsg", `'${pNum}' 완료 결과가 없습니다.`, "warn");
+      setMsg("adminResultMsg", `'${hCode} / ${pNum}' 완료 결과가 없습니다.`, "warn");
       return;
     }
     clearMsg("adminResultMsg");
@@ -508,6 +588,9 @@
   }
 
   el("btnAdminSearchResult")?.addEventListener("click", searchAdminResult);
+  el("adminSearchHCode")?.addEventListener("keydown", e => {
+    if (e.key === "Enter") searchAdminResult();
+  });
   el("adminSearchPNum")?.addEventListener("keydown", e => {
     if (e.key === "Enter") searchAdminResult();
   });
