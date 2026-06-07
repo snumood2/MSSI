@@ -23,6 +23,8 @@ assert.match(respondent, /mode: "no-cors"/);
 assert.doesNotMatch(respondent, /<script>[\s\S]*<\/script>[\s\S]*el\("btnPrintResult"\)/);
 assert.match(respondent, /let submitInProgress = false;/);
 assert.match(respondent, /await submitSurvey\(\);/);
+assert.match(respondent, /patient_can_use_hospital/);
+assert.match(respondent, /state\.hospitalActive/);
 assert.doesNotMatch(respondent, /onchange="\$\{onChangeLogic\}"/);
 assert.doesNotMatch(respondent, /input\[name\^=\\\\"/);
 assert.match(respondent, /input\.dataset\.monthKey = k;/);
@@ -43,6 +45,11 @@ assert.match(admin, /id="adminSearchHCode"/);
 assert.match(admin, /\.eq\("hospital_code", hCode\)/);
 assert.match(admin, /doctor_revoked/);
 assert.match(admin, /revoke_doctor_approval/);
+
+const migration = readFileSync('./supabase/migration.sql', 'utf8');
+assert.match(migration, /patient_can_use_hospital/);
+assert.match(migration, /can_patient_write_survey/);
+assert.match(migration, /public\.can_patient_write_survey\(patient_id, hospital_code\)/);
 
 const workflowExists = existsSync('./.github/workflows/deploy-pages.yml');
 if (workflowExists) {

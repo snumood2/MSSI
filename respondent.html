@@ -138,6 +138,7 @@ const state = {
   answers: {},
   currentSectionIdx: 0,
   responseId: null,
+  hospitalActive: true,
 };
 let submitInProgress = false;
 
@@ -285,6 +286,7 @@ async function initPatient() {
 }
 
 async function refreshPatientStatus() {
+  await refreshHospitalAccess();
   const { data: row } = await sb.from("survey_responses")
     .select("*")
     .or(`patient_id.eq.${state.user.id},patient_user_id.eq.${state.user.id}`)
@@ -300,6 +302,14 @@ async function refreshPatientStatus() {
   if (startBtn)  startBtn.style.display  = "block";
   if (resumeBtn) resumeBtn.style.display = "none";
   if (resultBtn) resultBtn.disabled      = true;
+
+  if (!state.hospitalActive) {
+    statusEl.innerHTML = `<div class="status-msg show error">현재 병원코드가 비활성화되어 설문을 이용할 수 없습니다. 담당자에게 문의해주세요.</div>`;
+    if (startBtn) startBtn.style.display = "none";
+    if (resumeBtn) resumeBtn.style.display = "none";
+    if (resultBtn) resultBtn.disabled = true;
+    return;
+  }
 
   if (row?.status === "completed") {
     statusEl.innerHTML  = `<div class="status-msg show ok">최근 설문이 완료되었습니다 (${fmtDate(row.completed_at)})</div>`;
@@ -319,6 +329,11 @@ async function refreshPatientStatus() {
   }
 
   await loadPatientHistory();
+}
+
+async function refreshHospitalAccess() {
+  const { data, error } = await sb.rpc("patient_can_use_hospital");
+  state.hospitalActive = error ? true : data === true;
 }
 
 async function loadPatientHistory() {
@@ -346,6 +361,12 @@ async function loadPatientHistory() {
 }
 
 el("btnStartSurvey")?.addEventListener("click", async () => {
+  await refreshHospitalAccess();
+  if (!state.hospitalActive) {
+    alert("현재 병원코드가 비활성화되어 설문을 시작할 수 없습니다. 담당자에게 문의해주세요.");
+    await refreshPatientStatus();
+    return;
+  }
   if (!confirm("새 설문을 시작하시겠습니까?")) return;
   state.answers = {}; state.currentSectionIdx = 0;
   const { data, error } = await sb.from("survey_responses").insert({
@@ -760,6 +781,13 @@ function renderCustomMDQ(q, qRow) {
 
 el("btnNext")?.addEventListener("click", async () => {
   if (submitInProgress) return;
+  await refreshHospitalAccess();
+  if (!state.hospitalActive) {
+    alert("현재 병원코드가 비활성화되어 설문을 저장하거나 제출할 수 없습니다. 담당자에게 문의해주세요.");
+    show("view-patient");
+    await refreshPatientStatus();
+    return;
+  }
   const missing = getUnanswered();
   if (missing.length > 0) {
     alert(`응답하지 않은 문항이 ${missing.length}개 있습니다.\n해당 항목으로 이동합니다.`);
@@ -796,6 +824,13 @@ el("btnPrev")?.addEventListener("click", () => {
 });
 
 el("btnSaveQuit")?.addEventListener("click", async () => {
+  await refreshHospitalAccess();
+  if (!state.hospitalActive) {
+    alert("현재 병원코드가 비활성화되어 설문을 저장할 수 없습니다. 담당자에게 문의해주세요.");
+    show("view-patient");
+    await refreshPatientStatus();
+    return;
+  }
   await sb.from("survey_responses").update({
     answers: state.answers,
     progress: { sectionIndex: state.currentSectionIdx }
@@ -807,6 +842,13 @@ el("btnSaveQuit")?.addEventListener("click", async () => {
 
 async function submitSurvey() {
   if (submitInProgress) return;
+  await refreshHospitalAccess();
+  if (!state.hospitalActive) {
+    alert("현재 병원코드가 비활성화되어 설문을 제출할 수 없습니다. 담당자에게 문의해주세요.");
+    show("view-patient");
+    await refreshPatientStatus();
+    return;
+  }
   if (!confirm("모든 설문이 완료되었습니다. 제출하시겠습니까?")) return;
 
   submitInProgress = true;

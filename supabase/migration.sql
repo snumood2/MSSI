@@ -121,6 +121,44 @@ AS $$
   SELECT hospital_code FROM public.profiles WHERE id = auth.uid();
 $$;
 
+CREATE OR REPLACE FUNCTION public.patient_can_use_hospital()
+RETURNS boolean
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path = public
+STABLE
+AS $$
+  SELECT EXISTS (
+    SELECT 1
+    FROM public.profiles patient
+    JOIN public.profiles doctor
+      ON doctor.hospital_code = patient.hospital_code
+     AND doctor.role = 'doctor'
+    WHERE patient.id = auth.uid()
+      AND patient.role = 'patient'
+  );
+$$;
+
+CREATE OR REPLACE FUNCTION public.can_patient_write_survey(p_patient_id UUID, p_hospital_code TEXT)
+RETURNS boolean
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path = public
+STABLE
+AS $$
+  SELECT EXISTS (
+    SELECT 1
+    FROM public.profiles patient
+    JOIN public.profiles doctor
+      ON doctor.hospital_code = patient.hospital_code
+     AND doctor.role = 'doctor'
+    WHERE patient.id = auth.uid()
+      AND patient.id = p_patient_id
+      AND patient.role = 'patient'
+      AND patient.hospital_code = p_hospital_code
+  );
+$$;
+
 --누구나 프로필 생성 가능 (회원가입 시)
 DROP POLICY IF EXISTS "profiles_insert_anyone" ON public.profiles;
 CREATE POLICY "profiles_insert_anyone" ON public.profiles
@@ -148,9 +186,12 @@ CREATE POLICY IF NOT EXISTS "profiles_update_own" ON public.profiles
 ALTER TABLE public.survey_responses ENABLE ROW LEVEL SECURITY;
 
 --환자는 자신의 설문만 INSERT
+DROP POLICY IF EXISTS "survey_insert_own" ON public.survey_responses;
+DROP POLICY IF EXISTS "survey_patient_all" ON public.survey_responses;
 CREATE POLICY IF NOT EXISTS "survey_insert_own" ON public.survey_responses
   FOR INSERT WITH CHECK (
     auth.uid() = patient_id
+    AND public.can_patient_write_survey(patient_id, hospital_code)
   );
 
 --환자는 자신의 설문만 SELECT
@@ -174,8 +215,16 @@ CREATE POLICY IF NOT EXISTS "survey_select_doctor" ON public.survey_responses
   );
 
 --환자는 자신의 설문만 UPDATE
+DROP POLICY IF EXISTS "survey_update_own" ON public.survey_responses;
 CREATE POLICY IF NOT EXISTS "survey_update_own" ON public.survey_responses
-  FOR UPDATE USING (auth.uid() = patient_id);
+  FOR UPDATE USING (
+    auth.uid() = patient_id
+    AND public.can_patient_write_survey(patient_id, hospital_code)
+  )
+  WITH CHECK (
+    auth.uid() = patient_id
+    AND public.can_patient_write_survey(patient_id, hospital_code)
+  );
 
 --══════════════════════════════════════════════════════════════
 --5. RPC (원격 프로시저) 함수
