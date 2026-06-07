@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <title>로그인 — 기분장애 임상평가 설문</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="auth-page">
+
+<div class="auth-wrapper">
+  <div class="auth-header">
+    <h1>📋 로그인</h1>
+  </div>
+  <div class="auth-card">
+    <div id="authMsg" class="status-msg"></div>
+
+    <div id="form-patient">
+      <div class="form-group">
+        <label>아이디</label>
+        <input type="text" id="p_id" placeholder="아이디 입력" autocomplete="username">
+      </div>
+      <div class="form-group">
+        <label>비밀번호</label>
+        <input type="password" id="p_pw" placeholder="비밀번호" autocomplete="current-password">
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <label class="save-id">
+        <input type="checkbox" id="saveIdCheck">
+        아이디 저장
+      </label>
+    </div>
+
+    <button id="btnLogin" class="btn primary">로그인</button>
+
+    <div class="auth-link">
+      <a id="signupLink" href="signup-patient-snubh01.html">처음 사용하시나요? 회원가입</a>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
+  import { SUPABASE_URL, SUPABASE_ANON_KEY, PATIENT_EMAIL_DOMAIN, ADMIN_EMAIL } from "./config.js";
+
+  const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  const $ = id => document.getElementById(id);
+  const setMsg = (msg, type) => {
+    const el = $("authMsg");
+    el.className = `status-msg show ${type}`;
+    el.textContent = msg;
+  };
+  const clearMsg = () => { $("authMsg").className = "status-msg"; };
+
+  const saved = localStorage.getItem("saved_id") || "";
+  if (saved) {
+    $("p_id").value = saved;
+    $("saveIdCheck").checked = true;
+  }
+
+  $("btnLogin").addEventListener("click", async () => {
+    clearMsg();
+
+    try {
+      const id = $("p_id").value.trim();
+      if (!id) throw "아이디를 입력하세요.";
+      if (id.length < 2) throw "아이디는 2자 이상이어야 합니다.";
+
+      const pw = $("p_pw").value;
+      if (!pw) throw "비밀번호를 입력하세요.";
+
+      const email = `${id}@${PATIENT_EMAIL_DOMAIN}`;
+      if ($("saveIdCheck").checked) localStorage.setItem("saved_id", id);
+      else localStorage.removeItem("saved_id");
+
+      setMsg("로그인 중...", "info");
+      $("btnLogin").disabled = true;
+
+      const { error } = await sb.auth.signInWithPassword({ email, password: pw });
+      if (error) throw "로그인 실패. 정보를 확인하세요.";
+    } catch (e) {
+      setMsg(typeof e === "string" ? e : (e.message || "오류 발생"), "error");
+      $("btnLogin").disabled = false;
+    }
+  });
+
+  document.querySelectorAll("input").forEach(inp => {
+    inp.addEventListener("keydown", e => {
+      if (e.key === "Enter") $("btnLogin").click();
+    });
+  });
+
+  sb.auth.onAuthStateChange((event, session) => {
+    if (event !== "SIGNED_IN") return;
+    const user = session?.user;
+    if (!user) return;
+    if (user.email?.toLowerCase() === ADMIN_EMAIL) {
+      window.location.href = "admin.html";
+      return;
+    }
+    window.location.href = "respondent.html";
+  });
+</script>
+</body>
+</html>

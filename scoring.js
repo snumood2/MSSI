@@ -466,8 +466,11 @@ export function generateReport(scores, answers) {
     if (spaqRow) { spaqRow.specialCols = true; spaqRow.extra = scores.SPAQ.class; }
 
     const asrsScreenText = scores.ASRS.screen >= 4 ? "성인ADHD의심됨" : "성인ADHD의심되지않음";
-    const asrsTotalRow = makeRow("성인기 주의집중문제", scores.ASRS.total, 'ASRS', "");
-    if (asrsTotalRow) { asrsTotalRow.specialCols = true; asrsTotalRow.extra = asrsScreenText; }
+    const asrsScreenRow = makeTextOnlyRow(
+      "성인기 주의집중문제 선별",
+      `6개 중 ${scores.ASRS.screen}개 (${asrsScreenText})`
+    );
+    const asrsTotalRow = makeRow("성인기 주의집중문제 점수", scores.ASRS.total, 'ASRS', "");
 
     sections.push({
       title: "계절성 우울증, 집중력, 경계선 성격, 행동문제, 성격특성",
@@ -480,7 +483,7 @@ export function generateReport(scores, answers) {
         {
           label: "성인기 주의집중문제",
           description: "성인 ADHD 검사입니다 (환자군평균 46.8, 정상군평균 39.9). 6개 항목은 ADHD 진단기준에 대해 물어보는 것입니다. 이 중 4개 이상의 항목을 만족하면 성인 ADHD를 의심할 수 있습니다. 그런 경우 \"성인ADHD의심됨\"이라고 표시됩니다. 그러나 이것만으로 ADHD로 진단할 수는 없고, ADHD가 아니라 기분장애의 증상으로 집중력 문제가 있을 수도 있습니다. 하단의 점수는 ADHD 증상의 정도를 나타냅니다.",
-          rows: [asrsTotalRow].filter(Boolean)
+          rows: [asrsScreenRow, asrsTotalRow].filter(Boolean)
         },
         {
           label: "아동기 주의집중문제",

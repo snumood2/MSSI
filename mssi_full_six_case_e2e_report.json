@@ -1,0 +1,139 @@
+{
+  "started_at": "2026-06-07T16:42:30.977Z",
+  "hospital_code": "JWEY6A",
+  "cases": [
+    {
+      "case": 1,
+      "patient_number": "ASRS-20260607164048-1",
+      "hospital_code": "JWEY6A",
+      "target_screen": 0,
+      "screen": 0,
+      "total": 54,
+      "expected": {
+        "screen": "6개 중 0개 (성인ADHD의심되지않음)",
+        "patient_rank": 29,
+        "normal_rank": 3
+      },
+      "sheet": {
+        "screen": "6개 중 0개 (성인ADHD의심되지않음)",
+        "total": 54,
+        "patient_rank": 29,
+        "normal_rank": 3
+      },
+      "mismatches": [],
+      "report_errors": [],
+      "ok": true
+    },
+    {
+      "case": 2,
+      "patient_number": "ASRS-20260607164048-2",
+      "hospital_code": "JWEY6A",
+      "target_screen": 1,
+      "screen": 1,
+      "total": 60,
+      "expected": {
+        "screen": "6개 중 1개 (성인ADHD의심되지않음)",
+        "patient_rank": 15,
+        "normal_rank": 1
+      },
+      "sheet": {
+        "screen": "6개 중 1개 (성인ADHD의심되지않음)",
+        "total": 60,
+        "patient_rank": 15,
+        "normal_rank": 1
+      },
+      "mismatches": [],
+      "report_errors": [],
+      "ok": true
+    },
+    {
+      "case": 3,
+      "patient_number": "ASRS-20260607164048-3",
+      "hospital_code": "JWEY6A",
+      "target_screen": 2,
+      "screen": 2,
+      "total": 60,
+      "expected": {
+        "screen": "6개 중 2개 (성인ADHD의심되지않음)",
+        "patient_rank": 15,
+        "normal_rank": 1
+      },
+      "sheet": {
+        "screen": "6개 중 2개 (성인ADHD의심되지않음)",
+        "total": 60,
+        "patient_rank": 15,
+        "normal_rank": 1
+      },
+      "mismatches": [],
+      "report_errors": [],
+      "ok": true
+    },
+    {
+      "case": 4,
+      "patient_number": "ASRS-20260607164048-4",
+      "hospital_code": "JWEY6A",
+      "target_screen": 3,
+      "screen": 3,
+      "total": 57,
+      "expected": {
+        "screen": "6개 중 3개 (성인ADHD의심되지않음)",
+        "patient_rank": 21,
+        "normal_rank": 1
+      },
+      "sheet": {
+        "screen": "6개 중 3개 (성인ADHD의심되지않음)",
+        "total": 57,
+        "patient_rank": 21,
+        "normal_rank": 1
+      },
+      "mismatches": [],
+      "report_errors": [],
+      "ok": true
+    },
+    {
+      "case": 5,
+      "patient_number": "ASRS-20260607164048-5",
+      "hospital_code": "JWEY6A",
+      "target_screen": 4,
+      "screen": 4,
+      "total": 63,
+      "expected": {
+        "screen": "6개 중 4개 (성인ADHD의심됨)",
+        "patient_rank": 10,
+        "normal_rank": 1
+      },
+      "sheet": {
+        "screen": "6개 중 4개 (성인ADHD의심됨)",
+        "total": 63,
+        "patient_rank": 10,
+        "normal_rank": 1
+      },
+      "mismatches": [],
+      "report_errors": [],
+      "ok": true
+    },
+    {
+      "case": 6,
+      "patient_number": "ASRS-20260607164048-6",
+      "hospital_code": "JWEY6A",
+      "target_screen": 6,
+      "screen": 6,
+      "total": 64,
+      "expected": {
+        "screen": "6개 중 6개 (성인ADHD의심됨)",
+        "patient_rank": 9,
+        "normal_rank": 1
+      },
+      "sheet": {
+        "screen": "6개 중 6개 (성인ADHD의심됨)",
+        "total": 64,
+        "patient_rank": 9,
+        "normal_rank": 1
+      },
+      "mismatches": [],
+      "report_errors": [],
+      "ok": true
+    }
+  ],
+  "ok": true
+}
