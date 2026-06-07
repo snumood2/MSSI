@@ -87,8 +87,8 @@
         <input type="month" id="s_dob" min="1900-01" required>
       </div>
       <div class="form-group">
-        <label>의사에게 받은 번호 <span class="optional">(선택)</span></label>
-        <input type="text" id="s_pnum" placeholder="예: 12345">
+        <label>의사에게 받은 번호 <span class="required">*</span></label>
+        <input type="text" id="s_pnum" placeholder="예: 12345" required>
       </div>
 
       <button id="btnSignup" class="btn-signup">가입하기</button>
@@ -143,8 +143,8 @@
         $("btnSignup").disabled = true;
 
         const patientNumber = $("s_pnum").value.trim();
-        const userData = { role: "patient", username: id, dob, hospital_code: FIXED_HOSPITAL_CODE };
-        if (patientNumber) userData.patient_number = patientNumber;
+        if (!patientNumber) throw "의사에게 받은 번호를 입력하세요.";
+        const userData = { role: "patient", username: id, dob, hospital_code: FIXED_HOSPITAL_CODE, patient_number: patientNumber };
 
         const { data, error } = await sb.auth.signUp({
           email, password: pw,
