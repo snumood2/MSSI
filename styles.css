@@ -960,11 +960,11 @@ body {
 .pdf-export .card,
 .pdf-export.patient-result-card {
   max-width: none !important;
-  width: 190mm !important;
+  width: 170mm !important;
   margin: 0 !important;
   border: none !important;
   border-radius: 0 !important;
-  padding: 0 !important;
+  padding: 7mm 8mm !important;
 }
 .pdf-export .print-btn-wrap,
 .pdf-export #btnBack,

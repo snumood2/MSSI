@@ -571,32 +571,35 @@ document.addEventListener("click", function (e) {
 
   const patNum = btn.dataset.patnum || "result";
   const dateStr = (btn.dataset.date || new Date().toISOString().slice(0, 10)).replace(/\s+/g, "_");
-  const pdfNode = card.cloneNode(true);
+  const pdfNode = card;
+  const openedDetails = Array.from(pdfNode.querySelectorAll("details")).map(d => [d, d.open]);
+  const oldScroll = window.scrollY;
   pdfNode.classList.add("pdf-export");
-  pdfNode.querySelectorAll(".print-btn-wrap, button").forEach(n => n.remove());
-  pdfNode.style.position = "fixed";
-  pdfNode.style.left = "-9999px";
-  pdfNode.style.top = "0";
-  document.body.appendChild(pdfNode);
+  openedDetails.forEach(([d]) => { d.open = true; });
+  window.scrollTo(0, 0);
 
   html2pdf()
     .set({
       margin:       [8, 8, 8, 8],
       filename:     `MSSI_결과지_${dateStr}_${patNum}.pdf`,
       image:        { type: "jpeg", quality: 0.98 },
-      html2canvas:  { scale: 2, useCORS: true, logging: false, backgroundColor: "#ffffff", windowWidth: 900 },
+      html2canvas:  { scale: 2, useCORS: true, logging: false, backgroundColor: "#ffffff", windowWidth: 900, x: -20, scrollX: 0 },
       jsPDF:        { unit: "mm", format: "a4", orientation: "portrait" },
       pagebreak:    { mode: ["css", "legacy"], avoid: ["tr", ".result-section-title"] }
     })
     .from(pdfNode)
     .save()
     .then(() => {
-      pdfNode.remove();
+      pdfNode.classList.remove("pdf-export");
+      openedDetails.forEach(([d, open]) => { d.open = open; });
+      window.scrollTo(0, oldScroll);
       btn.textContent = "✅ PDF 완료";
       setTimeout(() => { btn.disabled = false; btn.textContent = "📄 PDF 다운로드"; }, 2000);
     })
     .catch(() => {
-      pdfNode.remove();
+      pdfNode.classList.remove("pdf-export");
+      openedDetails.forEach(([d, open]) => { d.open = open; });
+      window.scrollTo(0, oldScroll);
       btn.textContent = "❌ 오류";
       setTimeout(() => { btn.disabled = false; btn.textContent = "📄 PDF 다운로드"; }, 3000);
     });
