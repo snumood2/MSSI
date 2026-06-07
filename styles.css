@@ -942,6 +942,168 @@ body {
   border-bottom: 1px solid #eef2f4;
 }
 
+.pdf-export {
+  width: 190mm;
+  box-sizing: border-box;
+  background: #fff;
+  color: #111;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans KR", Arial, sans-serif;
+}
+.pdf-export,
+.pdf-export * {
+  box-sizing: border-box;
+  box-shadow: none !important;
+  text-shadow: none !important;
+}
+.pdf-export.card,
+.pdf-export .card,
+.pdf-export.patient-result-card {
+  max-width: none !important;
+  width: 190mm !important;
+  margin: 0 !important;
+  border: none !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+}
+.pdf-export .print-btn-wrap,
+.pdf-export #btnBack,
+.pdf-export #btnPrintResult,
+.pdf-export #btnDownloadPdf,
+.pdf-export .btn {
+  display: none !important;
+}
+.pdf-export details {
+  display: block !important;
+}
+.pdf-export details > summary {
+  display: none !important;
+}
+.pdf-export .result-header,
+.pdf-export .result-header-block {
+  margin-bottom: 12px !important;
+  text-align: center;
+}
+.pdf-export .result-header h2,
+.pdf-export .report-main-title {
+  font-size: 18pt !important;
+  line-height: 1.25 !important;
+  margin: 0 0 4px 0 !important;
+  color: #111 !important;
+}
+.pdf-export .result-instructions {
+  display: block !important;
+  font-size: 8.5pt !important;
+  line-height: 1.55 !important;
+  padding: 8px 10px !important;
+  margin: 8px 0 12px 0 !important;
+  border-radius: 4px !important;
+  background: #eef6ff !important;
+  color: #222 !important;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+.pdf-export .result-category {
+  break-inside: avoid-page;
+  page-break-inside: avoid;
+  margin-bottom: 10px !important;
+}
+.pdf-export .result-section-title {
+  break-after: avoid;
+  page-break-after: avoid;
+  border-radius: 4px 4px 0 0 !important;
+  padding: 6px 9px !important;
+  font-size: 9.5pt !important;
+  line-height: 1.3 !important;
+  background: #1a7a8a !important;
+  color: #fff !important;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+.pdf-export .group-label {
+  font-size: 9pt !important;
+  padding: 5px 8px !important;
+  margin-top: 6px !important;
+  border-left-width: 3px !important;
+}
+.pdf-export .section-desc-block {
+  font-size: 7.5pt !important;
+  line-height: 1.45 !important;
+  padding: 5px 8px !important;
+  background: #f5fafb !important;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+.pdf-export .result-table-wrap {
+  overflow: visible !important;
+  border: 1px solid #c8d6db !important;
+  border-radius: 0 0 4px 4px !important;
+  width: 100% !important;
+}
+.pdf-export .result-table {
+  table-layout: fixed !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  border-collapse: collapse !important;
+  font-size: 8pt !important;
+}
+.pdf-export .result-table thead {
+  display: table-header-group;
+}
+.pdf-export .result-table tr {
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+.pdf-export .result-table th,
+.pdf-export .result-table td {
+  overflow-wrap: anywhere !important;
+  word-break: keep-all !important;
+}
+.pdf-export .result-table thead th {
+  font-size: 7.5pt !important;
+  line-height: 1.25 !important;
+  padding: 4px 5px !important;
+  background: #f0f5f7 !important;
+  color: #2d5566 !important;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+.pdf-export .result-table tbody td {
+  font-size: 7.5pt !important;
+  line-height: 1.35 !important;
+  padding: 4px 5px !important;
+  vertical-align: middle !important;
+}
+.pdf-export .result-table tbody td.name-cell {
+  width: 25% !important;
+  min-width: 0 !important;
+}
+.pdf-export .result-table tbody td.score-cell {
+  width: 13% !important;
+  min-width: 0 !important;
+  font-size: 8pt !important;
+}
+.pdf-export .result-table tbody td.rank-cell {
+  width: 16% !important;
+  min-width: 0 !important;
+  font-size: 7.5pt !important;
+}
+.pdf-export .result-table tbody td.desc-cell,
+.pdf-export .result-table tbody tr.desc-row td.desc-cell-block {
+  font-size: 7pt !important;
+  line-height: 1.4 !important;
+  padding: 4px 7px !important;
+  background: #fafcfd !important;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+.pdf-export .comorbidity-table {
+  table-layout: auto !important;
+  width: auto !important;
+  max-width: 70mm !important;
+}
+
 @media print {
 
   body * { visibility: hidden; }
