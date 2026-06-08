@@ -2,3 +2,7 @@ node_modules/
 .env
 *.log
 .DS_Store
+__pycache__/
+tools/__pycache__/
+e2e-artifacts/
+excel-e2e-artifacts/

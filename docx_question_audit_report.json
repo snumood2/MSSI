@@ -1,0 +1,493 @@
+{
+  "docx": "/Users/wm/Library/CloudStorage/OneDrive-개인/9. Temporal Work/2026 설문웹앱개밸/기분장애_설문지.docx",
+  "summary": {
+    "sections_checked": 18,
+    "sections_with_question_mismatches": 0,
+    "total_question_mismatches": 0,
+    "sections_with_option_drift": []
+  },
+  "results": [
+    {
+      "section_id": "zung_sds",
+      "title": "1. 우울증 선별 (Zung SDS)",
+      "docx_table": 1,
+      "docx_questions": 20,
+      "web_questions": 20,
+      "question_mismatch_count": 0,
+      "question_mismatches": [],
+      "docx_options": [
+        "1. 아니다",
+        "2. 가끔 그렇다",
+        "3. 자주 그렇다",
+        "4. 항상 그렇다"
+      ],
+      "web_options": [
+        "1. 아니다",
+        "2. 가끔 그렇다",
+        "3. 자주 그렇다",
+        "4. 항상 그렇다"
+      ],
+      "option_similarity": 1.0,
+      "option_note": ""
+    },
+    {
+      "section_id": "bai",
+      "title": "2. 불안 증상 (BAI)",
+      "docx_table": 2,
+      "docx_questions": 21,
+      "web_questions": 21,
+      "question_mismatch_count": 0,
+      "question_mismatches": [],
+      "docx_options": [
+        "0. 전혀",
+        "1. 조금",
+        "2. 상당히",
+        "3. 심하게"
+      ],
+      "web_options": [
+        "0. 전혀",
+        "1. 조금",
+        "2. 상당히",
+        "3. 심하게"
+      ],
+      "option_similarity": 1.0,
+      "option_note": ""
+    },
+    {
+      "section_id": "temps_a",
+      "title": "3. 정서기질 (TEMPSA-SV)",
+      "docx_table": 3,
+      "docx_questions": 39,
+      "web_questions": 39,
+      "question_mismatch_count": 0,
+      "question_mismatches": [],
+      "docx_options": [
+        "1. 예",
+        "0. 아니오"
+      ],
+      "web_options": [
+        "1. 예",
+        "0. 아니오"
+      ],
+      "option_similarity": 1.0,
+      "option_note": ""
+    },
+    {
+      "section_id": "mssi",
+      "title": "4. 기분 안정성 상태 (MSSI)",
+      "docx_table": 4,
+      "docx_questions": 20,
+      "web_questions": 20,
+      "question_mismatch_count": 0,
+      "question_mismatches": [],
+      "docx_options": [
+        "1 = 1일 미만 (몇 시간 지속) / 2 = 1일 이상 1주 미만 / 3 = 1주 이상 2주 미만 / 4 = 매일 증상이 있었다",
+        "1 = 약간 (증상은 있었지만 힘들지 않았다) / 2 = 상당히 (매우 불쾌하지만 참을 수 있었다) / 3 = 심하게 (정말 견디기 힘들었다)"
+      ],
+      "web_options": [
+        "빈도: 1 = 1일 미만 (몇 시간 지속) / 2 = 1일 이상 1주 미만 / 3 = 1주 이상 2주 미만 / 4 = 매일 증상이 있었다",
+        "심각도: 1 = 약간 (증상은 있었지만 힘들지 않았다) / 2 = 상당히 (매우 불쾌하지만 참을 수 있었다) / 3 = 심하게 (정말 견디기 힘들었다)"
+      ],
+      "option_similarity": 0.957,
+      "option_note": "MSSI frequency/severity options compared from DOCX instruction text."
+    },
+    {
+      "section_id": "miq_t",
+      "title": "6. 기분 안정성 특성 (MIQ-T Short Form)",
+      "docx_table": 11,
+      "docx_questions": 17,
+      "web_questions": 17,
+      "question_mismatch_count": 0,
+      "question_mismatches": [],
+      "docx_options": [
+        "0. 전혀 그렇지 않다",
+        "1. 별로 그렇지 않다",
+        "2. 약간 그렇다",
+        "3. 매우 그렇다"
+      ],
+      "web_options": [
+        "0. 전혀 그렇지 않다",
+        "1. 별로 그렇지 않다",
+        "2. 약간 그렇다",
+        "3. 매우 그렇다"
+      ],
+      "option_similarity": 1.0,
+      "option_note": ""
+    },
+    {
+      "section_id": "k_mdq",
+      "title": "7. 한국형 기분장애 질문지 (K-MDQ)",
+      "docx_table": 12,
+      "docx_questions": 15,
+      "web_questions": 15,
+      "question_mismatch_count": 0,
+      "question_mismatches": [],
+      "docx_options": [
+        "1. 예",
+        "0. 아니오",
+        "0. 문제 없었다",
+        "1. 경미한 문제",
+        "2. 중등도의 문제",
+        "3. 심각한 문제"
+      ],
+      "web_options": [
+        "1. 예",
+        "0. 아니오",
+        "0. 문제 없었다",
+        "1. 경미한 문제",
+        "2. 중등도의 문제",
+        "3. 심각한 문제"
+      ],
+      "option_similarity": 1.0,
+      "option_note": "MDQ yes/no and impairment options compared from split DOCX rows."
+    },
+    {
+      "section_id": "bapq",
+      "title": "8. 행동특성 (BAPQ)",
+      "docx_table": 13,
+      "docx_questions": 36,
+      "web_questions": 36,
+      "question_mismatch_count": 0,
+      "question_mismatches": [],
+      "docx_options": [
+        "1. 아주 드물게 그렇다",
+        "2. 드물게 그렇다",
+        "3. 가끔 그렇다",
+        "4. 약간 자주 그렇다",
+        "5. 자주 그렇다",
+        "6. 매우 자주 그렇다"
+      ],
+      "web_options": [
+        "1. 아주 드물게 그렇다",
+        "2. 드물게 그렇다",
+        "3. 가끔 그렇다",
+        "4. 약간 자주 그렇다",
+        "5. 자주 그렇다",
+        "6. 매우 자주 그렇다"
+      ],
+      "option_similarity": 1.0,
+      "option_note": ""
+    },
+    {
+      "section_id": "ctq_sf",
+      "title": "9. 아동기 외상 (CTQ-SF)",
+      "docx_table": 14,
+      "docx_questions": 28,
+      "web_questions": 28,
+      "question_mismatch_count": 0,
+      "question_mismatches": [],
+      "docx_options": [
+        "1. 전혀 아니다",
+        "2. 거의 아니다",
+        "3. 보통 이다",
+        "4. 조금 그랬다",
+        "5. 항상 그랬다"
+      ],
+      "web_options": [
+        "1. 전혀 아니다",
+        "2. 거의 아니다",
+        "3. 보통이다",
+        "4. 조금 그랬다",
+        "5. 항상 그랬다"
+      ],
+      "option_similarity": 1.0,
+      "option_note": ""
+    },
+    {
+      "section_id": "ipsm",
+      "title": "10. 대인관계민감성 (IPSM)",
+      "docx_table": 15,
+      "docx_questions": 36,
+      "web_questions": 36,
+      "question_mismatch_count": 0,
+      "question_mismatches": [],
+      "docx_options": [
+        "1. 전혀 그렇지 않다",
+        "2. 별로 그렇지 않다",
+        "3. 약간 그렇다",
+        "4. 매우 그렇다"
+      ],
+      "web_options": [
+        "1. 전혀 그렇지 않다",
+        "2. 별로 그렇지 않다",
+        "3. 약간 그렇다",
+        "4. 매우 그렇다"
+      ],
+      "option_similarity": 1.0,
+      "option_note": ""
+    },
+    {
+      "section_id": "cd_risc",
+      "title": "11. 회복탄력성 (CD-RISC)",
+      "docx_table": 16,
+      "docx_questions": 25,
+      "web_questions": 25,
+      "question_mismatch_count": 0,
+      "question_mismatches": [],
+      "docx_options": [
+        "0. 전혀 그렇지 않다",
+        "1. 약간 그렇지 않다",
+        "2. 보통이다",
+        "3. 약간 그렇다",
+        "4. 매우 그렇다"
+      ],
+      "web_options": [
+        "0. 전혀 그렇지 않다",
+        "1. 약간 그렇지 않다",
+        "2. 보통이다",
+        "3. 약간 그렇다",
+        "4. 매우 그렇다"
+      ],
+      "option_similarity": 1.0,
+      "option_note": ""
+    },
+    {
+      "section_id": "ersq",
+      "title": "12. 정서조절 (ERSQ)",
+      "docx_table": 17,
+      "docx_questions": 27,
+      "web_questions": 27,
+      "question_mismatch_count": 0,
+      "question_mismatches": [],
+      "docx_options": [
+        "0. 전혀 안 느꼈다",
+        "1. 드물게 느꼈다",
+        "2. 간혹 느꼈다",
+        "3. 자주 느꼈다",
+        "4. 거의 항상 느꼈다"
+      ],
+      "web_options": [
+        "0. 전혀 안 느꼈다",
+        "1. 드물게 느꼈다",
+        "2. 간혹 느꼈다",
+        "3. 자주 느꼈다",
+        "4. 거의 항상 느꼈다"
+      ],
+      "option_similarity": 1.0,
+      "option_note": ""
+    },
+    {
+      "section_id": "bis_bas",
+      "title": "13. 행동패턴 (BIS/BAS)",
+      "docx_table": 18,
+      "docx_questions": 20,
+      "web_questions": 20,
+      "question_mismatch_count": 0,
+      "question_mismatches": [],
+      "docx_options": [
+        "1. 전혀 그렇지 않다",
+        "2. 별로 그렇지 않다",
+        "3. 약간 그렇다",
+        "4. 매우 그렇다"
+      ],
+      "web_options": [
+        "1. 전혀 그렇지 않다",
+        "2. 별로 그렇지 않다",
+        "3. 약간 그렇다",
+        "4. 매우 그렇다"
+      ],
+      "option_similarity": 1.0,
+      "option_note": ""
+    },
+    {
+      "section_id": "audit_k",
+      "title": "14. 음주 (알코올 사용 장애 선별) (AUDIT-K)",
+      "docx_table": 20,
+      "docx_questions": 10,
+      "web_questions": 10,
+      "question_mismatch_count": 0,
+      "question_mismatches": [],
+      "docx_options": [
+        "전혀 마시지 않는다.",
+        "월 1회 미만",
+        "월 2-4회",
+        "주 2-3회",
+        "주 4회 이상",
+        "1-2잔",
+        "3-4잔",
+        "5-6잔",
+        "7-9잔",
+        "10잔 이상",
+        "전혀 없다",
+        "월 1회 미만",
+        "월 1회",
+        "주 1회",
+        "거의 매일",
+        "전혀 없다",
+        "월 1회 미만",
+        "월 1회",
+        "주 1회",
+        "거의 매일",
+        "전혀 없다",
+        "월 1회 미만",
+        "월 1회",
+        "주 1회",
+        "거의 매일",
+        "전혀 없다",
+        "월 1회 미만",
+        "월 1회",
+        "주 1회",
+        "거의 매일",
+        "전혀 없다",
+        "월 1회 미만",
+        "월 1회",
+        "주 1회",
+        "거의 매일",
+        "전혀 없다",
+        "월 1회 미만",
+        "월 1회",
+        "주 1회",
+        "거의 매일",
+        "없었다",
+        "있지만, 지난 1년간 없었다",
+        "지난 1년간 있었다",
+        "없었다",
+        "있지만, 지난 1년간 없었다",
+        "지난 1년간 있었다"
+      ],
+      "web_options": [
+        "0: 전혀 마시지 않는다.",
+        "1: 월 1회 미만",
+        "2: 월 2-4회",
+        "3: 주 2-3회",
+        "4: 주 4회 이상",
+        "0: 1-2잔",
+        "1: 3-4잔",
+        "2: 5-6잔",
+        "3: 7-9잔",
+        "4: 10잔 이상",
+        "0: 전혀 없다",
+        "1: 월 1회 미만",
+        "2: 월 1회",
+        "3: 주 1회",
+        "4: 거의 매일",
+        "0: 전혀 없다",
+        "1: 월 1회 미만",
+        "2: 월 1회",
+        "3: 주 1회",
+        "4: 거의 매일",
+        "0: 전혀 없다",
+        "1: 월 1회 미만",
+        "2: 월 1회",
+        "3: 주 1회",
+        "4: 거의 매일",
+        "0: 전혀 없다",
+        "1: 월 1회 미만",
+        "2: 월 1회",
+        "3: 주 1회",
+        "4: 거의 매일",
+        "0: 전혀 없다",
+        "1: 월 1회 미만",
+        "2: 월 1회",
+        "3: 주 1회",
+        "4: 거의 매일",
+        "0: 전혀 없다",
+        "1: 월 1회 미만",
+        "2: 월 1회",
+        "3: 주 1회",
+        "4: 거의 매일",
+        "0: 없었다",
+        "2: 있지만, 지난 1년간 없었다",
+        "4: 지난 1년간 있었다",
+        "0: 없었다",
+        "2: 있지만, 지난 1년간 없었다",
+        "4: 지난 1년간 있었다"
+      ],
+      "option_similarity": 1.0,
+      "option_note": "AUDIT-K per-question options compared from each row."
+    },
+    {
+      "section_id": "asrs",
+      "title": "17. 집중: 성인기 주의집중 및 행동 문제 (ASRS)",
+      "docx_table": 40,
+      "docx_questions": 18,
+      "web_questions": 18,
+      "question_mismatch_count": 0,
+      "question_mismatches": [],
+      "docx_options": [
+        "1. 전혀 그렇지 않다",
+        "2. 거의 그렇지 않다",
+        "3. 가끔 그렇다",
+        "4. 자주 그렇다",
+        "5. 매우 그렇다"
+      ],
+      "web_options": [
+        "1. 전혀 그렇지 않다",
+        "2. 거의 그렇지 않다",
+        "3. 가끔 그렇다",
+        "4. 자주 그렇다",
+        "5. 매우 그렇다"
+      ],
+      "option_similarity": 1.0,
+      "option_note": ""
+    },
+    {
+      "section_id": "pai_bor",
+      "title": "18. 성격: 경계선 성격 특성 (PAI-BOR)",
+      "docx_table": 41,
+      "docx_questions": 24,
+      "web_questions": 24,
+      "question_mismatch_count": 0,
+      "question_mismatches": [],
+      "docx_options": [
+        "1. 전혀 그렇지 않다",
+        "2. 약간 그렇다",
+        "3. 대체로 그렇다",
+        "4. 매우 그렇다"
+      ],
+      "web_options": [
+        "1. 전혀 그렇지 않다",
+        "2. 약간 그렇다",
+        "3. 대체로 그렇다",
+        "4. 매우 그렇다"
+      ],
+      "option_similarity": 1.0,
+      "option_note": ""
+    },
+    {
+      "section_id": "wurs",
+      "title": "19. 아동기 성향 (WURS)",
+      "docx_table": 42,
+      "docx_questions": 25,
+      "web_questions": 25,
+      "question_mismatch_count": 0,
+      "question_mismatches": [],
+      "docx_options": [
+        "0. 전혀 아니다",
+        "1. 약간 그렇다",
+        "2. 어느 정도 그렇다",
+        "3. 상당히 그렇다",
+        "4. 매우 그렇다"
+      ],
+      "web_options": [
+        "0. 전혀 아니다",
+        "1. 약간 그렇다",
+        "2. 어느 정도 그렇다",
+        "3. 상당히 그렇다",
+        "4. 매우 그렇다"
+      ],
+      "option_similarity": 1.0,
+      "option_note": ""
+    },
+    {
+      "section_id": "csm",
+      "title": "15. 수면 양상 (CSM)",
+      "docx_table": "21-33 plus prompts",
+      "docx_questions": 13,
+      "web_questions": 13,
+      "question_mismatch_count": 0,
+      "question_mismatches": [],
+      "option_similarity": null
+    },
+    {
+      "section_id": "pms",
+      "title": "20. 생리주기에 따른 변화 (PMS)",
+      "docx_table": "43-44",
+      "docx_questions": 19,
+      "web_questions": 19,
+      "question_mismatch_count": 0,
+      "question_mismatches": [],
+      "option_similarity": 1.0
+    }
+  ]
+}

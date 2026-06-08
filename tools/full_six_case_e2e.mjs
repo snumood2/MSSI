@@ -177,7 +177,9 @@ const hospitalCode = process.env.MSSI_E2E_HOSPITAL_CODE || "JWEY6A";
 const password = "MssiPat!2026";
 const sheetToken = await googleToken();
 const cases = [];
-const targets = [0, 1, 2, 3, 4, 6];
+const allTargets = [0, 1, 2, 3, 4, 6];
+const caseLimit = Number(process.env.MSSI_E2E_CASE_LIMIT || allTargets.length);
+const targets = allTargets.slice(0, Math.max(1, Math.min(allTargets.length, caseLimit)));
 
 const scoringSource = fs.readFileSync(new URL("../scoring.js", import.meta.url), "utf8");
 const statsBody = scoringSource.match(/const STATS = (\{[\s\S]*?\n\});/)?.[1];
@@ -348,7 +350,7 @@ for (let i = 0; i < targets.length; i++) {
   if (!wh.ok) throw new Error(`webhook failed case ${i + 1}: ${wh.status} ${wh.text}`);
 
   await sleep(2200);
-  await sheetPut(sheetToken, "검사결과지!H4:J4", [[hospitalCode, "번호", patientNumber]]);
+  await sheetPut(sheetToken, "검사결과지!H4:J4", [[patientNumber, "번호", hospitalCode]]);
   await sleep(1400);
   const reportRows = await sheetGet(sheetToken, "검사결과지!B82:E83", "FORMATTED_VALUE");
   const sheetRows = await sheetGet(sheetToken, "SHEET2REPORT!A21:H90", "FORMATTED_VALUE");

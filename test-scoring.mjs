@@ -36,4 +36,23 @@ const positivePmsScores = calculateScores({
 });
 assert.deepEqual(positivePmsScores.PMS, { sym: 15, func: 2, diag: 'PMS' });
 
+const asrsScores = calculateScores({
+  ...Object.fromEntries(Array.from({ length: 18 }, (_, i) => [`adhd${i + 1}`, 5])),
+});
+assert.deepEqual(asrsScores.ASRS, {
+  total: 72,
+  screen: 6,
+  result: '성인ADHD의심됨, 6개중6항목',
+});
+
+assert.equal(calculateScores({
+  spaq2_0: 2, spaq2_1: 2, spaq2_2: 2, spaq2_3: 2, spaq2_4: 2, spaq2_5: 1,
+  spaq3_2: 1,
+}).SPAQ.class, 'subsyndromal SAD');
+
+assert.equal(calculateScores({
+  spaq2_0: 2, spaq2_1: 2, spaq2_2: 2, spaq2_3: 2, spaq2_4: 1, spaq2_5: 0,
+  spaq3_2: 1,
+}).SPAQ.class, 'not SAD');
+
 console.log('scoring tests passed');

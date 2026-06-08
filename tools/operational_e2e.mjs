@@ -7,7 +7,7 @@ const SUPABASE_URL = cfg.match(/SUPABASE_URL = ENV\.VITE_SUPABASE_URL \|\| "([^"
 const SUPABASE_ANON_KEY = cfg.match(/SUPABASE_ANON_KEY = ENV\.VITE_SUPABASE_ANON_KEY \|\| "([^"]+)"/)[1];
 const WEBHOOK_URL = cfg.match(/GOOGLE_SHEETS_WEBHOOK_URL = ENV\.GOOGLE_SHEETS_WEBHOOK_URL \|\| "([^"]+)"/)[1];
 
-const ADMIN_EMAIL = "snumood@gmail.com";
+const ADMIN_EMAIL = process.env.MSSI_ADMIN_EMAIL || "snumood@gmail.com";
 const ADMIN_PASSWORD = process.env.MSSI_ADMIN_PASSWORD;
 const HDR = { apikey: SUPABASE_ANON_KEY, "Content-Type": "application/json" };
 const tag = new Date().toISOString().replace(/[-:.TZ]/g, "").slice(0, 14);

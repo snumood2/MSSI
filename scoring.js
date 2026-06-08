@@ -61,10 +61,10 @@ const STATS = {
   SPAQ:       { pat_m: 5.95,   pat_sd: 5.29,   nor_m: 5.90,   nor_sd: 4.45  },
   ASRS:       { pat_m: 46.80,  pat_sd: 12.68,  nor_m: 39.90,  nor_sd: 7.75  },
   WURS:       { pat_m: 25.89,  pat_sd: 20.10,  nor_m: 19.76,  nor_sd: 18.34 },
-  BAPQ_Total: { pat_m: 3.27,   pat_sd: 0.64,   nor_m: 2.99,   nor_sd: 0.55  },
-  BAPQ_Aloof: { pat_m: 3.57,   pat_sd: 0.91,   nor_m: 3.24,   nor_sd: 0.79  },
-  BAPQ_Pragma:{ pat_m: 2.84,   pat_sd: 0.79,   nor_m: 2.56,   nor_sd: 0.68  },
-  BAPQ_Rigid: { pat_m: 3.41,   pat_sd: 0.74,   nor_m: 3.15,   nor_sd: 0.61  },
+  BAPQ_Total: { pat_m: 3.58,   pat_sd: 0.65,   nor_m: 2.99,   nor_sd: 0.55  },
+  BAPQ_Aloof: { pat_m: 3.77,   pat_sd: 0.77,   nor_m: 3.24,   nor_sd: 0.79  },
+  BAPQ_Pragma:{ pat_m: 3.13,   pat_sd: 0.76,   nor_m: 2.56,   nor_sd: 0.68  },
+  BAPQ_Rigid: { pat_m: 3.58,   pat_sd: 0.86,   nor_m: 3.15,   nor_sd: 0.61  },
   BOR:        { pat_m: 31.90,  pat_sd: 13.03,  nor_m: 23.79,  nor_sd: 10.76 },
 
   PMS_Sym:    { pat_m: 17.87,  pat_sd: 11.49,  nor_m: 15.71,  nor_sd: 7.80  },
@@ -142,29 +142,29 @@ export function calculateScores(answers) {
   const ctqPN       = [1, 2, 4, 6, 26].reduce((a, c) => a + ctqItems[c-1], 0);
 
   const ipsmTotal  = sum('ip', 1, 36);
-  const ipsmIA     = [2, 9, 11, 15, 18, 19, 30, 36].reduce((a, c) => a + get(`ip${c}`), 0);
-  const ipsmNA     = [3, 5, 10, 14, 23, 24, 25, 35].reduce((a, c) => a + get(`ip${c}`), 0);
-  const ipsmSA     = [1, 8, 12, 17, 28, 31, 34].reduce((a, c) => a + get(`ip${c}`), 0);
-  const ipsmTIM    = [4, 6, 13, 20, 26, 29, 32].reduce((a, c) => a + get(`ip${c}`), 0);
-  const ipsmFIS    = [7, 16, 21, 22, 27, 33].reduce((a, c) => a + get(`ip${c}`), 0);
+  const ipsmIA     = [2, 4, 10, 23, 28, 30, 36].reduce((a, c) => a + get(`ip${c}`), 0);
+  const ipsmNA     = [6, 8, 11, 13, 16, 18, 20, 34].reduce((a, c) => a + get(`ip${c}`), 0);
+  const ipsmSA     = [1, 12, 15, 17, 19, 25, 26, 29].reduce((a, c) => a + get(`ip${c}`), 0);
+  const ipsmTIM    = [3, 7, 9, 14, 21, 22, 32, 33].reduce((a, c) => a + get(`ip${c}`), 0);
+  const ipsmFIS    = [5, 24, 27, 31, 35].reduce((a, c) => a + get(`ip${c}`), 0);
 
   const cdTotal    = sum('cd', 1, 25);
-  const cdHard     = [10, 11, 12, 16, 17, 23, 24, 25].reduce((a, c) => a + get(`cd${c}`), 0);
-  const cdPersist  = [6, 7, 14, 15, 18, 19, 20].reduce((a, c) => a + get(`cd${c}`), 0);
-  const cdOptimism = [1, 2, 4, 5, 8].reduce((a, c) => a + get(`cd${c}`), 0);
-  const cdSupport  = [3, 9, 13].reduce((a, c) => a + get(`cd${c}`), 0);
-  const cdSpirit   = [21, 22].reduce((a, c) => a + get(`cd${c}`), 0);
+  const cdHard     = [1, 4, 14, 15, 16, 17, 18, 19, 23].reduce((a, c) => a + get(`cd${c}`), 0);
+  const cdPersist  = [5, 10, 11, 12, 21, 22, 24, 25].reduce((a, c) => a + get(`cd${c}`), 0);
+  const cdOptimism = [6, 7, 8, 9].reduce((a, c) => a + get(`cd${c}`), 0);
+  const cdSupport  = [2, 13].reduce((a, c) => a + get(`cd${c}`), 0);
+  const cdSpirit   = [3, 20].reduce((a, c) => a + get(`cd${c}`), 0);
 
   const ersqTotal   = sum('er', 1, 27) / 27;
-  const ersqAware   = avg(['er1','er2','er3']);
-  const ersqBody    = avg(['er4','er5','er6']);
-  const ersqClarity = avg(['er7','er8','er9']);
-  const ersqUnder   = avg(['er10','er11','er12']);
-  const ersqAccept  = avg(['er13','er14','er15']);
-  const ersqResil   = avg(['er16','er17','er18']);
-  const ersqSupport = avg(['er19','er20','er21']);
-  const ersqTolerate= avg(['er22','er23','er24']);
-  const ersqModify  = avg(['er25','er26','er27']);
+  const ersqAware   = avg(['er1','er12','er19']);
+  const ersqBody    = avg(['er7','er14','er24']);
+  const ersqClarity = avg(['er6','er13','er25']);
+  const ersqUnder   = avg(['er3','er11','er20']);
+  const ersqAccept  = avg(['er5','er17','er23']);
+  const ersqResil   = avg(['er8','er16','er22']);
+  const ersqSupport = avg(['er9','er15','er27']);
+  const ersqTolerate= avg(['er4','er18','er26']);
+  const ersqModify  = avg(['er2','er10','er21']);
 
   const bis = [1, 6, 10, 13, 15, 18, 20].reduce((a, c) => a + ([1, 18].includes(c) ? (5 - get(`bb${c}`)) : get(`bb${c}`)), 0);
   const basReward = [3, 5, 11, 14, 19].reduce((a, c) => a + get(`bb${c}`), 0);
@@ -172,10 +172,16 @@ export function calculateScores(answers) {
   const basFun    = [4, 8, 12, 16].reduce((a, c) => a + get(`bb${c}`), 0);
   const bas = basReward + basDrive + basFun;
 
-  const bapqAloof  = sum('ba', 1, 12) / 12;
-  const bapqPragma = sum('ba', 13, 24) / 12;
-  const bapqRigid  = sum('ba', 25, 36) / 12;
-  const bapqTotal  = sum('ba', 1, 36) / 36;
+  const bapqItem = (item) => {
+    const value = get(`ba${item}`);
+    return [1, 3, 7, 9, 12, 15, 16, 19, 21, 23, 25, 28, 30, 34, 36].includes(item)
+      ? (7 - value)
+      : value;
+  };
+  const bapqAloof  = [1, 5, 9, 12, 16, 18, 23, 25, 27, 28, 31, 36].reduce((a, c) => a + bapqItem(c), 0) / 12;
+  const bapqPragma = [2, 4, 7, 10, 11, 14, 17, 20, 21, 29, 32, 34].reduce((a, c) => a + bapqItem(c), 0) / 12;
+  const bapqRigid  = [3, 6, 8, 13, 15, 19, 22, 24, 26, 30, 33, 35].reduce((a, c) => a + bapqItem(c), 0) / 12;
+  const bapqTotal  = Array.from({ length: 36 }, (_, i) => bapqItem(i + 1)).reduce((a, b) => a + b, 0) / 36;
 
   const audit = sum('au', 1, 10);
 
@@ -186,17 +192,17 @@ export function calculateScores(answers) {
   else cmsClass = "중간형";
 
   const spaqScore = sum('spaq2_', 0, 5);
-  const spaqGlobal = get('spaq_global');
+  const spaqGlobal = get('spaq3_2') || get('spaq_global');
   let spaqClass;
   if (spaqScore >= 11 && spaqGlobal >= 2) spaqClass = "SAD";
-  else if (spaqScore >= 11 || spaqGlobal >= 2) spaqClass = "subsyndromal SAD";
+  else if ((spaqScore >= 9 && spaqScore <= 10 && spaqGlobal >= 2) || (spaqScore >= 11 && spaqGlobal <= 1)) spaqClass = "subsyndromal SAD";
   else spaqClass = "not SAD";
 
   let asrsScreen = 0;
   for (let i = 1; i <= 3; i++) { if (get(`adhd${i}`) >= 3) asrsScreen++; }
   for (let i = 4; i <= 6; i++) { if (get(`adhd${i}`) >= 4) asrsScreen++; }
   const asrsResult = asrsScreen >= 4 ? `성인ADHD의심됨, 6개중${asrsScreen}항목` : `성인ADHD의심되지않음, 6개중${asrsScreen}항목`;
-  const asrsTotal  = sum('adhd', 1, 18);
+  const asrsTotal  = Array.from({ length: 18 }, (_, i) => Math.max(0, get(`adhd${i + 1}`) - 1)).reduce((a, b) => a + b, 0);
 
   const wurs = sum('wurs', 1, 25);
 
