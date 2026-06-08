@@ -454,8 +454,8 @@
 
     if (e.target.matches(".reset-btn")) {
       const id = e.target.dataset.id;
-      const newPw = "000000";
-      if (!confirm(`비밀번호를 '${newPw}'(으)로 초기화하시겠습니까?`)) return;
+      const newPw = generateTemporaryPassword();
+      if (!confirm("이 의사의 비밀번호를 안전한 임시 비밀번호로 초기화하시겠습니까?")) return;
       e.target.disabled = true;
       e.target.textContent = "처리 중...";
       const { error } = await sb.rpc("admin_reset_password", {
@@ -467,7 +467,7 @@
       if (error) {
         alert("오류: " + error.message);
       } else {
-        alert("비밀번호 초기화 완료");
+        alert(`비밀번호 초기화 완료\n\n임시 비밀번호: ${newPw}\n\n이 값은 다시 표시되지 않습니다. 의사에게 안전한 경로로 전달하고 로그인 후 변경하도록 안내하세요.`);
       }
       return;
     }
@@ -530,13 +530,13 @@
     container.innerHTML = (report.sections || []).map(section => {
       const groupsHTML = (section.groups || []).map(group => {
         let html = "";
-        if (group.label && group.type !== "comorbidity") html += `<div class="group-label">${group.label}</div>`;
-        if (group.description) html += `<div class="section-desc-block">${group.description}</div>`;
+        if (group.label && group.type !== "comorbidity") html += `<div class="group-label">${escapeHtml(group.label)}</div>`;
+        if (group.description) html += `<div class="section-desc-block">${escapeHtml(group.description)}</div>`;
         if (group.type === "comorbidity") {
-          html += `<div class="group-label">${group.label || ""}</div><table class="result-table comorbidity-table"><tbody>`;
+          html += `<div class="group-label">${escapeHtml(group.label)}</div><table class="result-table comorbidity-table"><tbody>`;
           (group.items || []).forEach(item => {
             const cls = item.value === "O" ? "comorbid-positive" : "comorbid-negative";
-            html += `<tr><td class="comorbid-name">${item.name}</td><td class="comorbid-val ${cls}">${item.value}</td></tr>`;
+            html += `<tr><td class="comorbid-name">${escapeHtml(item.name)}</td><td class="comorbid-val ${cls}">${escapeHtml(item.value)}</td></tr>`;
           });
           return html + `</tbody></table>`;
         }
@@ -551,18 +551,18 @@
         rows.forEach(r => {
           const subCls = r.sub ? " sub-item" : "";
           if (r.textOnly) {
-            html += `<tr><td class="name-cell${subCls}">${r.name || ""}</td><td class="score-cell" colspan="${hasSpecial ? 4 : 3}">${fmtScore(r.score)}</td></tr>`;
+            html += `<tr><td class="name-cell${subCls}">${escapeHtml(r.name)}</td><td class="score-cell" colspan="${hasSpecial ? 4 : 3}">${escapeHtml(fmtScore(r.score))}</td></tr>`;
           } else if (hasSpecial) {
-            html += `<tr><td class="name-cell${subCls}">${r.name || ""}</td><td class="score-cell">${r.extra || ""}</td><td class="score-cell">${fmtScore(r.score)}</td><td class="rank-cell" style="color:${r.pat_color || "inherit"}">${fmtRank(r.pat_rank)}</td><td class="rank-cell" style="color:${r.nor_color || "inherit"}">${fmtRank(r.nor_rank)}</td></tr>`;
-            if (r.description) html += `<tr class="desc-row"><td colspan="5" class="desc-cell-block">${r.description}</td></tr>`;
+            html += `<tr><td class="name-cell${subCls}">${escapeHtml(r.name)}</td><td class="score-cell">${escapeHtml(r.extra)}</td><td class="score-cell">${escapeHtml(fmtScore(r.score))}</td><td class="rank-cell" style="color:${safeReportColor(r.pat_color)}">${escapeHtml(fmtRank(r.pat_rank))}</td><td class="rank-cell" style="color:${safeReportColor(r.nor_color)}">${escapeHtml(fmtRank(r.nor_rank))}</td></tr>`;
+            if (r.description) html += `<tr class="desc-row"><td colspan="5" class="desc-cell-block">${escapeHtml(r.description)}</td></tr>`;
           } else {
-            html += `<tr><td class="name-cell${subCls}">${r.name || ""}</td><td class="score-cell">${fmtScore(r.score)}</td><td class="rank-cell" style="color:${r.pat_color || "inherit"}">${fmtRank(r.pat_rank)}</td><td class="rank-cell" style="color:${r.nor_color || "inherit"}">${fmtRank(r.nor_rank)}</td></tr>`;
-            if (!r.sub && r.description) html += `<tr class="desc-row"><td colspan="4" class="desc-cell-block">${r.description}</td></tr>`;
+            html += `<tr><td class="name-cell${subCls}">${escapeHtml(r.name)}</td><td class="score-cell">${escapeHtml(fmtScore(r.score))}</td><td class="rank-cell" style="color:${safeReportColor(r.pat_color)}">${escapeHtml(fmtRank(r.pat_rank))}</td><td class="rank-cell" style="color:${safeReportColor(r.nor_color)}">${escapeHtml(fmtRank(r.nor_rank))}</td></tr>`;
+            if (!r.sub && r.description) html += `<tr class="desc-row"><td colspan="4" class="desc-cell-block">${escapeHtml(r.description)}</td></tr>`;
           }
         });
         return html + `</tbody></table></div>`;
       }).join("");
-      return `<div class="result-category"><div class="result-section-title">${section.title}</div>${groupsHTML}</div>`;
+      return `<div class="result-category"><div class="result-section-title">${escapeHtml(section.title)}</div>${groupsHTML}</div>`;
     }).join("");
   }
 
@@ -583,17 +583,17 @@
         <div class="divider" style="margin-top:0;"></div>
         <div class="result-header-block">
           <h2 class="report-main-title">기분장애 임상평가 결과지</h2>
-          <p class="report-date-line">${fmtDate(row.completed_at)}&nbsp;&nbsp;번호: ${row.patient_number || "-"}</p>
+          <p class="report-date-line">${escapeHtml(fmtDate(row.completed_at))}&nbsp;&nbsp;번호: ${escapeHtml(row.patient_number || "-")}</p>
         </div>
         <details style="margin-bottom:24px;">
           <summary style="cursor:pointer;font-size:14px;font-weight:700;color:var(--accent);padding:12px 16px;background:var(--accent-light);border-radius:10px;">
             📋 결과 해석 안내 (클릭하여 펼치기)
           </summary>
-          <div class="result-instructions" style="margin-top:8px;">${instructions}</div>
+          <div class="result-instructions" style="margin-top:8px;">${escapeHtml(instructions)}</div>
         </details>
         <div id="${contentId}"></div>
         <div class="print-btn-wrap">
-          <button class="btn secondary sm btn-admin-pdf" data-patnum="${row.patient_number || "result"}" data-date="${fmtDate(row.completed_at)}">📄 PDF 다운로드</button>
+          <button class="btn secondary sm btn-admin-pdf" data-patnum="${escapeAttr(row.patient_number || "result")}" data-date="${escapeAttr(fmtDate(row.completed_at))}">📄 PDF 다운로드</button>
           <button class="btn primary sm" onclick="window.print()">🖨️ 인쇄</button>
         </div>
       </div>`;
@@ -687,6 +687,18 @@
   function escapeAttr(str) {
     if (str == null) return "";
     return String(str).replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+  }
+
+  function safeReportColor(value) {
+    const color = String(value || "");
+    return /^#[0-9a-fA-F]{3,8}$/.test(color) ? color : "inherit";
+  }
+
+  function generateTemporaryPassword() {
+    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%";
+    const bytes = new Uint8Array(16);
+    crypto.getRandomValues(bytes);
+    return Array.from(bytes, b => chars[b % chars.length]).join("");
   }
 
   el("a_pw").addEventListener("keydown", (e) => {

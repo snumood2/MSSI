@@ -228,6 +228,23 @@ document.addEventListener('DOMContentLoaded', function() {
     if (target) { target.classList.add("active"); window.scrollTo(0, 0); }
   }
 
+  function escapeHtml(str) {
+    if (str == null) return "";
+    const div = document.createElement("div");
+    div.textContent = String(str);
+    return div.innerHTML;
+  }
+
+  function escapeAttr(str) {
+    if (str == null) return "";
+    return String(str).replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+  }
+
+  function safeReportColor(value) {
+    const color = String(value || "");
+    return /^#[0-9a-fA-F]{3,8}$/.test(color) ? color : "inherit";
+  }
+
   function renderReportHTML(report, container) {
     if (!container || !report) return;
 
@@ -250,20 +267,20 @@ document.addEventListener('DOMContentLoaded', function() {
         let html = "";
 
         if (group.label && group.type !== "comorbidity") {
-          html += `<div class="group-label">${group.label}</div>`;
+          html += `<div class="group-label">${escapeHtml(group.label)}</div>`;
         }
 
         if (group.description) {
-          html += `<div class="section-desc-block">${group.description}</div>`;
+          html += `<div class="section-desc-block">${escapeHtml(group.description)}</div>`;
         }
 
         if (group.type === "comorbidity") {
           const items = group.items || [];
-          html += `<div class="group-label">${group.label || ""}</div>`;
+          html += `<div class="group-label">${escapeHtml(group.label)}</div>`;
           html += `<table class="result-table comorbidity-table"><tbody>`;
           items.forEach(item => {
             const cls = item.value === 'O' ? 'comorbid-positive' : 'comorbid-negative';
-            html += `<tr><td class="comorbid-name">${item.name}</td><td class="comorbid-val ${cls}">${item.value}</td></tr>`;
+            html += `<tr><td class="comorbid-name">${escapeHtml(item.name)}</td><td class="comorbid-val ${cls}">${escapeHtml(item.value)}</td></tr>`;
           });
           html += `</tbody></table>`;
           return html;
@@ -285,34 +302,34 @@ document.addEventListener('DOMContentLoaded', function() {
             </tr></thead>
             <tbody>`;
           rows.forEach(r => {
-            const name = r.name || "";
+            const name = escapeHtml(r.name);
             const subCls = r.sub ? " sub-item" : "";
             if (r.textOnly) {
-              html += `<tr><td class="name-cell${subCls}">${name}</td><td class="score-cell" colspan="4">${fmtScore(r.score)}</td></tr>`;
+              html += `<tr><td class="name-cell${subCls}">${name}</td><td class="score-cell" colspan="4">${escapeHtml(fmtScore(r.score))}</td></tr>`;
             } else if (r.specialCols) {
               const pRank = fmtRank(r.pat_rank);
               const nRank = fmtRank(r.nor_rank);
               html += `<tr>
                 <td class="name-cell${subCls}">${name}</td>
-                <td class="score-cell">${r.extra || ""}</td>
-                <td class="score-cell">${fmtScore(r.score)}</td>
-                <td class="rank-cell" style="color:${r.pat_color || 'inherit'}">${pRank}</td>
-                <td class="rank-cell" style="color:${r.nor_color || 'inherit'}">${nRank}</td>
+                <td class="score-cell">${escapeHtml(r.extra)}</td>
+                <td class="score-cell">${escapeHtml(fmtScore(r.score))}</td>
+                <td class="rank-cell" style="color:${safeReportColor(r.pat_color)}">${escapeHtml(pRank)}</td>
+                <td class="rank-cell" style="color:${safeReportColor(r.nor_color)}">${escapeHtml(nRank)}</td>
               </tr>`;
               if (r.description) {
-                html += `<tr class="desc-row"><td colspan="5" class="desc-cell-block">${r.description}</td></tr>`;
+                html += `<tr class="desc-row"><td colspan="5" class="desc-cell-block">${escapeHtml(r.description)}</td></tr>`;
               }
             } else {
               const pRank = fmtRank(r.pat_rank);
               const nRank = fmtRank(r.nor_rank);
               html += `<tr>
                 <td class="name-cell${subCls}">${name}</td>
-                <td class="score-cell" colspan="2">${fmtScore(r.score)}</td>
-                <td class="rank-cell" style="color:${r.pat_color || 'inherit'}">${pRank}</td>
-                <td class="rank-cell" style="color:${r.nor_color || 'inherit'}">${nRank}</td>
+                <td class="score-cell" colspan="2">${escapeHtml(fmtScore(r.score))}</td>
+                <td class="rank-cell" style="color:${safeReportColor(r.pat_color)}">${escapeHtml(pRank)}</td>
+                <td class="rank-cell" style="color:${safeReportColor(r.nor_color)}">${escapeHtml(nRank)}</td>
               </tr>`;
               if (!r.sub && r.description) {
-                html += `<tr class="desc-row"><td colspan="5" class="desc-cell-block">${r.description}</td></tr>`;
+                html += `<tr class="desc-row"><td colspan="5" class="desc-cell-block">${escapeHtml(r.description)}</td></tr>`;
               }
             }
           });
@@ -327,21 +344,21 @@ document.addEventListener('DOMContentLoaded', function() {
             </tr></thead>
             <tbody>`;
           rows.forEach(r => {
-            const name = r.name || "";
+            const name = escapeHtml(r.name);
             const subCls = r.sub ? " sub-item" : "";
             if (r.textOnly) {
-              html += `<tr><td class="name-cell${subCls}">${name}</td><td class="score-cell" colspan="3">${fmtScore(r.score)}</td></tr>`;
+              html += `<tr><td class="name-cell${subCls}">${name}</td><td class="score-cell" colspan="3">${escapeHtml(fmtScore(r.score))}</td></tr>`;
             } else {
               const pRank = fmtRank(r.pat_rank);
               const nRank = fmtRank(r.nor_rank);
               html += `<tr>
                 <td class="name-cell${subCls}">${name}</td>
-                <td class="score-cell">${fmtScore(r.score)}</td>
-                <td class="rank-cell" style="color:${r.pat_color || 'inherit'}">${pRank}</td>
-                <td class="rank-cell" style="color:${r.nor_color || 'inherit'}">${nRank}</td>
+                <td class="score-cell">${escapeHtml(fmtScore(r.score))}</td>
+                <td class="rank-cell" style="color:${safeReportColor(r.pat_color)}">${escapeHtml(pRank)}</td>
+                <td class="rank-cell" style="color:${safeReportColor(r.nor_color)}">${escapeHtml(nRank)}</td>
               </tr>`;
               if (!r.sub && r.description) {
-                html += `<tr class="desc-row"><td colspan="4" class="desc-cell-block">${r.description}</td></tr>`;
+                html += `<tr class="desc-row"><td colspan="4" class="desc-cell-block">${escapeHtml(r.description)}</td></tr>`;
               }
             }
           });
@@ -353,7 +370,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
       return `
         <div class="result-category">
-          <div class="result-section-title">${section.title}</div>
+          <div class="result-section-title">${escapeHtml(section.title)}</div>
           ${groupsHTML}
         </div>`;
     }).join("");
@@ -382,17 +399,17 @@ document.addEventListener('DOMContentLoaded', function() {
         <div class="divider" style="margin-top:0;"></div>
         <div class="result-header-block">
           <h2 class="report-main-title">기분장애 임상평가 결과지</h2>
-          <p class="report-date-line">${dateStr}&nbsp;&nbsp;번호: ${patNum}</p>
+          <p class="report-date-line">${escapeHtml(dateStr)}&nbsp;&nbsp;번호: ${escapeHtml(patNum)}</p>
         </div>
         <details style="margin-bottom:24px;">
           <summary style="cursor:pointer;font-size:14px;font-weight:700;color:var(--accent);padding:12px 16px;background:var(--accent-light);border-radius:10px;">
             📋 결과 해석 안내 (클릭하여 펼치기)
           </summary>
-          <div class="result-instructions" style="margin-top:8px;">${instructions}</div>
+          <div class="result-instructions" style="margin-top:8px;">${escapeHtml(instructions)}</div>
         </details>
         <div id="drReportContent"></div>
         <div class="print-btn-wrap">
-          <button class="btn secondary sm btn-dr-pdf" data-patnum="${patNum}" data-date="${dateStr}">📄 PDF 다운로드</button>
+          <button class="btn secondary sm btn-dr-pdf" data-patnum="${escapeAttr(patNum)}" data-date="${escapeAttr(dateStr)}">📄 PDF 다운로드</button>
           <button class="btn primary sm" onclick="window.print()">🖨️ 인쇄</button>
         </div>
       </div>`;

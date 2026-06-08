@@ -86,7 +86,10 @@ function parsePayload_(e) {
 
 function verifySecret_(params) {
   const expected = PropertiesService.getScriptProperties().getProperty(CONFIG.WEBHOOK_SECRET_PROPERTY);
-  if (expected && params.secret !== expected) {
+  if (!expected) {
+    throw new Error('Webhook secret is not configured.');
+  }
+  if (params.secret !== expected) {
     throw new Error('Invalid webhook secret.');
   }
 }

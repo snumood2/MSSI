@@ -128,7 +128,7 @@
 
 <script type="module">
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
-import { SUPABASE_URL, SUPABASE_ANON_KEY, ADMIN_EMAIL, GOOGLE_SHEETS_WEBHOOK_URL } from "./config.js";
+import { SUPABASE_URL, SUPABASE_ANON_KEY, ADMIN_EMAIL, GOOGLE_SHEETS_WEBHOOK_URL, WEBHOOK_SECRET } from "./config.js";
 import { SURVEY_SECTIONS } from "./questions.js";
 import { calculateScores, generateReport, getGlobalInstructions } from "./scoring.js";
 
@@ -231,6 +231,18 @@ function isAUDITSkipActive() {
 const cleanText  = t => t ? t.replace(/\[cite:[^\]]*\]/g, "").trim() : "";
 const cleanTitle = t => t ? t.replace(/\s*\([^)]+\)/g, "").trim() : "";
 
+function escapeHtml(str) {
+  if (str == null) return "";
+  const div = document.createElement("div");
+  div.textContent = String(str);
+  return div.innerHTML;
+}
+
+function safeReportColor(value) {
+  const color = String(value || "");
+  return /^#[0-9a-fA-F]{3,8}$/.test(color) ? color : "inherit";
+}
+
 function fmtDate(str) {
   if (!str) return "-";
   const d = new Date(str);
@@ -244,7 +256,7 @@ function safeStringify(value) {
 
 function buildGoogleSheetsPayload(scores, report) {
   const p = state.profile || {};
-  return {
+  const payload = {
     timestamp: new Date().toISOString(),
     responseId: state.responseId || "",
     patientId: p.id || state.user?.id || "",
@@ -259,10 +271,16 @@ function buildGoogleSheetsPayload(scores, report) {
     scoresJson: safeStringify(scores || {}),
     reportJson: safeStringify(report || {})
   };
+  if (WEBHOOK_SECRET) payload.secret = WEBHOOK_SECRET;
+  return payload;
 }
 
 async function sendGoogleSheetsPayload(scores, report) {
   if (!GOOGLE_SHEETS_WEBHOOK_URL || !state.profile) return;
+  if (!WEBHOOK_SECRET) {
+    console.warn("Google Sheets 전송 건너뜀: VITE_WEBHOOK_SECRET이 설정되지 않았습니다.");
+    return;
+  }
   try {
     await fetch(GOOGLE_SHEETS_WEBHOOK_URL, {
       method: "POST",
@@ -942,11 +960,11 @@ function renderResultView(report, completedAt, patientNumber) {
   const infoEl = el("resultPatientInfo");
   if (infoEl && state.profile) {
     const p = state.profile;
-    const dobYear = p.dob ? p.dob.slice(0, 4) : "-";
+    const dobYear = p.dob ? escapeHtml(p.dob.slice(0, 4)) : "-";
     infoEl.innerHTML = `
       <span class="meta-label">출생연도:</span><span class="meta-value">${dobYear}</span>
-      &nbsp;&nbsp;<span class="meta-label">병원코드:</span><span class="meta-value">${p.hospital_code || "-"}</span>
-      &nbsp;&nbsp;<span class="meta-label">번호:</span><span class="meta-value">${p.patient_number || "-"}</span>`;
+      &nbsp;&nbsp;<span class="meta-label">병원코드:</span><span class="meta-value">${escapeHtml(p.hospital_code || "-")}</span>
+      &nbsp;&nbsp;<span class="meta-label">번호:</span><span class="meta-value">${escapeHtml(p.patient_number || "-")}</span>`;
   }
 
   const content = el("resultTableContent");
@@ -975,20 +993,20 @@ function renderReportHTML(report, container) {
       let html = "";
 
       if (group.label && group.type !== "comorbidity") {
-        html += `<div class="group-label">${group.label}</div>`;
+        html += `<div class="group-label">${escapeHtml(group.label)}</div>`;
       }
 
       if (group.description) {
-        html += `<div class="section-desc-block">${group.description}</div>`;
+        html += `<div class="section-desc-block">${escapeHtml(group.description)}</div>`;
       }
 
       if (group.type === "comorbidity") {
         const items = group.items || [];
-        html += `<div class="group-label">${group.label || ""}</div>`;
+        html += `<div class="group-label">${escapeHtml(group.label)}</div>`;
         html += `<table class="result-table comorbidity-table"><tbody>`;
         items.forEach(item => {
           const cls = item.value === 'O' ? 'comorbid-positive' : 'comorbid-negative';
-          html += `<tr><td class="comorbid-name">${item.name}</td><td class="comorbid-val ${cls}">${item.value}</td></tr>`;
+          html += `<tr><td class="comorbid-name">${escapeHtml(item.name)}</td><td class="comorbid-val ${cls}">${escapeHtml(item.value)}</td></tr>`;
         });
         html += `</tbody></table>`;
         return html;
@@ -1010,34 +1028,34 @@ function renderReportHTML(report, container) {
           </tr></thead>
           <tbody>`;
         rows.forEach(r => {
-          const name = r.name || "";
+          const name = escapeHtml(r.name);
           const subCls = r.sub ? " sub-item" : "";
           if (r.textOnly) {
-            html += `<tr><td class="name-cell${subCls}">${name}</td><td class="score-cell" colspan="4">${fmtScore(r.score)}</td></tr>`;
+            html += `<tr><td class="name-cell${subCls}">${name}</td><td class="score-cell" colspan="4">${escapeHtml(fmtScore(r.score))}</td></tr>`;
           } else if (r.specialCols) {
             const pRank = fmtRank(r.pat_rank);
             const nRank = fmtRank(r.nor_rank);
             html += `<tr>
               <td class="name-cell${subCls}">${name}</td>
-              <td class="score-cell">${r.extra || ""}</td>
-              <td class="score-cell">${fmtScore(r.score)}</td>
-              <td class="rank-cell" style="color:${r.pat_color || 'inherit'}">${pRank}</td>
-              <td class="rank-cell" style="color:${r.nor_color || 'inherit'}">${nRank}</td>
+              <td class="score-cell">${escapeHtml(r.extra)}</td>
+              <td class="score-cell">${escapeHtml(fmtScore(r.score))}</td>
+              <td class="rank-cell" style="color:${safeReportColor(r.pat_color)}">${escapeHtml(pRank)}</td>
+              <td class="rank-cell" style="color:${safeReportColor(r.nor_color)}">${escapeHtml(nRank)}</td>
             </tr>`;
             if (r.description) {
-              html += `<tr class="desc-row"><td colspan="5" class="desc-cell-block">${r.description}</td></tr>`;
+              html += `<tr class="desc-row"><td colspan="5" class="desc-cell-block">${escapeHtml(r.description)}</td></tr>`;
             }
           } else {
             const pRank = fmtRank(r.pat_rank);
             const nRank = fmtRank(r.nor_rank);
             html += `<tr>
               <td class="name-cell${subCls}">${name}</td>
-              <td class="score-cell" colspan="2">${fmtScore(r.score)}</td>
-              <td class="rank-cell" style="color:${r.pat_color || 'inherit'}">${pRank}</td>
-              <td class="rank-cell" style="color:${r.nor_color || 'inherit'}">${nRank}</td>
+              <td class="score-cell" colspan="2">${escapeHtml(fmtScore(r.score))}</td>
+              <td class="rank-cell" style="color:${safeReportColor(r.pat_color)}">${escapeHtml(pRank)}</td>
+              <td class="rank-cell" style="color:${safeReportColor(r.nor_color)}">${escapeHtml(nRank)}</td>
             </tr>`;
             if (!r.sub && r.description) {
-              html += `<tr class="desc-row"><td colspan="5" class="desc-cell-block">${r.description}</td></tr>`;
+              html += `<tr class="desc-row"><td colspan="5" class="desc-cell-block">${escapeHtml(r.description)}</td></tr>`;
             }
           }
         });
@@ -1052,21 +1070,21 @@ function renderReportHTML(report, container) {
           </tr></thead>
           <tbody>`;
         rows.forEach(r => {
-          const name = r.name || "";
+          const name = escapeHtml(r.name);
           const subCls = r.sub ? " sub-item" : "";
           if (r.textOnly) {
-            html += `<tr><td class="name-cell${subCls}">${name}</td><td class="score-cell" colspan="3">${fmtScore(r.score)}</td></tr>`;
+            html += `<tr><td class="name-cell${subCls}">${name}</td><td class="score-cell" colspan="3">${escapeHtml(fmtScore(r.score))}</td></tr>`;
           } else {
             const pRank = fmtRank(r.pat_rank);
             const nRank = fmtRank(r.nor_rank);
             html += `<tr>
               <td class="name-cell${subCls}">${name}</td>
-              <td class="score-cell">${fmtScore(r.score)}</td>
-              <td class="rank-cell" style="color:${r.pat_color || 'inherit'}">${pRank}</td>
-              <td class="rank-cell" style="color:${r.nor_color || 'inherit'}">${nRank}</td>
+              <td class="score-cell">${escapeHtml(fmtScore(r.score))}</td>
+              <td class="rank-cell" style="color:${safeReportColor(r.pat_color)}">${escapeHtml(pRank)}</td>
+              <td class="rank-cell" style="color:${safeReportColor(r.nor_color)}">${escapeHtml(nRank)}</td>
             </tr>`;
             if (!r.sub && r.description) {
-              html += `<tr class="desc-row"><td colspan="4" class="desc-cell-block">${r.description}</td></tr>`;
+              html += `<tr class="desc-row"><td colspan="4" class="desc-cell-block">${escapeHtml(r.description)}</td></tr>`;
             }
           }
         });
@@ -1078,7 +1096,7 @@ function renderReportHTML(report, container) {
 
     return `
       <div class="result-category">
-        <div class="result-section-title">${section.title}</div>
+        <div class="result-section-title">${escapeHtml(section.title)}</div>
         ${groupsHTML}
       </div>`;
   }).join("");

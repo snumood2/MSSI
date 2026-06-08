@@ -290,9 +290,20 @@ BEGIN
     RAISE EXCEPTION '권한이 없습니다.';
   END IF;
 
-  UPDATE auth.users
+  IF new_password IS NULL OR char_length(new_password) < 12 THEN
+    RAISE EXCEPTION '임시 비밀번호는 12자 이상이어야 합니다.';
+  END IF;
+
+  UPDATE auth.users u
   SET encrypted_password = crypt(new_password, gen_salt('bf'))
-  WHERE id = target_user_id;
+  FROM public.profiles p
+  WHERE u.id = target_user_id
+    AND p.id = target_user_id
+    AND p.role IN ('doctor', 'doctor_pending', 'doctor_revoked');
+
+  IF NOT FOUND THEN
+    RAISE EXCEPTION '비밀번호를 초기화할 수 있는 의사 계정이 아닙니다.';
+  END IF;
 END;
 $$;
 

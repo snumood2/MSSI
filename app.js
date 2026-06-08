@@ -65,6 +65,23 @@ function isAUDITSkipActive() {
 const cleanText  = t => t ? t.replace(/\[cite:[^\]]*\]/g, "").trim() : "";
 const cleanTitle = t => t ? t.replace(/\s*\([^)]+\)/g, "").trim() : "";
 
+function escapeHtml(str) {
+  if (str == null) return "";
+  const div = document.createElement("div");
+  div.textContent = String(str);
+  return div.innerHTML;
+}
+
+function escapeAttr(str) {
+  if (str == null) return "";
+  return String(str).replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+}
+
+function safeReportColor(value) {
+  const color = String(value || "");
+  return /^#[0-9a-fA-F]{3,8}$/.test(color) ? color : "inherit";
+}
+
 function fmtDate(str) {
   if (!str) return "-";
   const d = new Date(str);
@@ -396,11 +413,11 @@ document.addEventListener("click", async (e) => {
   }
   if (e.target.matches(".reset-btn")) {
     const { id } = e.target.dataset;
-    const newPw = "000000";
-    if (!confirm(`비밀번호를 '${newPw}'(으)로 초기화하시겠습니까?`)) return;
+    const newPw = generateTemporaryPassword();
+    if (!confirm("이 의사의 비밀번호를 안전한 임시 비밀번호로 초기화하시겠습니까?")) return;
     const { error } = await sb.rpc("admin_reset_password", { target_user_id: id, new_password: newPw });
     if (error) alert("오류: " + error.message);
-    else alert("비밀번호 초기화 완료");
+    else alert(`비밀번호 초기화 완료\n\n임시 비밀번호: ${newPw}\n\n이 값은 다시 표시되지 않습니다. 의사에게 안전한 경로로 전달하고 로그인 후 변경하도록 안내하세요.`);
   }
 });
 
@@ -490,9 +507,9 @@ function renderDoctorResult(row, container) {
       <div class="divider" style="margin-top:0;"></div>
       <div class="result-header-block">
         <h2 class="report-main-title">기분장애 임상평가 결과지</h2>
-        <p class="report-date-line">${dateStr}&nbsp;&nbsp;번호: ${patNum}</p>
+        <p class="report-date-line">${escapeHtml(dateStr)}&nbsp;&nbsp;번호: ${escapeHtml(patNum)}</p>
       </div>
-      <div class="result-instructions">${instructions}</div>
+      <div class="result-instructions">${escapeHtml(instructions)}</div>
       <div id="drReportContent"></div>
       <div class="print-btn-wrap">
         <button class="btn secondary" onclick="window.print()">인쇄</button>
@@ -515,13 +532,13 @@ async function loadDoctorPatientList() {
   }
 
   list.innerHTML = data.map(r => `
-    <div class="history-item" data-response-id="${r.id}" style="cursor:pointer;">
+    <div class="history-item" data-response-id="${escapeAttr(r.id)}" style="cursor:pointer;">
       <div class="history-dot"></div>
       <div class="history-info">
-        <div class="history-date">번호: ${r.patient_number || "미입력"}</div>
-        <div class="history-sub">완료: ${fmtDate(r.completed_at)}</div>
+        <div class="history-date">번호: ${escapeHtml(r.patient_number || "미입력")}</div>
+        <div class="history-sub">완료: ${escapeHtml(fmtDate(r.completed_at))}</div>
       </div>
-      <button class="btn secondary sm" onclick="viewResponseById('${r.id}')">결과보기</button>
+      <button class="btn secondary sm" onclick="viewResponseById('${escapeAttr(r.id)}')">결과보기</button>
     </div>`).join("");
 }
 
@@ -1060,6 +1077,10 @@ async function submitSurvey() {
 
     if (GOOGLE_SHEETS_WEBHOOK_URL && state.profile) {
       try {
+        if (!WEBHOOK_SECRET) {
+          console.warn("Google Sheets 전송 건너뜀: VITE_WEBHOOK_SECRET이 설정되지 않았습니다.");
+          throw new Error("VITE_WEBHOOK_SECRET is required for Google Sheets webhook.");
+        }
         const gsPayload = {
           timestamp: new Date().toISOString(),
           responseId: state.responseId || '',
@@ -1075,7 +1096,7 @@ async function submitSurvey() {
           scoresJson: JSON.stringify(scores),
           reportJson: JSON.stringify(report)
         };
-        if (WEBHOOK_SECRET) gsPayload.secret = WEBHOOK_SECRET;
+        gsPayload.secret = WEBHOOK_SECRET;
         fetch(GOOGLE_SHEETS_WEBHOOK_URL, {
           method: 'POST',
           mode: 'no-cors',
@@ -1116,11 +1137,11 @@ function renderResultView(report, completedAt, patientNumber) {
   const infoEl = el("resultPatientInfo");
   if (infoEl && state.profile) {
     const p = state.profile;
-    const dobYear = p.dob ? p.dob.slice(0, 4) : "-";
+    const dobYear = p.dob ? escapeHtml(p.dob.slice(0, 4)) : "-";
     infoEl.innerHTML = `
       <span class="meta-label">출생연도:</span><span class="meta-value">${dobYear}</span>
-      &nbsp;&nbsp;<span class="meta-label">병원코드:</span><span class="meta-value">${p.hospital_code || "-"}</span>
-      &nbsp;&nbsp;<span class="meta-label">번호:</span><span class="meta-value">${p.patient_number || "-"}</span>`;
+      &nbsp;&nbsp;<span class="meta-label">병원코드:</span><span class="meta-value">${escapeHtml(p.hospital_code || "-")}</span>
+      &nbsp;&nbsp;<span class="meta-label">번호:</span><span class="meta-value">${escapeHtml(p.patient_number || "-")}</span>`;
   }
 
   const content = el("resultTableContent");
@@ -1149,20 +1170,20 @@ function renderReportHTML(report, container) {
       let html = "";
 
       if (group.label && group.type !== "comorbidity") {
-        html += `<div class="group-label">${group.label}</div>`;
+        html += `<div class="group-label">${escapeHtml(group.label)}</div>`;
       }
 
       if (group.description) {
-        html += `<div class="section-desc-block">${group.description}</div>`;
+        html += `<div class="section-desc-block">${escapeHtml(group.description)}</div>`;
       }
 
       if (group.type === "comorbidity") {
         const items = group.items || [];
-        html += `<div class="group-label">${group.label || ""}</div>`;
+        html += `<div class="group-label">${escapeHtml(group.label)}</div>`;
         html += `<table class="result-table comorbidity-table"><tbody>`;
         items.forEach(item => {
           const cls = item.value === 'O' ? 'comorbid-positive' : 'comorbid-negative';
-          html += `<tr><td class="comorbid-name">${item.name}</td><td class="comorbid-val ${cls}">${item.value}</td></tr>`;
+          html += `<tr><td class="comorbid-name">${escapeHtml(item.name)}</td><td class="comorbid-val ${cls}">${escapeHtml(item.value)}</td></tr>`;
         });
         html += `</tbody></table>`;
         return html;
@@ -1185,34 +1206,34 @@ function renderReportHTML(report, container) {
           </tr></thead>
           <tbody>`;
         rows.forEach(r => {
-          const name = r.name || "";
+          const name = escapeHtml(r.name);
           const subCls = r.sub ? " sub-item" : "";
           if (r.textOnly) {
-            html += `<tr><td class="name-cell${subCls}">${name}</td><td class="score-cell" colspan="4">${fmtScore(r.score)}</td></tr>`;
+            html += `<tr><td class="name-cell${subCls}">${name}</td><td class="score-cell" colspan="4">${escapeHtml(fmtScore(r.score))}</td></tr>`;
           } else if (r.specialCols) {
             const pRank = fmtRank(r.pat_rank);
             const nRank = fmtRank(r.nor_rank);
             html += `<tr>
               <td class="name-cell${subCls}">${name}</td>
-              <td class="score-cell">${r.extra || ""}</td>
-              <td class="score-cell">${fmtScore(r.score)}</td>
-              <td class="rank-cell" style="color:${r.pat_color || 'inherit'}">${pRank}</td>
-              <td class="rank-cell" style="color:${r.nor_color || 'inherit'}">${nRank}</td>
+              <td class="score-cell">${escapeHtml(r.extra)}</td>
+              <td class="score-cell">${escapeHtml(fmtScore(r.score))}</td>
+              <td class="rank-cell" style="color:${safeReportColor(r.pat_color)}">${escapeHtml(pRank)}</td>
+              <td class="rank-cell" style="color:${safeReportColor(r.nor_color)}">${escapeHtml(nRank)}</td>
             </tr>`;
             if (r.description) {
-              html += `<tr class="desc-row"><td colspan="5" class="desc-cell-block">${r.description}</td></tr>`;
+              html += `<tr class="desc-row"><td colspan="5" class="desc-cell-block">${escapeHtml(r.description)}</td></tr>`;
             }
           } else {
             const pRank = fmtRank(r.pat_rank);
             const nRank = fmtRank(r.nor_rank);
             html += `<tr>
               <td class="name-cell${subCls}">${name}</td>
-              <td class="score-cell" colspan="2">${fmtScore(r.score)}</td>
-              <td class="rank-cell" style="color:${r.pat_color || 'inherit'}">${pRank}</td>
-              <td class="rank-cell" style="color:${r.nor_color || 'inherit'}">${nRank}</td>
+              <td class="score-cell" colspan="2">${escapeHtml(fmtScore(r.score))}</td>
+              <td class="rank-cell" style="color:${safeReportColor(r.pat_color)}">${escapeHtml(pRank)}</td>
+              <td class="rank-cell" style="color:${safeReportColor(r.nor_color)}">${escapeHtml(nRank)}</td>
             </tr>`;
             if (!r.sub && r.description) {
-              html += `<tr class="desc-row"><td colspan="5" class="desc-cell-block">${r.description}</td></tr>`;
+              html += `<tr class="desc-row"><td colspan="5" class="desc-cell-block">${escapeHtml(r.description)}</td></tr>`;
             }
           }
         });
@@ -1228,21 +1249,21 @@ function renderReportHTML(report, container) {
           </tr></thead>
           <tbody>`;
         rows.forEach(r => {
-          const name = r.name || "";
+          const name = escapeHtml(r.name);
           const subCls = r.sub ? " sub-item" : "";
           if (r.textOnly) {
-            html += `<tr><td class="name-cell${subCls}">${name}</td><td class="score-cell" colspan="3">${fmtScore(r.score)}</td></tr>`;
+            html += `<tr><td class="name-cell${subCls}">${name}</td><td class="score-cell" colspan="3">${escapeHtml(fmtScore(r.score))}</td></tr>`;
           } else {
             const pRank = fmtRank(r.pat_rank);
             const nRank = fmtRank(r.nor_rank);
             html += `<tr>
               <td class="name-cell${subCls}">${name}</td>
-              <td class="score-cell">${fmtScore(r.score)}</td>
-              <td class="rank-cell" style="color:${r.pat_color || 'inherit'}">${pRank}</td>
-              <td class="rank-cell" style="color:${r.nor_color || 'inherit'}">${nRank}</td>
+              <td class="score-cell">${escapeHtml(fmtScore(r.score))}</td>
+              <td class="rank-cell" style="color:${safeReportColor(r.pat_color)}">${escapeHtml(pRank)}</td>
+              <td class="rank-cell" style="color:${safeReportColor(r.nor_color)}">${escapeHtml(nRank)}</td>
             </tr>`;
             if (!r.sub && r.description) {
-              html += `<tr class="desc-row"><td colspan="4" class="desc-cell-block">${r.description}</td></tr>`;
+              html += `<tr class="desc-row"><td colspan="4" class="desc-cell-block">${escapeHtml(r.description)}</td></tr>`;
             }
           }
         });
@@ -1254,7 +1275,7 @@ function renderReportHTML(report, container) {
 
     return `
       <div class="result-category">
-        <div class="result-section-title">${section.title}</div>
+        <div class="result-section-title">${escapeHtml(section.title)}</div>
         ${groupsHTML}
       </div>`;
   }).join("");
@@ -1262,3 +1283,10 @@ function renderReportHTML(report, container) {
 
 el("btnPrintResult")?.addEventListener("click", () => window.print());
 el("btnBack")?.addEventListener("click", () => { show("view-patient"); refreshPatientStatus(); });
+
+function generateTemporaryPassword() {
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%";
+  const bytes = new Uint8Array(16);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes, b => chars[b % chars.length]).join("");
+}
