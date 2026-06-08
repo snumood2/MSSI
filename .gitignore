@@ -6,3 +6,4 @@ __pycache__/
 tools/__pycache__/
 e2e-artifacts/
 excel-e2e-artifacts/
+.monthly-audit/
