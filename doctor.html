@@ -198,6 +198,7 @@ document.addEventListener('DOMContentLoaded', function() {
   import { SUPABASE_URL, SUPABASE_ANON_KEY, ADMIN_EMAIL } from "./config.js";
   import { SURVEY_SECTIONS } from "./questions.js";
   import { calculateScores, generateReport, getGlobalInstructions } from "./scoring.js";
+  import { renderAnswerRawHTML } from "./answer-view.js";
 
   const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -378,8 +379,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
   function renderDoctorResult(row, container) {
     let report = row.report;
-    const needsRecalc = !report || !report.sections?.[0]?.groups;
-    if (needsRecalc && row.answers) {
+    if (row.answers) {
       try {
         const scores = calculateScores(row.answers);
         report = generateReport(scores, row.answers);
@@ -414,7 +414,9 @@ document.addEventListener('DOMContentLoaded', function() {
         </div>
       </div>`;
 
-    renderReportHTML(report, el("drReportContent"));
+    const content = el("drReportContent");
+    renderReportHTML(report, content);
+    content.insertAdjacentHTML("beforeend", renderAnswerRawHTML(row.answers || {}));
   }
 
   async function searchPatient() {
@@ -475,8 +477,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const { data, error } = await sb.from("survey_responses").select("*").eq("id", responseId).single();
     if (error || !data) return alert("결과를 찾을 수 없습니다.");
 
-    const needsRecalc = !data?.report || !data.report.sections?.[0]?.groups;
-    if (needsRecalc && data?.answers) {
+    if (data?.answers) {
       try {
         const scores = calculateScores(data.answers);
         data.report = generateReport(scores, data.answers);
@@ -636,6 +637,7 @@ document.addEventListener("click", function (e) {
   const dateStr = (btn.dataset.date || new Date().toISOString().slice(0, 10)).replace(/\s+/g, "_");
   const pdfNode = card.cloneNode(true);
   pdfNode.classList.add("pdf-export");
+  pdfNode.querySelectorAll(".raw-answer-view").forEach(n => n.remove());
   pdfNode.querySelectorAll("details").forEach(d => { d.open = true; });
   Object.assign(pdfNode.style, {
     position: "absolute",
@@ -648,7 +650,7 @@ document.addEventListener("click", function (e) {
   const oldScroll = window.scrollY;
   window.scrollTo(0, 0);
 
-  saveNodeAsFittedPdf(pdfNode, `MSSI_결과지_${dateStr}_${patNum}.pdf`)
+  saveNodeAsFittedPdf(pdfNode, `Self_Report_Survey_Result_${dateStr}_${patNum}.pdf`)
     .then(() => {
       pdfNode.remove();
       window.scrollTo(0, oldScroll);

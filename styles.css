@@ -722,6 +722,10 @@ body {
 }
 
 @media print {
+  .raw-answer-view {
+    display: none !important;
+  }
+
   #mainHeader, .survey-nav, .print-btn-wrap, #btnBack, .doctor-tabs { display: none !important; }
   body { background: #fff; }
   .card { box-shadow: none; border: none; }
@@ -827,6 +831,38 @@ body {
   word-wrap: break-word;
 }
 .result-table tbody tr.desc-row:hover td { background: #fafcfd !important; }
+
+.raw-answer-view {
+  margin-top: 28px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: #fff;
+}
+
+.raw-answer-view > summary {
+  cursor: pointer;
+  padding: 14px 16px;
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--accent);
+}
+
+.raw-answer-section {
+  border-top: 1px solid var(--border);
+}
+
+.raw-answer-section > summary {
+  cursor: pointer;
+  padding: 12px 16px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.raw-answer-table td:first-child {
+  width: 66%;
+  white-space: normal;
+  text-align: left;
+}
 
 .section-desc-block {
   font-size: 12px;

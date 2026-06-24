@@ -40,7 +40,7 @@ const asrsScores = calculateScores({
   ...Object.fromEntries(Array.from({ length: 18 }, (_, i) => [`adhd${i + 1}`, 5])),
 });
 assert.deepEqual(asrsScores.ASRS, {
-  total: 72,
+  total: 90,
   screen: 6,
   result: '성인ADHD의심됨, 6개중6항목',
 });

@@ -170,6 +170,7 @@
   import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
   import { SUPABASE_URL, SUPABASE_ANON_KEY, ADMIN_EMAIL } from "./config.js";
   import { calculateScores, generateReport, getGlobalInstructions } from "./scoring.js";
+  import { renderAnswerRawHTML } from "./answer-view.js";
 
   const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -568,7 +569,7 @@
 
   function renderAdminResult(row) {
     let report = row.report;
-    if ((!report || !report.sections?.[0]?.groups) && row.answers) {
+    if (row.answers) {
       const scores = calculateScores(row.answers);
       report = generateReport(scores, row.answers);
     }
@@ -597,7 +598,9 @@
           <button class="btn primary sm" onclick="window.print()">🖨️ 인쇄</button>
         </div>
       </div>`;
-    renderReportHTML(report, el(contentId));
+    const content = el(contentId);
+    renderReportHTML(report, content);
+    content.insertAdjacentHTML("beforeend", renderAnswerRawHTML(row.answers || {}));
   }
 
   async function searchAdminResult() {
@@ -652,6 +655,7 @@
 
     const pdfNode = card.cloneNode(true);
     pdfNode.classList.add("pdf-export");
+    pdfNode.querySelectorAll(".raw-answer-view").forEach(n => n.remove());
     pdfNode.querySelectorAll("details").forEach(d => { d.open = true; });
     Object.assign(pdfNode.style, {
       position: "absolute",
@@ -665,7 +669,7 @@
     window.scrollTo(0, 0);
 
     try {
-      await saveNodeAsFittedPdf(pdfNode, `MSSI_결과지_${dateStr}_${patNum}.pdf`);
+      await saveNodeAsFittedPdf(pdfNode, `Self_Report_Survey_Result_${dateStr}_${patNum}.pdf`);
       btn.textContent = "✅ PDF 완료";
       setTimeout(() => { btn.disabled = false; btn.textContent = "📄 PDF 다운로드"; }, 2000);
     } catch (err) {

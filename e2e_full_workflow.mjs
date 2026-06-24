@@ -51,7 +51,7 @@ function genAnswers(mode='full') {
       if (section.id==='audit_k' && q.id==='au1' && mode==='audit_skip') { a[q.id]=0; continue; }
       if (mode==='diag_skip') {
         if (['d1a','e1','f1','g1a','g3a','n1a'].includes(q.id)) { a[q.id]=0; continue; }
-        if (['d1b','d2','e3','f3_4','f6','g2','g5','n1b','n2','n3a','n3b','n3c','n3d','n3e','n3f'].includes(q.id)) { a[q.id]=0; continue; }
+        if (['d1b','d2','e3','f3','f4','f6','g2','g5','n1b','n2','n3a','n3b','n3c','n3d','n3e','n3f'].includes(q.id)) { a[q.id]=0; continue; }
       }
       if (section.type === 'matrix_complex' && q.id !== 'mssi21') {
         const yes = mode==='low' ? 0 : 1;
@@ -66,8 +66,12 @@ function genAnswers(mode='full') {
         for (let r=0;r<q.rows.length;r++) a[`${q.id}_${r}`]=7;
       } else if (q.type === 'custom_mdq') {
         for (const sq of q.questions) a[sq.id]=chooseVal(sq.options?.length?sq.options:[{v:1},{v:0}], mode==='low'?'min':'mid');
+      } else if (q.type === 'yesno_with_sub') {
+        a[q.id]=chooseVal(q.options, mode==='low'?'min':'mid');
+        if (a[q.id] === 1 && q.subQuestion) a[q.subQuestion.id]=chooseVal(q.subQuestion.options, 'mid');
+        else if (q.subQuestion) a[q.subQuestion.id]=0;
       } else {
-        const opts=q.options || section.options || [{v:1},{v:0}];
+        const opts=(section.type === 'matrix_complex' && q.id === 'mssi21') ? [{v:1},{v:0}] : (q.options || section.options || [{v:1},{v:0}]);
         a[q.id]=chooseVal(opts, mode==='low'?'min':'mid');
       }
     }
@@ -85,15 +89,17 @@ function validateAnswers(a) {
       if (s.id==='audit_k' && q.id!=='au1' && a.au1===0) continue;
       if (['d1b','d2'].includes(q.id) && a.d1a===0) continue;
       if (['e3'].includes(q.id) && a.e1===0) continue;
-      if (['f3_4','f6'].includes(q.id) && a.f1===0) continue;
-      if (['g2'].includes(q.id) && a.g1a===0) continue;
-      if (['g5'].includes(q.id) && a.g3a===0) continue;
+      if (['f3','f4','f6'].includes(q.id) && a.f1===0) continue;
+      if (q.id === 'g2' && a.g1a!==1) continue;
+      if (q.id === 'g3a' && a.g1a===undefined) continue;
+      if (q.id === 'g5' && !(a.g2===1 || a.g3a===1)) continue;
       if (['n1b','n2','n3a','n3b','n3c','n3d','n3e','n3f'].includes(q.id) && a.n1a===0) continue;
       if (s.type==='matrix_complex' && q.id!=='mssi21') { if(a[`${q.id}_yn`]===undefined || (a[`${q.id}_yn`]===1 && (a[`${q.id}_freq`]===undefined||a[`${q.id}_sev`]===undefined))) missing.push(q.id); }
       else if(q.type==='matrix_months') {}
       else if(q.type==='scale_matrix') { for(let r=0;r<q.rows.length;r++) if(a[`${q.id}_${r}`]===undefined) missing.push(q.id); }
       else if(q.type==='matrix_season_sleep') { for(let r=0;r<q.rows.length;r++) if(a[`${q.id}_${r}`]===undefined) missing.push(q.id); }
       else if(q.type==='custom_mdq') { for(const sq of q.questions) if(a[sq.id]===undefined) missing.push(sq.id); }
+      else if(q.type==='yesno_with_sub') { if(a[q.id]===undefined || (a[q.id]===1 && a[q.subQuestion.id]===undefined)) missing.push(q.id); }
       else if(a[q.id]===undefined) missing.push(q.id);
     }
   }

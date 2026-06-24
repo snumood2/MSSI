@@ -9,15 +9,15 @@ assert.doesNotMatch(questions, /전혀 느끼지 않았다|조금 느꼈다|상�
 
 const signup = readFileSync('./signup-patient.html', 'utf8');
 assert.match(signup, /const patientNumber = \$\("s_pnum"\)\.value\.trim\(\);/);
-assert.match(signup, /if \(patientNumber\) userData\.patient_number = patientNumber;/);
-assert.doesNotMatch(signup, /patient_number: \$\("s_pnum"\)\.value\.trim\(\)/);
+assert.match(signup, /if \(!patientNumber\) throw "의사에게 받은 번호를 입력하세요\.";[\s\S]*patient_number: patientNumber/);
+assert.doesNotMatch(signup, /if \(patientNumber\) userData\.patient_number = patientNumber;/);
 
 const respondent = readFileSync('./respondent.html', 'utf8');
 assert.doesNotMatch(respondent, /contact_email/);
 
 const app = readFileSync('./app.js', 'utf8');
-assert.match(app, /if \(patientNumber\) signUpMeta\.patient_number = patientNumber;/);
-assert.doesNotMatch(app, /patient_number: el\("p_pnum"\)\.value\.trim\(\)/);
+assert.match(app, /if \(!patientNumber\) throw "의사에게 받은 번호를 입력하세요\.";[\s\S]*patient_number: patientNumber/);
+assert.doesNotMatch(app, /if \(patientNumber\) signUpMeta\.patient_number = patientNumber;/);
 assert.doesNotMatch(app, /select\("[^"]*contact_email[^"]*"\)/);
 
 const admin = readFileSync('./admin.html', 'utf8');

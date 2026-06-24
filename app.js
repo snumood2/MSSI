@@ -3,6 +3,7 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 import { SUPABASE_URL, SUPABASE_ANON_KEY, PATIENT_EMAIL_DOMAIN, DOCTOR_EMAIL_DOMAIN, ADMIN_EMAIL, GOOGLE_SHEETS_WEBHOOK_URL, WEBHOOK_SECRET } from "./config.js";
 import { SURVEY_SECTIONS } from "./questions.js";
 import { calculateScores, generateReport, getGlobalInstructions } from "./scoring.js";
+import { renderAnswerRawHTML } from "./answer-view.js";
 
 const _store = {};
 const safeStorage = {
@@ -46,7 +47,7 @@ function clearMsg(elId) {
 const DIAG_BRANCH = {
   diag_panic:  { parent: "d1a", children: ["d1b", "d2"] },
   diag_agora:  { parent: "e1",  children: ["e3"] },
-  diag_social: { parent: "f1",  children: ["f3_4", "f6"] },
+  diag_social: { parent: "f1",  children: ["f3", "f4", "f6"] },
   diag_ocd:    { parent: "g1a", children: ["g2"], sub: { parent: "g3a", children: ["g5"] } },
   diag_gad:    { parent: "n1a", children: ["n1b", "n2", "n3a", "n3b", "n3c", "n3d", "n3e", "n3f"] }
 };
@@ -54,6 +55,12 @@ const DIAG_BRANCH = {
 function isDiagChildHidden(sectionId, qId) {
   const rule = DIAG_BRANCH[sectionId];
   if (!rule) return false;
+  if (sectionId === "diag_ocd") {
+    if (qId === "g2") return state.answers.g1a !== 1;
+    if (qId === "g3a") return state.answers.g1a === undefined;
+    if (qId === "g5") return !(state.answers.g2 === 1 || state.answers.g3a === 1);
+    return false;
+  }
   if (rule.children.includes(qId)) return state.answers[rule.parent] === 0;
   if (rule.sub && rule.sub.children.includes(qId)) return state.answers[rule.sub.parent] === 0;
   return false;
@@ -225,13 +232,14 @@ el("btnLoginAction")?.addEventListener("click", async () => {
       let signUpMeta;
       if (selectedRole === "patient") {
         const patientNumber = el("p_pnum").value.trim();
+        if (!patientNumber) throw "의사에게 받은 번호를 입력하세요.";
         signUpMeta = {
           role: "patient",
           username: rawId,
           dob: el("p_dob").value,
-          hospital_code: el("p_hcode").value.trim()
+          hospital_code: el("p_hcode").value.trim(),
+          patient_number: patientNumber
         };
-        if (patientNumber) signUpMeta.patient_number = patientNumber;
       } else {
         const hospitalName = el("d_hname").value.trim();
         if (!hospitalName) throw "병원닉네임을 입력해주세요.";
@@ -486,8 +494,7 @@ async function searchPatient() {
 function renderDoctorResult(row, container) {
   let report = row.report;
 
-  const needsRecalc = !report || !report.sections?.[0]?.groups;
-  if (needsRecalc && row.answers) {
+  if (row.answers) {
     try {
       const scores = calculateScores(row.answers);
       report = generateReport(scores, row.answers);
@@ -516,7 +523,9 @@ function renderDoctorResult(row, container) {
       </div>
     </div>`;
 
-  renderReportHTML(report, el("drReportContent"));
+  const content = el("drReportContent");
+  renderReportHTML(report, content);
+  content.insertAdjacentHTML("beforeend", renderAnswerRawHTML(row.answers || {}));
 }
 
 async function loadDoctorPatientList() {
@@ -545,8 +554,7 @@ async function loadDoctorPatientList() {
 window.viewResponseById = async (responseId) => {
   const { data } = await sb.from("survey_responses").select("*").eq("id", responseId).single();
 
-  const needsRecalc = !data?.report || !data.report.sections?.[0]?.groups;
-  if (needsRecalc && data?.answers) {
+  if (data?.answers) {
     try {
       const scores = calculateScores(data.answers);
       data.report = generateReport(scores, data.answers);
@@ -661,9 +669,9 @@ el("btnViewMyResult")?.addEventListener("click", () => viewMyResult(state.respon
 window.viewMyResult = async (rid) => {
   const { data } = await sb.from("survey_responses").select("report, scores, answers, completed_at, patient_number").eq("id", rid).single();
   let report = data?.report;
+  if (data?.answers) state.answers = data.answers;
 
-  const needsRecalc = !report || !report.sections?.[0]?.groups;
-  if (needsRecalc && data?.answers) {
+  if (data?.answers) {
     try {
       const scores = calculateScores(data.answers);
       report = generateReport(scores, data.answers);
@@ -728,7 +736,13 @@ function getUnanswered() {
         if (state.answers[`${q.id}_freq`] === undefined || state.answers[`${q.id}_sev`] === undefined) missing.push(q.id);
       }
     } else if (q.type === "matrix_months") {
-
+      for (let r = 0; r < q.rows.length; r++) {
+        let hasAnyMonth = false;
+        for (let c = 0; c < 13; c++) {
+          if (state.answers[`${q.id}_r${r}_m${c}`] === 1) { hasAnyMonth = true; break; }
+        }
+        if (!hasAnyMonth) { missing.push(q.id); break; }
+      }
     } else if (q.type === "scale_matrix") {
       for (let r = 0; r < q.rows.length; r++) {
         if (state.answers[`${q.id}_${r}`] === undefined) { missing.push(q.id); break; }
@@ -741,6 +755,9 @@ function getUnanswered() {
       for (const sq of q.questions) {
         if (state.answers[sq.id] === undefined) { missing.push(q.id); break; }
       }
+    } else if (q.type === "yesno_with_sub") {
+      if (state.answers[q.id] === undefined) { missing.push(q.id); continue; }
+      if (state.answers[q.id] === 1 && state.answers[q.subQuestion.id] === undefined) missing.push(q.id);
     } else {
       if (state.answers[q.id] === undefined) missing.push(q.id);
     }
@@ -791,7 +808,7 @@ function renderSurvey() {
     const banner = document.createElement("div");
     banner.className = "pms-skip-banner";
     banner.innerHTML = `
-      <div class="pms-skip-title">📋 사전 확인: 폐경이 되었거나 아직 생리를 시작하지 않으셨나요?</div>
+      <div class="pms-skip-title">📋 사전 확인: (여성의 경우) 폐경이 되었거나, 생리를 시작하지 않으셨나요? 혹은 남성이신가요?</div>
       <div class="opts-list">
         <label class="opt-list-item ${state.answers["pms_skip"]==1?'checked':''}">
           <input type="radio" name="pms_skip" value="1" ${state.answers["pms_skip"]==1?"checked":""} onchange="window.savePmsSkip(1)"> 예 (해당함 – 이 섹션 건너뜁니다)
@@ -824,7 +841,7 @@ function renderSurvey() {
     }
 
     if (isDiagChildHidden(section.id, q.id)) {
-      state.answers[q.id] = 0;
+      delete state.answers[q.id];
       return;
     }
 
@@ -842,6 +859,8 @@ function renderSurvey() {
       renderSeasonSleep(q, qRow);
     } else if (q.type === "custom_mdq") {
       renderCustomMDQ(q, qRow);
+    } else if (q.type === "yesno_with_sub") {
+      renderYesNoWithSub(q, qRow);
     } else {
       renderStandard(q, section, qRow, qIdx);
     }
@@ -849,10 +868,13 @@ function renderSurvey() {
     container.appendChild(qRow);
   });
 }
+window.renderSurvey = renderSurvey;
 
 function renderStandard(q, section, qRow, qIdx) {
   const isMulti = q.type === "checkbox";
-  let options = q.options || section.options || [];
+  let options = (section.type === "matrix_complex" && q.id === "mssi21")
+    ? [{ v: 1, l: "예" }, { v: 0, l: "아니오" }]
+    : (q.options || section.options || []);
   if (!options.length) options = [{ v: 1, l: "예" }, { v: 0, l: "아니오" }];
 
   const longOpt = options.some(o => (o.l || "").length > 12);
@@ -889,6 +911,7 @@ function renderStandard(q, section, qRow, qIdx) {
         label.classList.toggle("checked", isMulti ? e.target.checked : true);
         clearHighlight(q.id);
         triggerAutoSave();
+        if (section.id?.startsWith("diag_")) window.renderSurvey();
       });
       optsEl.appendChild(label);
     } else {
@@ -902,6 +925,7 @@ function renderStandard(q, section, qRow, qIdx) {
         if (!isMulti) state.answers[q.id] = val;
         clearHighlight(q.id);
         triggerAutoSave();
+        if (section.id?.startsWith("diag_")) window.renderSurvey();
       });
       optsEl.appendChild(chip);
     }
@@ -936,6 +960,33 @@ function renderMSSI(q, section, qRow) {
           `<label class="opt-list-item ${state.answers[`${q.id}_sev`]==o.v?"checked":""}">
             <input type="radio" name="${q.id}_sev" value="${o.v}" ${state.answers[`${q.id}_sev`]==o.v?"checked":""}
               onchange="window.saveAns('${q.id}_sev', this.value); this.closest('.opts-list').querySelectorAll('.opt-list-item').forEach(l=>l.classList.remove('checked')); this.closest('.opt-list-item').classList.add('checked');">
+            ${cleanText(o.l)}
+          </label>`).join("")}
+      </div>
+    </div>`;
+}
+
+function renderYesNoWithSub(q, qRow) {
+  const main = state.answers[q.id];
+  const sub = q.subQuestion;
+  qRow.style.flexDirection = "column";
+  qRow.innerHTML = `
+    <div class="q-text">${cleanText(q.text)}</div>
+    <div class="opts-list">
+      ${(q.options || []).map(o => `
+        <label class="opt-list-item ${main==o.v?"checked":""}">
+          <input type="radio" name="${q.id}" value="${o.v}" ${main==o.v?"checked":""}
+            onchange="window.saveAns('${q.id}', this.value); if(Number(this.value)===0){window.saveAns('${sub.id}', 0);} window.renderSurvey();">
+          ${cleanText(o.l)}
+        </label>`).join("")}
+    </div>
+    <div class="months-section" style="${main==1 ? "" : "display:none;"}">
+      <div class="months-section-title">${cleanText(sub.text)}</div>
+      <div class="opts-list">
+        ${(sub.options || []).map(o => `
+          <label class="opt-list-item ${state.answers[sub.id]==o.v?"checked":""}">
+            <input type="radio" name="${sub.id}" value="${o.v}" ${state.answers[sub.id]==o.v?"checked":""}
+              onchange="window.saveAns('${sub.id}', this.value); this.closest('.opts-list').querySelectorAll('.opt-list-item').forEach(l=>l.classList.remove('checked')); this.closest('.opt-list-item').classList.add('checked');">
             ${cleanText(o.l)}
           </label>`).join("")}
       </div>
@@ -993,7 +1044,7 @@ function renderSeasonSleep(q, qRow) {
       ${q.rows.map((r, ridx) => {
         const k = `${q.id}_${ridx}`;
         return `<div class="season-item"><b>${cleanText(r)}</b>
-          <input type="number" min="0" max="24" step="0.5" value="${state.answers[k]||""}" onchange="window.saveAns('${k}', this.value)">
+          <input type="number" min="0" max="24" step="1" value="${state.answers[k]||""}" onchange="window.saveAns('${k}', this.value)">
           <span>시간</span></div>`;
       }).join("")}
     </div>`;
@@ -1146,6 +1197,7 @@ function renderResultView(report, completedAt, patientNumber) {
 
   const content = el("resultTableContent");
   renderReportHTML(report, content);
+  content.insertAdjacentHTML("beforeend", renderAnswerRawHTML(state.answers || {}));
 }
 
 function renderReportHTML(report, container) {

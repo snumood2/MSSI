@@ -42,8 +42,15 @@ function genAnswers(mode = "mid") {
         for (let r = 0; r < q.rows.length; r++) a[`${q.id}_${r}`] = mode === "max" ? 9 : 7;
       } else if (q.type === "custom_mdq") {
         for (const sq of q.questions) a[sq.id] = chooseVal(sq.options?.length ? sq.options : [{ v: 1 }, { v: 0 }], mode);
+      } else if (q.type === "yesno_with_sub") {
+        a[q.id] = chooseVal(q.options, mode);
+        if (a[q.id] === 1 && q.subQuestion) a[q.subQuestion.id] = chooseVal(q.subQuestion.options, mode);
+        else if (q.subQuestion) a[q.subQuestion.id] = 0;
       } else {
-        a[q.id] = chooseVal(q.options || section.options || [{ v: 1 }, { v: 0 }], mode);
+        const opts = (section.type === "matrix_complex" && q.id === "mssi21")
+          ? [{ v: 1 }, { v: 0 }]
+          : (q.options || section.options || [{ v: 1 }, { v: 0 }]);
+        a[q.id] = chooseVal(opts, mode);
       }
     }
   }
