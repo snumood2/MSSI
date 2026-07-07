@@ -15,9 +15,10 @@
 
 1. Apps Script 프로젝트를 엽니다. 대상 Google Sheet의 `확장 프로그램 > Apps Script`에서 열어도 되고, 새 standalone Apps Script 프로젝트를 만들어도 됩니다.
 2. [`Code.gs`](./Code.gs)의 전체 내용을 Apps Script 편집기에 붙여넣습니다.
-3. 웹훅 secret을 반드시 설정합니다.
+3. 웹훅 secret을 설정할 수 있습니다.
    - Apps Script `프로젝트 설정 > 스크립트 속성`에 `MSSI_WEBHOOK_SECRET` 추가
    - 웹앱에도 같은 값을 `VITE_WEBHOOK_SECRET` 환경변수로 설정
+   - 미설정 시에도 웹훅은 동작합니다. 다만 URL을 아는 사용자가 임의 payload를 보낼 수 있으므로 가능하면 설정하는 것이 좋습니다.
 4. `배포 > 새 배포 > 웹 앱`을 선택합니다.
 5. 실행 권한은 본인, 접근 권한은 웹앱 호출 환경에 맞게 설정합니다.
 6. 발급된 Web App URL을 웹앱 환경변수 `GOOGLE_SHEETS_WEBHOOK_URL`에 넣습니다.
@@ -30,7 +31,7 @@
 VITE_SUPABASE_URL=...
 VITE_SUPABASE_ANON_KEY=...
 GOOGLE_SHEETS_WEBHOOK_URL=...
-VITE_WEBHOOK_SECRET=...   # 필수: Apps Script MSSI_WEBHOOK_SECRET과 같은 값
+VITE_WEBHOOK_SECRET=...   # 선택: Apps Script MSSI_WEBHOOK_SECRET과 같은 값
 ADMIN_EMAIL=...
 ```
 

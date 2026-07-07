@@ -20,6 +20,7 @@ const respondent = readFileSync('./respondent.html', 'utf8');
 assert.match(respondent, /GOOGLE_SHEETS_WEBHOOK_URL/);
 assert.match(respondent, /Content-Type": "text\/plain;charset=utf-8"/);
 assert.match(respondent, /mode: "no-cors"/);
+assert.doesNotMatch(respondent, /Google Sheets 전송 건너뜀: VITE_WEBHOOK_SECRET/);
 assert.doesNotMatch(respondent, /<script>[\s\S]*<\/script>[\s\S]*el\("btnPrintResult"\)/);
 assert.match(respondent, /let submitInProgress = false;/);
 assert.match(respondent, /await submitSurvey\(\);/);
@@ -57,6 +58,7 @@ assert.match(codeGs, /const FIXED_HEADERS = \[[\s\S]*'timestamp'[\s\S]*'hospital
 assert.match(codeGs, /flattenObject_\(record, '', params\.answers \|\| \{\}\);/);
 assert.match(codeGs, /flattenObject_\(record, 'score_', params\.scores \|\| \{\}\);/);
 assert.match(codeGs, /dob: params\.dob \? "'" \+ String\(params\.dob\) : ''/);
+assert.match(codeGs, /if \(!expected\) \{[\s\S]*return;[\s\S]*\}/);
 
 const workflowExists = existsSync('./.github/workflows/deploy-pages.yml');
 if (workflowExists) {

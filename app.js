@@ -1128,10 +1128,6 @@ async function submitSurvey() {
 
     if (GOOGLE_SHEETS_WEBHOOK_URL && state.profile) {
       try {
-        if (!WEBHOOK_SECRET) {
-          console.warn("Google Sheets 전송 건너뜀: VITE_WEBHOOK_SECRET이 설정되지 않았습니다.");
-          throw new Error("VITE_WEBHOOK_SECRET is required for Google Sheets webhook.");
-        }
         const gsPayload = {
           timestamp: new Date().toISOString(),
           responseId: state.responseId || '',
