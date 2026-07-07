@@ -1,0 +1,17 @@
+{
+  "at": "2026-07-07T14:59:06.796Z",
+  "sheetId": "1mHaUquO0qdv7bpj9T7LIPVfyUsUlX87uyHiAS_dyG78",
+  "range": "DB2SHEET!A3:ZW250",
+  "nonempty": [
+    {
+      "row": 3,
+      "col": 1,
+      "value": "=LET(headers,$A$1:$ZW$1,rawHeaders,RAWDATA!$1:$1,cols,MAP(headers,LAMBDA(h,IFERROR(MATCH(h,rawHeaders,0),0))),raw,FILTER(RAWDATA!$A$2:$ATD,RAWDATA!$A$2:$A<>\"\"),MAKEARRAY(ROWS(raw),COLUMNS(headers),LAMBDA(r,c,IF(INDEX(cols,1,c)=0,\"\",INDEX(raw,r,INDEX(cols,1,c))))))"
+    },
+    {
+      "row": 156,
+      "col": 4,
+      "value": "ASRS-20260707134604-3"
+    }
+  ]
+}

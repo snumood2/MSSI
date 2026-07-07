@@ -63,4 +63,4 @@ Apps Script Web App URL을 브라우저에서 GET으로 열면 아래와 비슷�
 - G열 이후: `response_id`, `doctor_nickname`, `hospital_nickname`, `scores_json`, `report_json`
 - 이후 컬럼: `z1`, `t1`, `au1`, `csm1`, `spaq2_0` 같은 설문 응답 변수와 `score_ZUNG`, `score_TEMPS_cyc`, `score_PMS_diag` 같은 계산 점수
 
-`DB2SHEET`는 1행에 DB 변수명, 2행에 설문지 질문/점수 설명, 3행부터 데이터를 표시합니다. 사용자는 `검사결과지!H4`에 `hospital_code`, `검사결과지!J4`에 `patient_number`를 직접 입력합니다. `SHEET2REPORT!A4`는 `검사결과지!J4`, `SHEET2REPORT!B4`는 `검사결과지!H4`를 참조하여 해당 조합의 결과를 계산합니다. 웹앱과 Google Sheet 양쪽에서 같은 `병원코드 + 의사에게 받은 번호` 조합으로 조회됩니다.
+`DB2SHEET`는 1행에 DB 변수명, 2행에 설문지 질문/점수 설명, 3행부터 데이터를 표시합니다. 사용자는 `검사결과지!H4`에 `patient_number`(의사에게 받은 번호), `검사결과지!J4`에 `hospital_code`(병원코드)를 직접 입력합니다. `SHEET2REPORT!A4`는 `검사결과지!H4`, `SHEET2REPORT!B4`는 `검사결과지!J4`를 참조하여 해당 조합의 결과를 계산합니다. 웹앱과 Google Sheet 양쪽에서 같은 `병원코드 + 의사에게 받은 번호` 조합으로 조회됩니다.
