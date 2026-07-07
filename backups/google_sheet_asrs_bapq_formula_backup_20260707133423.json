@@ -1,0 +1,91 @@
+{
+  "at": "2026-07-07T13:34:22.052Z",
+  "sheetId": "1mHaUquO0qdv7bpj9T7LIPVfyUsUlX87uyHiAS_dyG78",
+  "ranges": {
+    "SHEET2REPORT!C80": [
+      [
+        "=IFNA(LET(r,FILTER(DB2SHEET!$A$3:$ZW,DB2SHEET!$D$3:$D=$A$4,DB2SHEET!$C$3:$C=$B$4),raw,LAMBDA(h,IFNA(INDEX(r,1,MATCH(h,DB2SHEET!$1:$1,0)),\"\")),v,LAMBDA(h,N(raw(h))),IF(MAX(v(\"adhd1\"),v(\"adhd2\"),v(\"adhd3\"),v(\"adhd4\"),v(\"adhd5\"),v(\"adhd6\"),v(\"adhd7\"),v(\"adhd8\"),v(\"adhd9\"),v(\"adhd10\"),v(\"adhd11\"),v(\"adhd12\"),v(\"adhd13\"),v(\"adhd14\"),v(\"adhd15\"),v(\"adhd16\"),v(\"adhd17\"),v(\"adhd18\"))=0,\"\",MAX(0,v(\"adhd1\")-1)+MAX(0,v(\"adhd2\")-1)+MAX(0,v(\"adhd3\")-1)+MAX(0,v(\"adhd4\")-1)+MAX(0,v(\"adhd5\")-1)+MAX(0,v(\"adhd6\")-1)+MAX(0,v(\"adhd7\")-1)+MAX(0,v(\"adhd8\")-1)+MAX(0,v(\"adhd9\")-1)+MAX(0,v(\"adhd10\")-1)+MAX(0,v(\"adhd11\")-1)+MAX(0,v(\"adhd12\")-1)+MAX(0,v(\"adhd13\")-1)+MAX(0,v(\"adhd14\")-1)+MAX(0,v(\"adhd15\")-1)+MAX(0,v(\"adhd16\")-1)+MAX(0,v(\"adhd17\")-1)+MAX(0,v(\"adhd18\")-1))),\"\")"
+      ]
+    ],
+    "SHEET2REPORT!E82:F85": [
+      [
+        "=IF(C82=\"\",\"\",MAX(1,MIN(100,ROUND((1-NORM.DIST(VALUE(C82),3.58,0.65,TRUE))*100,0))))",
+        "=IF(C82=\"\",\"\",MAX(1,MIN(100,ROUND((1-NORM.DIST(VALUE(C82),2.99,0.55,TRUE))*100,0))))"
+      ],
+      [
+        "=IF(C83=\"\",\"\",MAX(1,MIN(100,ROUND((1-NORM.DIST(VALUE(C83),3.77,0.77,TRUE))*100,0))))",
+        "=IF(C83=\"\",\"\",MAX(1,MIN(100,ROUND((1-NORM.DIST(VALUE(C83),3.24,0.79,TRUE))*100,0))))"
+      ],
+      [
+        "=IF(C84=\"\",\"\",MAX(1,MIN(100,ROUND((1-NORM.DIST(VALUE(C84),3.13,0.76,TRUE))*100,0))))",
+        "=IF(C84=\"\",\"\",MAX(1,MIN(100,ROUND((1-NORM.DIST(VALUE(C84),2.56,0.68,TRUE))*100,0))))"
+      ],
+      [
+        "=IF(C85=\"\",\"\",MAX(1,MIN(100,ROUND((1-NORM.DIST(VALUE(C85),3.58,0.86,TRUE))*100,0))))",
+        "=IF(C85=\"\",\"\",MAX(1,MIN(100,ROUND((1-NORM.DIST(VALUE(C85),3.15,0.61,TRUE))*100,0))))"
+      ]
+    ],
+    "SHEET2REPORT!A80:H85": [
+      [
+        "성인기 주의집중문제",
+        "성인기 주의집중문제 점수",
+        "=IFNA(LET(r,FILTER(DB2SHEET!$A$3:$ZW,DB2SHEET!$D$3:$D=$A$4,DB2SHEET!$C$3:$C=$B$4),raw,LAMBDA(h,IFNA(INDEX(r,1,MATCH(h,DB2SHEET!$1:$1,0)),\"\")),v,LAMBDA(h,N(raw(h))),IF(MAX(v(\"adhd1\"),v(\"adhd2\"),v(\"adhd3\"),v(\"adhd4\"),v(\"adhd5\"),v(\"adhd6\"),v(\"adhd7\"),v(\"adhd8\"),v(\"adhd9\"),v(\"adhd10\"),v(\"adhd11\"),v(\"adhd12\"),v(\"adhd13\"),v(\"adhd14\"),v(\"adhd15\"),v(\"adhd16\"),v(\"adhd17\"),v(\"adhd18\"))=0,\"\",MAX(0,v(\"adhd1\")-1)+MAX(0,v(\"adhd2\")-1)+MAX(0,v(\"adhd3\")-1)+MAX(0,v(\"adhd4\")-1)+MAX(0,v(\"adhd5\")-1)+MAX(0,v(\"adhd6\")-1)+MAX(0,v(\"adhd7\")-1)+MAX(0,v(\"adhd8\")-1)+MAX(0,v(\"adhd9\")-1)+MAX(0,v(\"adhd10\")-1)+MAX(0,v(\"adhd11\")-1)+MAX(0,v(\"adhd12\")-1)+MAX(0,v(\"adhd13\")-1)+MAX(0,v(\"adhd14\")-1)+MAX(0,v(\"adhd15\")-1)+MAX(0,v(\"adhd16\")-1)+MAX(0,v(\"adhd17\")-1)+MAX(0,v(\"adhd18\")-1))),\"\")",
+        "=C80",
+        "=IF(C80=\"\",\"\",MAX(1,MIN(100,ROUND((1-NORM.DIST(VALUE(C80),46.8,12.68,TRUE))*100,0))))",
+        "=IF(C80=\"\",\"\",MAX(1,MIN(100,ROUND((1-NORM.DIST(VALUE(C80),39.9,7.75,TRUE))*100,0))))",
+        "=IF(C90=\"\",\"\",IF(C90>=4,\"성인ADHD의심됨, 6개중\"&C90&\"항목\",\"성인ADHD의심되지않음, 6개중\"&C90&\"항목\"))",
+        "ASRS"
+      ],
+      [
+        "아동기 주의집중문제",
+        "아동기 주의집중문제",
+        "=IFNA(INDEX(FILTER(DB2SHEET!$A$3:$ZU,DB2SHEET!$D$3:$D=$A$4,DB2SHEET!$C$3:$C=$B$4),1,MATCH(\"score_WURS\",DB2SHEET!$1:$1,0)),\"\")",
+        "=C81",
+        "=IF(C81=\"\",\"\",MAX(1,MIN(100,ROUND((1-NORM.DIST(VALUE(C81),25.89,20.1,TRUE))*100,0))))",
+        "=IF(C81=\"\",\"\",MAX(1,MIN(100,ROUND((1-NORM.DIST(VALUE(C81),19.76,18.34,TRUE))*100,0))))",
+        "",
+        "WURS"
+      ],
+      [
+        "범 행동문제 척도",
+        "범 행동문제 척도",
+        "=IFNA(LET(r,FILTER(DB2SHEET!$A$3:$ZW,DB2SHEET!$D$3:$D=$A$4,DB2SHEET!$C$3:$C=$B$4),raw,LAMBDA(h,IFNA(INDEX(r,1,MATCH(h,DB2SHEET!$1:$1,0)),\"\")),v,LAMBDA(h,N(raw(h))),((7-v(\"ba1\"))+v(\"ba2\")+(7-v(\"ba3\"))+v(\"ba4\")+v(\"ba5\")+v(\"ba6\")+(7-v(\"ba7\"))+v(\"ba8\")+(7-v(\"ba9\"))+v(\"ba10\")+v(\"ba11\")+(7-v(\"ba12\"))+v(\"ba13\")+v(\"ba14\")+(7-v(\"ba15\"))+(7-v(\"ba16\"))+v(\"ba17\")+v(\"ba18\")+(7-v(\"ba19\"))+v(\"ba20\")+(7-v(\"ba21\"))+v(\"ba22\")+(7-v(\"ba23\"))+v(\"ba24\")+(7-v(\"ba25\"))+v(\"ba26\")+v(\"ba27\")+(7-v(\"ba28\"))+v(\"ba29\")+(7-v(\"ba30\"))+v(\"ba31\")+v(\"ba32\")+v(\"ba33\")+(7-v(\"ba34\"))+v(\"ba35\")+(7-v(\"ba36\")))/36),\"\")",
+        "=C82",
+        "=IF(C82=\"\",\"\",MAX(1,MIN(100,ROUND((1-NORM.DIST(VALUE(C82),3.58,0.65,TRUE))*100,0))))",
+        "=IF(C82=\"\",\"\",MAX(1,MIN(100,ROUND((1-NORM.DIST(VALUE(C82),2.99,0.55,TRUE))*100,0))))",
+        "",
+        "BAPQ_Total"
+      ],
+      [
+        "범 행동문제 척도",
+        "무심한 성격",
+        "=IFNA(LET(r,FILTER(DB2SHEET!$A$3:$ZW,DB2SHEET!$D$3:$D=$A$4,DB2SHEET!$C$3:$C=$B$4),raw,LAMBDA(h,IFNA(INDEX(r,1,MATCH(h,DB2SHEET!$1:$1,0)),\"\")),v,LAMBDA(h,N(raw(h))),((7-v(\"ba1\"))+v(\"ba5\")+(7-v(\"ba9\"))+(7-v(\"ba12\"))+(7-v(\"ba16\"))+v(\"ba18\")+(7-v(\"ba23\"))+(7-v(\"ba25\"))+v(\"ba27\")+(7-v(\"ba28\"))+v(\"ba31\")+(7-v(\"ba36\")))/12),\"\")",
+        "=C83",
+        "=IF(C83=\"\",\"\",MAX(1,MIN(100,ROUND((1-NORM.DIST(VALUE(C83),3.77,0.77,TRUE))*100,0))))",
+        "=IF(C83=\"\",\"\",MAX(1,MIN(100,ROUND((1-NORM.DIST(VALUE(C83),3.24,0.79,TRUE))*100,0))))",
+        "",
+        "BAPQ_Aloof"
+      ],
+      [
+        "범 행동문제 척도",
+        "실용적 언어사용",
+        "=IFNA(LET(r,FILTER(DB2SHEET!$A$3:$ZW,DB2SHEET!$D$3:$D=$A$4,DB2SHEET!$C$3:$C=$B$4),raw,LAMBDA(h,IFNA(INDEX(r,1,MATCH(h,DB2SHEET!$1:$1,0)),\"\")),v,LAMBDA(h,N(raw(h))),(v(\"ba2\")+v(\"ba4\")+(7-v(\"ba7\"))+v(\"ba10\")+v(\"ba11\")+v(\"ba14\")+v(\"ba17\")+v(\"ba20\")+(7-v(\"ba21\"))+v(\"ba29\")+v(\"ba32\")+(7-v(\"ba34\")))/12),\"\")",
+        "=C84",
+        "=IF(C84=\"\",\"\",MAX(1,MIN(100,ROUND((1-NORM.DIST(VALUE(C84),3.13,0.76,TRUE))*100,0))))",
+        "=IF(C84=\"\",\"\",MAX(1,MIN(100,ROUND((1-NORM.DIST(VALUE(C84),2.56,0.68,TRUE))*100,0))))",
+        "",
+        "BAPQ_Pragma"
+      ],
+      [
+        "범 행동문제 척도",
+        "경직된 성격",
+        "=IFNA(LET(r,FILTER(DB2SHEET!$A$3:$ZW,DB2SHEET!$D$3:$D=$A$4,DB2SHEET!$C$3:$C=$B$4),raw,LAMBDA(h,IFNA(INDEX(r,1,MATCH(h,DB2SHEET!$1:$1,0)),\"\")),v,LAMBDA(h,N(raw(h))),((7-v(\"ba3\"))+v(\"ba6\")+v(\"ba8\")+v(\"ba13\")+(7-v(\"ba15\"))+(7-v(\"ba19\"))+v(\"ba22\")+v(\"ba24\")+v(\"ba26\")+(7-v(\"ba30\"))+v(\"ba33\")+v(\"ba35\"))/12),\"\")",
+        "=C85",
+        "=IF(C85=\"\",\"\",MAX(1,MIN(100,ROUND((1-NORM.DIST(VALUE(C85),3.58,0.86,TRUE))*100,0))))",
+        "=IF(C85=\"\",\"\",MAX(1,MIN(100,ROUND((1-NORM.DIST(VALUE(C85),3.15,0.61,TRUE))*100,0))))",
+        "",
+        "BAPQ_Rigid"
+      ]
+    ]
+  }
+}

@@ -10,7 +10,7 @@ const WEBHOOK_URL = cfg.match(/GOOGLE_SHEETS_WEBHOOK_URL = ENV\.GOOGLE_SHEETS_WE
 const SHEET_ID = "1mHaUquO0qdv7bpj9T7LIPVfyUsUlX87uyHiAS_dyG78";
 const PYTHON = "/Users/wm/.cache/codex-runtimes/codex-primary-runtime/dependencies/python/bin/python3";
 const XLSX_PATH = "/Users/wm/Library/CloudStorage/OneDrive-개인/9. Temporal Work/2026 설문웹앱개밸/테스트데이터.xlsx";
-const GOOGLE_TOKEN_PATH = "/Users/wm/Documents/Codex/2026-06-07/files-mentioned-by-the-user-docx/.secrets/google_token_script.json";
+const GOOGLE_TOKEN_PATH = process.env.GOOGLE_TOKEN_PATH || "/Users/wm/Documents/Codex/2026-06-07/files-mentioned-by-the-user-docx/.secrets/google_token_script.json";
 const HDR = { apikey: SUPABASE_ANON_KEY, "Content-Type": "application/json" };
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
