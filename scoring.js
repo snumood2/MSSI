@@ -86,10 +86,10 @@ function getRank(score, mean, std) {
   return Math.max(1, Math.min(100, rank));
 }
 
-function getRankColor(rank) {
-  if (rank <= 30) return "#FF5C7A";
-  if (rank >= 70) return "#2B3CFF";
-  return "#9FB0FF";
+export function getRankColor(rank) {
+  if (rank < 50) return "#FF5C7A";
+  if (rank > 50) return "#2B3CFF";
+  return "#5F6368";
 }
 
 export function calculateScores(answers) {

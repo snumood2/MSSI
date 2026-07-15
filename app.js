@@ -89,6 +89,14 @@ function safeReportColor(value) {
   return /^#[0-9a-fA-F]{3,8}$/.test(color) ? color : "inherit";
 }
 
+function reportRankColor(rank, storedColor) {
+  const value = Number(rank);
+  if (!Number.isFinite(value)) return safeReportColor(storedColor);
+  if (value < 50) return "#FF5C7A";
+  if (value > 50) return "#2B3CFF";
+  return "#5F6368";
+}
+
 function fmtDate(str) {
   if (!str) return "-";
   const d = new Date(str);
@@ -1265,8 +1273,8 @@ function renderReportHTML(report, container) {
               <td class="name-cell${subCls}">${name}</td>
               <td class="score-cell">${escapeHtml(r.extra)}</td>
               <td class="score-cell">${escapeHtml(fmtScore(r.score))}</td>
-              <td class="rank-cell" style="color:${safeReportColor(r.pat_color)}">${escapeHtml(pRank)}</td>
-              <td class="rank-cell" style="color:${safeReportColor(r.nor_color)}">${escapeHtml(nRank)}</td>
+              <td class="rank-cell" style="color:${reportRankColor(r.pat_rank, r.pat_color)}">${escapeHtml(pRank)}</td>
+              <td class="rank-cell" style="color:${reportRankColor(r.nor_rank, r.nor_color)}">${escapeHtml(nRank)}</td>
             </tr>`;
             if (r.description) {
               html += `<tr class="desc-row"><td colspan="5" class="desc-cell-block">${escapeHtml(r.description)}</td></tr>`;
@@ -1277,8 +1285,8 @@ function renderReportHTML(report, container) {
             html += `<tr>
               <td class="name-cell${subCls}">${name}</td>
               <td class="score-cell" colspan="2">${escapeHtml(fmtScore(r.score))}</td>
-              <td class="rank-cell" style="color:${safeReportColor(r.pat_color)}">${escapeHtml(pRank)}</td>
-              <td class="rank-cell" style="color:${safeReportColor(r.nor_color)}">${escapeHtml(nRank)}</td>
+              <td class="rank-cell" style="color:${reportRankColor(r.pat_rank, r.pat_color)}">${escapeHtml(pRank)}</td>
+              <td class="rank-cell" style="color:${reportRankColor(r.nor_rank, r.nor_color)}">${escapeHtml(nRank)}</td>
             </tr>`;
             if (!r.sub && r.description) {
               html += `<tr class="desc-row"><td colspan="5" class="desc-cell-block">${escapeHtml(r.description)}</td></tr>`;
@@ -1307,8 +1315,8 @@ function renderReportHTML(report, container) {
             html += `<tr>
               <td class="name-cell${subCls}">${name}</td>
               <td class="score-cell">${escapeHtml(fmtScore(r.score))}</td>
-              <td class="rank-cell" style="color:${safeReportColor(r.pat_color)}">${escapeHtml(pRank)}</td>
-              <td class="rank-cell" style="color:${safeReportColor(r.nor_color)}">${escapeHtml(nRank)}</td>
+              <td class="rank-cell" style="color:${reportRankColor(r.pat_rank, r.pat_color)}">${escapeHtml(pRank)}</td>
+              <td class="rank-cell" style="color:${reportRankColor(r.nor_rank, r.nor_color)}">${escapeHtml(nRank)}</td>
             </tr>`;
             if (!r.sub && r.description) {
               html += `<tr class="desc-row"><td colspan="4" class="desc-cell-block">${escapeHtml(r.description)}</td></tr>`;

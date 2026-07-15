@@ -1,0 +1,19 @@
+{
+  "spreadsheet_id": "1mHaUquO0qdv7bpj9T7LIPVfyUsUlX87uyHiAS_dyG78",
+  "created_at": "2026-07-15T20:20:00+09:00",
+  "reason": "Backup before splitting OCD obsession and compulsion in the Google report",
+  "cells": {
+    "SHEET2REPORT!B31": "강박증상",
+    "SHEET2REPORT!C31": "=IFNA(INDEX(FILTER(DB2SHEET!$A$3:$ZU,DB2SHEET!$D$3:$D=$A$4,DB2SHEET!$C$3:$C=$B$4),1,MATCH(\"score_DIAG_ocd\",DB2SHEET!$1:$1,0)),\"\")",
+    "SHEET2REPORT!D31": "=C31",
+    "SHEET2REPORT!B91": "",
+    "SHEET2REPORT!C91": "",
+    "SHEET2REPORT!D91": "",
+    "검사결과지!I17": "강박증상",
+    "검사결과지!I18": "=IFNA(XLOOKUP(I17,SHEET2REPORT!$B:$B,SHEET2REPORT!$D:$D,\"\"),\"\")",
+    "검사결과지!J17": "범불안",
+    "검사결과지!J18": "=IFNA(XLOOKUP(J17,SHEET2REPORT!$B:$B,SHEET2REPORT!$D:$D,\"\"),\"\")",
+    "검사결과지!K17": "",
+    "검사결과지!K18": ""
+  }
+}
