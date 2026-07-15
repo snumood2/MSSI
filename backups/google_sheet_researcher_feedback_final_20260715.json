@@ -1,0 +1,33 @@
+{
+  "spreadsheet_id": "1mHaUquO0qdv7bpj9T7LIPVfyUsUlX87uyHiAS_dyG78",
+  "verified_at": "2026-07-15T20:55:00+09:00",
+  "e2e_case": {
+    "hospital_code": "SNUBH01",
+    "patient_number": "96008894",
+    "response_id": "f88e8884-f96f-4e7d-a606-64bdd15f7e8d",
+    "rawdata_row": 162,
+    "db2sheet_row": 162,
+    "survey_sections_completed": 25,
+    "answer_keys_persisted": 611
+  },
+  "formulas": {
+    "SHEET2REPORT!C31": "=IFNA(LET(r,FILTER(DB2SHEET!$A$3:$ZW,DB2SHEET!$D$3:$D=$A$4,DB2SHEET!$C$3:$C=$B$4),v,LAMBDA(h,N(INDEX(r,1,MATCH(h,DB2SHEET!$1:$1,0)))),IF(AND(v(\"g1a\")=1,v(\"g2\")=1,v(\"g5\")=1),\"O\",\"X\")),\"\")",
+    "SHEET2REPORT!C91": "=IFNA(LET(r,FILTER(DB2SHEET!$A$3:$ZW,DB2SHEET!$D$3:$D=$A$4,DB2SHEET!$C$3:$C=$B$4),v,LAMBDA(h,N(INDEX(r,1,MATCH(h,DB2SHEET!$1:$1,0)))),IF(AND(v(\"g3a\")=1,v(\"g5\")=1),\"O\",\"X\")),\"\")"
+  },
+  "verification": {
+    "web_vs_sheet_numeric_rows": 60,
+    "web_vs_sheet_mismatches": 0,
+    "ocd_obsession": "O",
+    "ocd_compulsion": "X",
+    "bapq": {
+      "total": [3.92, 17, 4],
+      "aloof": [3.75, 43, 25],
+      "pragmatic": [4.33, 3, 1],
+      "rigid": [3.67, 39, 19]
+    },
+    "asrs": {
+      "screen": "6개 중 3개 (성인ADHD의심되지않음)",
+      "score": [54, 29, 3]
+    }
+  }
+}
