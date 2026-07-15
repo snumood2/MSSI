@@ -14,6 +14,10 @@
     "SHEET2REPORT!C31": "=IFNA(LET(r,FILTER(DB2SHEET!$A$3:$ZW,DB2SHEET!$D$3:$D=$A$4,DB2SHEET!$C$3:$C=$B$4),v,LAMBDA(h,N(INDEX(r,1,MATCH(h,DB2SHEET!$1:$1,0)))),IF(AND(v(\"g1a\")=1,v(\"g2\")=1,v(\"g5\")=1),\"O\",\"X\")),\"\")",
     "SHEET2REPORT!C91": "=IFNA(LET(r,FILTER(DB2SHEET!$A$3:$ZW,DB2SHEET!$D$3:$D=$A$4,DB2SHEET!$C$3:$C=$B$4),v,LAMBDA(h,N(INDEX(r,1,MATCH(h,DB2SHEET!$1:$1,0)))),IF(AND(v(\"g3a\")=1,v(\"g5\")=1),\"O\",\"X\")),\"\")"
   },
+  "layout": {
+    "검사결과지!K:K_width_pixels": 160,
+    "reason": "범불안 제목과 결과가 잘리지 않도록 인접 공존장애 열과 같은 폭으로 조정"
+  },
   "verification": {
     "web_vs_sheet_numeric_rows": 60,
     "web_vs_sheet_mismatches": 0,
