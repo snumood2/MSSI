@@ -1,9 +1,11 @@
 import fs from "node:fs";
 import path from "node:path";
 import { randomBytes } from "node:crypto";
-import { chromium } from "playwright";
+import { chromium, devices } from "playwright";
 
 const appUrl = (process.env.MSSI_APP_URL || "https://snumood2.github.io/MSSI").replace(/\/$/, "");
+const entryUrl = process.env.MSSI_ENTRY_URL || `${appUrl}/signup-patient-snubh01.html`;
+const mobileProfile = devices[process.env.MSSI_DEVICE || "iPhone 13"];
 const tag = Date.now().toString().slice(-8);
 const username = `research${tag}`;
 const password = `MssiE2E!${randomBytes(12).toString("base64url")}`;
@@ -118,18 +120,34 @@ async function loginToken() {
 }
 
 const browser = await chromium.launch({ headless: true });
-const context = await browser.newContext({ viewport: { width: 1440, height: 1100 }, acceptDownloads: true });
-const page = await context.newPage();
-page.setDefaultTimeout(30000);
-page.on("dialog", async (dialog) => {
-  dialogs.push({ type: dialog.type(), message: dialog.message() });
-  await dialog.accept();
-});
+const context = await browser.newContext({ ...mobileProfile, acceptDownloads: true });
+function bindPage(candidate) {
+  candidate.setDefaultTimeout(30000);
+  candidate.on("dialog", async (dialog) => {
+    dialogs.push({ type: dialog.type(), message: dialog.message() });
+    await dialog.accept();
+  });
+}
+
+let page = await context.newPage();
+bindPage(page);
 
 let sectionsCompleted = 0;
 let totalSections = 0;
 try {
-  await page.goto(`${appUrl}/signup-patient-snubh01.html`, { waitUntil: "networkidle" });
+  await page.goto(entryUrl, { waitUntil: "networkidle" });
+  if (!page.url().startsWith(appUrl)) {
+    check("public_homepage_redirect", page.url().startsWith("https://snumood.github.io/homepage/"), { entryUrl, resolvedUrl: page.url() });
+    const signupLink = page.getByRole("link", { name: "설문작성 (회원가입 필요)" });
+    const [signupPage] = await Promise.all([
+      context.waitForEvent("page"),
+      signupLink.click(),
+    ]);
+    page = signupPage;
+    bindPage(page);
+    await page.waitForLoadState("networkidle");
+    check("homepage_mobile_signup_link", page.url() === `${appUrl}/signup-patient-snubh01.html`, { resolvedUrl: page.url() });
+  }
   await page.fill("#s_id", username);
   await page.fill("#s_pw", password);
   await page.fill("#s_pw2", password);
@@ -211,7 +229,7 @@ try {
   check("spaq_impairment_value_persisted", row?.answers?.spaq3 === 1 && Number.isFinite(Number(row?.answers?.spaq3_2)), { spaq3: row?.answers?.spaq3, spaq3_2: row?.answers?.spaq3_2 });
 
   fs.writeFileSync(path.join(outDir, "e2e.json"), JSON.stringify({
-    appUrl, username, patientNumber, hospitalCode, sectionsCompleted, totalSections,
+    appUrl, entryUrl, device: process.env.MSSI_DEVICE || "iPhone 13", username, patientNumber, hospitalCode, sectionsCompleted, totalSections,
     dialogs, responseId: row?.id, completedAt: row?.completed_at, scores: row?.scores,
     answers: row?.answers, report: row?.report, checks,
   }, null, 2), { mode: 0o600 });
@@ -219,7 +237,7 @@ try {
   check("ui_e2e_flow", false, { error: String(error), sectionsCompleted, totalSections });
   await page.screenshot({ path: path.join(outDir, "failure.png"), fullPage: true }).catch(() => {});
   const artifactPath = path.join(outDir, "e2e.json");
-  fs.writeFileSync(artifactPath, JSON.stringify({ appUrl, username, patientNumber, hospitalCode, sectionsCompleted, totalSections, dialogs, checks }, null, 2), { mode: 0o600 });
+  fs.writeFileSync(artifactPath, JSON.stringify({ appUrl, entryUrl, device: process.env.MSSI_DEVICE || "iPhone 13", username, patientNumber, hospitalCode, sectionsCompleted, totalSections, dialogs, checks }, null, 2), { mode: 0o600 });
 } finally {
   await browser.close();
 }
