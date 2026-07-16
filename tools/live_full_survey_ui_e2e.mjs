@@ -179,7 +179,7 @@ try {
     await answerCurrentSection(page);
 
     if (!capturedFourChoice && await page.locator(".choice-count-4").count()) {
-      const rows = await page.locator(".choice-count-4 .opt-chip").evaluateAll((items) => {
+      const rows = await page.locator(".choice-count-4").first().locator(".opt-chip").evaluateAll((items) => {
         const counts = new Map();
         items.forEach((item) => {
           const key = Math.round(item.getBoundingClientRect().top);
@@ -192,7 +192,7 @@ try {
       capturedFourChoice = true;
     }
     if (!capturedFiveChoice && await page.locator(".choice-count-5").count()) {
-      const rows = await page.locator(".choice-count-5 .opt-chip").evaluateAll((items) => {
+      const rows = await page.locator(".choice-count-5").first().locator(".opt-chip").evaluateAll((items) => {
         const counts = new Map();
         items.forEach((item) => {
           const key = Math.round(item.getBoundingClientRect().top);
