@@ -7,3 +7,7 @@ tools/__pycache__/
 e2e-artifacts/
 excel-e2e-artifacts/
 .monthly-audit/
+output/
+tmp/
+backups/*/
+mssi_*_e2e_report.json

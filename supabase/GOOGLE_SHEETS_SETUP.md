@@ -1,6 +1,6 @@
 # Google Sheets 연동 설정
 
-이 프로젝트는 설문 제출 시 브라우저에서 Google Apps Script Web App으로 payload를 전송하고, Apps Script가 지정 스프레드시트의 `RAWDATA` 탭에 한 행을 추가합니다. 이후 Google Sheets 수식이 `RAWDATA -> DB2SHEET -> SHEET2REPORT -> 검사결과지` 순서로 데이터를 정리하고 결과지를 출력합니다.
+이 프로젝트는 설문 제출 시 로그인 JWT를 확인하는 Supabase Edge Function `submit-survey`가 점수를 계산하고 Google Apps Script Web App으로 payload를 전송합니다. 브라우저에는 Google 웹훅 secret을 두지 않습니다. Apps Script는 지정 스프레드시트의 `RAWDATA` 탭을 `response_id` 기준으로 갱신하고, Google Sheets 수식이 `RAWDATA -> DB2SHEET -> SHEET2REPORT -> 검사결과지` 순서로 결과지를 출력합니다.
 
 ## 대상 스프레드시트
 
@@ -15,15 +15,15 @@
 
 1. Apps Script 프로젝트를 엽니다. 대상 Google Sheet의 `확장 프로그램 > Apps Script`에서 열어도 되고, 새 standalone Apps Script 프로젝트를 만들어도 됩니다.
 2. [`Code.gs`](./Code.gs)의 전체 내용을 Apps Script 편집기에 붙여넣습니다.
-3. 웹훅 secret을 설정할 수 있습니다.
+3. 웹훅 secret을 반드시 설정합니다.
    - Apps Script `프로젝트 설정 > 스크립트 속성`에 `MSSI_WEBHOOK_SECRET` 추가
-   - 웹앱에도 같은 값을 `VITE_WEBHOOK_SECRET` 환경변수로 설정
-   - 미설정 시에도 웹훅은 동작합니다. 다만 URL을 아는 사용자가 임의 payload를 보낼 수 있으므로 가능하면 설정하는 것이 좋습니다.
+   - Supabase Function secret에도 같은 값을 `MSSI_WEBHOOK_SECRET`으로 설정
+   - 미설정 시 Apps Script는 모든 POST 요청을 거부합니다.
 4. `배포 > 새 배포 > 웹 앱`을 선택합니다.
 5. 실행 권한은 본인, 접근 권한은 웹앱 호출 환경에 맞게 설정합니다.
-6. 발급된 Web App URL을 웹앱 환경변수 `GOOGLE_SHEETS_WEBHOOK_URL`에 넣습니다.
+6. 발급된 Web App URL을 Supabase Function secret `MSSI_GOOGLE_WEBHOOK_URL`에 넣습니다.
 
-## 웹앱 환경변수
+## 환경변수와 서버 secret
 
 로컬 정적 배포가 아니라 호스팅 환경에서 `window.__ENV__`를 주입하는 경우 아래 값을 넣습니다.
 
@@ -31,11 +31,17 @@
 VITE_SUPABASE_URL=...
 VITE_SUPABASE_ANON_KEY=...
 GOOGLE_SHEETS_WEBHOOK_URL=...
-VITE_WEBHOOK_SECRET=...   # 선택: Apps Script MSSI_WEBHOOK_SECRET과 같은 값
 ADMIN_EMAIL=...
 ```
 
-현재 [`config.js`](../config.js)는 환경변수가 없으면 저장소의 기본 Supabase URL, anon key, Apps Script URL을 사용합니다. Apps Script는 `CONFIG.SPREADSHEET_ID`로 대상 스프레드시트를 열기 때문에 standalone 프로젝트에서도 동작합니다.
+`GOOGLE_SHEETS_WEBHOOK_URL`은 운영 상태 확인 도구만 사용합니다. 설문 브라우저 코드는 이 URL로 직접 POST하지 않습니다. Supabase에는 아래 server secret을 설정합니다.
+
+```text
+MSSI_GOOGLE_WEBHOOK_URL=...
+MSSI_WEBHOOK_SECRET=...
+```
+
+Apps Script는 `CONFIG.SPREADSHEET_ID`로 대상 스프레드시트를 열기 때문에 standalone 프로젝트에서도 동작합니다.
 
 ## 동작 확인
 
@@ -44,11 +50,7 @@ Apps Script Web App URL을 브라우저에서 GET으로 열면 아래와 비슷�
 ```json
 {
   "status": "ok",
-  "mode": "raw_dynamic_full_payload",
-  "rawSheet": { "gid": 1056247064 },
-  "db2Sheet": { "gid": 8856437 },
-  "sheet2Report": { "gid": 1977304621 },
-  "reportSheet": { "gid": 1440639532 }
+  "service": "mssi-sheet-sync"
 }
 ```
 

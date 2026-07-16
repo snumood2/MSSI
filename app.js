@@ -1,6 +1,6 @@
 
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
-import { SUPABASE_URL, SUPABASE_ANON_KEY, PATIENT_EMAIL_DOMAIN, DOCTOR_EMAIL_DOMAIN, ADMIN_EMAIL, GOOGLE_SHEETS_WEBHOOK_URL, WEBHOOK_SECRET } from "./config.js";
+import { SUPABASE_URL, SUPABASE_ANON_KEY, PATIENT_EMAIL_DOMAIN, DOCTOR_EMAIL_DOMAIN, ADMIN_EMAIL } from "./config.js";
 import { SURVEY_SECTIONS } from "./questions.js";
 import { calculateScores, generateReport, getGlobalInstructions } from "./scoring.js";
 import { renderAnswerRawHTML } from "./answer-view.js";
@@ -21,6 +21,8 @@ const state = {
   answers: {},
   currentSectionIdx: 0,
   responseId: null,
+  assessmentNo: null,
+  assessmentKey: null,
 };
 
 const $  = sel => document.querySelector(sel);
@@ -242,18 +244,17 @@ el("btnLoginAction")?.addEventListener("click", async () => {
 
     if (authMode === "signup") {
       if (selectedRole === "admin") throw "관리자는 가입 불가합니다.";
+      if (pw.length < 12) throw "비밀번호는 12자리 이상이어야 합니다.";
 
       if (selectedRole === "patient") {
         const hCode = el("p_hcode").value.trim();
         if (!hCode) throw "병원코드를 입력하세요.";
-        const { data: docProf } = await sb.from("profiles").select("id").eq("hospital_code", hCode).eq("role", "doctor").maybeSingle();
-        if (!docProf) throw "존재하지 않거나 미승인된 병원코드입니다.";
       }
 
       let signUpMeta;
       if (selectedRole === "patient") {
         const patientNumber = el("p_pnum").value.trim();
-        if (!patientNumber) throw "의사에게 받은 번호를 입력하세요.";
+        if (!/^\d{8}$/.test(patientNumber)) throw "의사에게 받은 번호는 8자리 숫자로 입력하세요.";
         signUpMeta = {
           role: "patient",
           username: rawId,
@@ -622,6 +623,11 @@ async function refreshPatientStatus() {
   if (resumeBtn) resumeBtn.style.display = "none";
   if (resultBtn) resultBtn.disabled      = true;
 
+  if (row) {
+    state.assessmentNo = row.assessment_no;
+    state.assessmentKey = row.assessment_key;
+  }
+
   if (row?.status === "completed") {
     statusEl.innerHTML  = `<div class="status-msg show ok">최근 설문이 완료되었습니다 (${fmtDate(row.completed_at)})</div>`;
     if (startBtn)  startBtn.textContent   = "새 설문 시작하기";
@@ -646,7 +652,7 @@ async function loadPatientHistory() {
   const list = el("patientHistoryList");
   if (!list) return;
   const { data } = await sb.from("survey_responses")
-    .select("id, completed_at, status, completed")
+    .select("id, completed_at, status, completed, assessment_no, assessment_key")
     .or(`patient_id.eq.${state.user.id},patient_user_id.eq.${state.user.id}`)
     .or("status.eq.completed,completed.eq.true")
     .order("completed_at", { ascending: false });
@@ -661,7 +667,7 @@ async function loadPatientHistory() {
       <div class="history-dot"></div>
       <div class="history-info">
         <div class="history-date">${i === 0 ? "최근 " : ""}${fmtDate(r.completed_at)}</div>
-        <div class="history-sub">완료된 검사</div>
+        <div class="history-sub">${escapeHtml(r.assessment_key || `회차 ${r.assessment_no || "-"}`)}</div>
       </div>
     </div>`).join("");
 }
@@ -680,6 +686,8 @@ el("btnStartSurvey")?.addEventListener("click", async () => {
   }).select().single();
   if (error) return alert("오류: " + error.message);
   state.responseId = data.id;
+  state.assessmentNo = data.assessment_no;
+  state.assessmentKey = data.assessment_key;
   renderSurvey();
 });
 
@@ -688,7 +696,7 @@ el("btnResumeSurvey")?.addEventListener("click", () => renderSurvey());
 el("btnViewMyResult")?.addEventListener("click", () => viewMyResult(state.responseId));
 
 window.viewMyResult = async (rid) => {
-  const { data } = await sb.from("survey_responses").select("report, scores, answers, completed_at, patient_number").eq("id", rid).single();
+  const { data } = await sb.from("survey_responses").select("report, scores, answers, completed_at, patient_number, assessment_no, assessment_key").eq("id", rid).single();
   let report = data?.report;
   if (data?.answers) state.answers = data.answers;
 
@@ -700,7 +708,9 @@ window.viewMyResult = async (rid) => {
     } catch (e) { console.error("재계산 실패:", e); }
   }
   if (!report) return alert("결과를 찾을 수 없습니다.");
-  renderResultView(report, data.completed_at, data.patient_number);
+  state.assessmentNo = data.assessment_no;
+  state.assessmentKey = data.assessment_key;
+  renderResultView(report, data.completed_at, data.patient_number, data.assessment_key);
   show("view-result");
   el("btnBack").onclick = () => { show("view-patient"); refreshPatientStatus(); };
 };
@@ -1136,69 +1146,28 @@ async function submitSurvey() {
   if (!confirm("모든 설문이 완료되었습니다. 제출하시겠습니까?")) return;
 
   try {
-    const scores = calculateScores(state.answers);
-    const report = generateReport(scores, state.answers);
-
-    await sb.from("survey_responses").update({
-      answers: state.answers, scores, report,
-      status: "completed",
-      completed: true,
-      completed_at: new Date().toISOString()
-    }).eq("id", state.responseId);
-
-    alert("설문이 성공적으로 제출되었습니다.");
-
-    if (GOOGLE_SHEETS_WEBHOOK_URL && state.profile) {
-      try {
-        const gsPayload = {
-          timestamp: new Date().toISOString(),
-          responseId: state.responseId || '',
-          patientId: state.profile.id || state.user?.id || '',
-          dob: state.profile.dob || '',
-          hospitalCode: state.profile.hospital_code || '',
-          patientNumber: state.profile.patient_number || '',
-          doctorNickname: state.profile.doctor_name || '',
-          hospitalNickname: state.profile.hospital_name || '',
-          answers: state.answers,
-          scores,
-          report,
-          scoresJson: JSON.stringify(scores),
-          reportJson: JSON.stringify(report)
-        };
-        gsPayload.secret = WEBHOOK_SECRET;
-        fetch(GOOGLE_SHEETS_WEBHOOK_URL, {
-          method: 'POST',
-          mode: 'no-cors',
-          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-          body: JSON.stringify(gsPayload)
-        }).catch(e => console.warn('Google Sheets 전송 실패(무시됨):', e));
-      } catch (e) {
-        console.warn('Google Sheets 전송 오류(무시됨):', e);
-      }
+    const { data, error } = await sb.functions.invoke("submit-survey", {
+      body: { responseId: state.responseId, answers: state.answers }
+    });
+    if (error || data?.status !== "ok" || !data.report) {
+      throw error || new Error(data?.error || "제출 처리에 실패했습니다.");
     }
 
-    renderResultView(report, new Date().toISOString(), state.profile?.patient_number);
+    alert("설문이 성공적으로 제출되었습니다.");
+    renderResultView(data.report, data.completedAt, state.profile?.patient_number, state.assessmentKey);
     show("view-result");
     el("btnBack").onclick = () => { show("view-patient"); refreshPatientStatus(); };
 
   } catch (err) {
     console.error(err);
-
-    await sb.from("survey_responses").update({
-      answers: state.answers, status: "completed",
-      completed: true,
-      completed_at: new Date().toISOString()
-    }).eq("id", state.responseId);
-    alert("제출 완료 (결과 계산 오류 발생 – 의사에게 문의하세요).");
-    show("view-patient");
-    refreshPatientStatus();
+    alert("제출을 완료하지 못했습니다. 응답은 임시 저장되었으니 잠시 후 다시 제출해 주세요.");
   }
 }
 window.submitSurvey = submitSurvey;
 
-function renderResultView(report, completedAt, patientNumber) {
+function renderResultView(report, completedAt, patientNumber, assessmentKey) {
   el("resultDate").textContent    = fmtDate(completedAt);
-  el("resultPatNum").textContent  = patientNumber ? `번호: ${patientNumber}` : "";
+  el("resultPatNum").textContent  = patientNumber ? `번호: ${assessmentKey || patientNumber}` : "";
 
   const instructions = (report && report.instructions) ? report.instructions : getGlobalInstructions();
   el("resultInstructions").textContent = instructions;
@@ -1210,7 +1179,7 @@ function renderResultView(report, completedAt, patientNumber) {
     infoEl.innerHTML = `
       <span class="meta-label">출생연도:</span><span class="meta-value">${dobYear}</span>
       &nbsp;&nbsp;<span class="meta-label">병원코드:</span><span class="meta-value">${escapeHtml(p.hospital_code || "-")}</span>
-      &nbsp;&nbsp;<span class="meta-label">번호:</span><span class="meta-value">${escapeHtml(p.patient_number || "-")}</span>`;
+      &nbsp;&nbsp;<span class="meta-label">번호:</span><span class="meta-value">${escapeHtml(assessmentKey || p.patient_number || "-")}</span>`;
   }
 
   const content = el("resultTableContent");

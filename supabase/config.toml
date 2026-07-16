@@ -112,9 +112,12 @@ enable_anonymous_sign_ins = false
 
 enable_manual_linking = false
 
-minimum_password_length = 6
+minimum_password_length = 12
 
 password_requirements = ""
+
+[functions.submit-survey]
+verify_jwt = true
 
 [auth.rate_limit]
 

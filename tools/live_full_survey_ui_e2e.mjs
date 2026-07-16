@@ -1,11 +1,12 @@
 import fs from "node:fs";
 import path from "node:path";
+import { randomBytes } from "node:crypto";
 import { chromium } from "playwright";
 
 const appUrl = (process.env.MSSI_APP_URL || "https://snumood2.github.io/MSSI").replace(/\/$/, "");
 const tag = Date.now().toString().slice(-8);
 const username = `research${tag}`;
-const password = "MssiE2E!2026";
+const password = `MssiE2E!${randomBytes(12).toString("base64url")}`;
 const patientNumber = `9${tag.slice(-7)}`;
 const hospitalCode = "SNUBH01";
 const outDir = path.resolve("e2e-artifacts", `researcher-ui-${Date.now()}`);
@@ -24,6 +25,12 @@ function check(name, ok, detail = {}) {
   if (!ok) process.exitCode = 1;
 }
 
+function variedIndex(name, length) {
+  let hash = 17;
+  for (const char of name) hash = (hash * 31 + char.charCodeAt(0)) >>> 0;
+  return hash % length;
+}
+
 function radioChoice(name, values) {
   if (name === "pms_skip") return "0";
   if (name === "g1a" || name === "g2" || name === "g5") return "1";
@@ -33,14 +40,12 @@ function radioChoice(name, values) {
     return values[(number * 5 + 1) % values.length];
   }
   if (/^spaq2_[0-5]$/.test(name)) {
-    return ["2", "2", "2", "2", "2", "1"][Number(name.slice(-1))];
+    return ["0", "4", "1", "3", "2", "4"][Number(name.slice(-1))];
   }
-  if (name === "spaq3") return "0";
-  if (/^mssi\d+_yn$/.test(name)) return "1";
-  if (/^mssi\d+_(freq|sev)$/.test(name)) return values[Math.floor(values.length / 2)];
-  if (/^(d1a|e1|f1|n1a)$/.test(name)) return values.includes("0") ? "0" : values[0];
+  if (name === "spaq3") return "1";
+  if (/^(d1a|e1|f1|n1a)$/.test(name)) return "1";
   if (name === "au1") return values.find((value) => value !== "0") || values[0];
-  return values[Math.floor(values.length / 2)];
+  return values[variedIndex(name, values.length)];
 }
 
 async function answerCurrentSection(page) {
@@ -190,21 +195,34 @@ try {
   check("all_answer_keys_persisted", Object.keys(row?.answers || {}).length > 300, { answerKeys: Object.keys(row?.answers || {}).length });
   check("ocd_branch_scored", row?.scores?.DIAG?.ocdObsession === "O" && row?.scores?.DIAG?.ocdCompulsion === "X", row?.scores?.DIAG || {});
   check("bapq_varied_scored", Number.isFinite(row?.scores?.BAPQ?.total) && new Set([row?.scores?.BAPQ?.aloof, row?.scores?.BAPQ?.pragma, row?.scores?.BAPQ?.rigid]).size > 1, row?.scores?.BAPQ || {});
-  check("spaq_kasper_boundary", row?.scores?.SPAQ?.score === 11 && row?.scores?.SPAQ?.global === 0 && row?.scores?.SPAQ?.class === "subsyndromal SAD", row?.scores?.SPAQ || {});
-  check("spaq_hidden_impairment_blank", row?.answers?.spaq3 === 0 && row?.answers?.spaq3_2 === undefined, { spaq3: row?.answers?.spaq3, spaq3_2: row?.answers?.spaq3_2 });
+  const erValues = Object.entries(row?.answers || {}).filter(([key]) => /^er\d+$/.test(key)).map(([, value]) => Number(value));
+  const tempsValues = Object.entries(row?.answers || {}).filter(([key]) => /^t\d+$/.test(key)).map(([, value]) => Number(value));
+  check("ersq_inputs_varied", new Set(erValues).size >= 4, { uniqueValues: [...new Set(erValues)].sort((a, b) => a - b), count: erValues.length });
+  const tempsCounts = tempsValues.reduce((counts, value) => counts.set(value, (counts.get(value) || 0) + 1), new Map());
+  check("temps_inputs_varied", tempsCounts.size === 2 && Math.min(...tempsCounts.values()) >= 8, { uniqueValues: [...tempsCounts.keys()].sort((a, b) => a - b), counts: Object.fromEntries(tempsCounts), count: tempsValues.length });
+  check("overall_numeric_inputs_varied", new Set(Object.values(row?.answers || {}).filter((value) => Number.isFinite(Number(value))).map(Number)).size >= 6, { uniqueValues: [...new Set(Object.values(row?.answers || {}).filter((value) => Number.isFinite(Number(value))).map(Number))].sort((a, b) => a - b) });
+  const expectedSpaqClass = row?.scores?.SPAQ?.score >= 11 && row?.scores?.SPAQ?.global >= 2
+    ? "SAD"
+    : ((row?.scores?.SPAQ?.score >= 9 && row?.scores?.SPAQ?.score <= 10 && row?.scores?.SPAQ?.global >= 2)
+      || (row?.scores?.SPAQ?.score >= 11 && row?.scores?.SPAQ?.global <= 1)
+      ? "subsyndromal SAD"
+      : "not SAD");
+  check("spaq_diverse_values_scored", row?.scores?.SPAQ?.score === 14 && Number.isFinite(row?.scores?.SPAQ?.global) && row?.scores?.SPAQ?.class === expectedSpaqClass, row?.scores?.SPAQ || {});
+  check("spaq_impairment_value_persisted", row?.answers?.spaq3 === 1 && Number.isFinite(Number(row?.answers?.spaq3_2)), { spaq3: row?.answers?.spaq3, spaq3_2: row?.answers?.spaq3_2 });
 
   fs.writeFileSync(path.join(outDir, "e2e.json"), JSON.stringify({
-    appUrl, username, password, patientNumber, hospitalCode, sectionsCompleted, totalSections,
+    appUrl, username, patientNumber, hospitalCode, sectionsCompleted, totalSections,
     dialogs, responseId: row?.id, completedAt: row?.completed_at, scores: row?.scores,
-    report: row?.report, checks,
-  }, null, 2));
+    answers: row?.answers, report: row?.report, checks,
+  }, null, 2), { mode: 0o600 });
 } catch (error) {
   check("ui_e2e_flow", false, { error: String(error), sectionsCompleted, totalSections });
   await page.screenshot({ path: path.join(outDir, "failure.png"), fullPage: true }).catch(() => {});
-  fs.writeFileSync(path.join(outDir, "e2e.json"), JSON.stringify({ appUrl, username, password, patientNumber, hospitalCode, sectionsCompleted, totalSections, dialogs, checks }, null, 2));
+  const artifactPath = path.join(outDir, "e2e.json");
+  fs.writeFileSync(artifactPath, JSON.stringify({ appUrl, username, patientNumber, hospitalCode, sectionsCompleted, totalSections, dialogs, checks }, null, 2), { mode: 0o600 });
 } finally {
   await browser.close();
 }
 
 console.log("ARTIFACT_DIR", outDir);
-console.log("PATIENT", JSON.stringify({ username, password, patientNumber, hospitalCode }));
+console.log("PATIENT", JSON.stringify({ username, patientNumber, hospitalCode }));

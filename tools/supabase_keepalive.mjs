@@ -20,11 +20,10 @@ const timer = setTimeout(() => controller.abort(), timeoutMs);
 const startedAt = new Date();
 
 try {
-  const response = await fetch(`${url}/rest/v1/profiles?select=id&limit=1`, {
+  const response = await fetch(`${url}/auth/v1/health`, {
     method: "GET",
     headers: {
       apikey: anonKey,
-      Authorization: `Bearer ${anonKey}`,
       Accept: "application/json",
       "User-Agent": "MSSI-Supabase-Keepalive/1.0",
     },

@@ -73,7 +73,7 @@
       </div>
       <div class="form-group">
         <label>비밀번호 <span class="required">*</span></label>
-        <input type="password" id="s_pw" placeholder="4자리 이상" autocomplete="new-password">
+        <input type="password" id="s_pw" placeholder="12자리 이상" minlength="12" autocomplete="new-password">
       </div>
       <div class="form-group">
         <label>비밀번호 확인 <span class="required">*</span></label>
@@ -134,7 +134,7 @@
         if (!id) throw "아이디를 입력하세요.";
         if (id.length < 2) throw "아이디는 2자 이상이어야 합니다.";
         if (!pw) throw "비밀번호를 입력하세요.";
-        if (pw.length < 4) throw "비밀번호는 4자리 이상이어야 합니다.";
+        if (pw.length < 12) throw "비밀번호는 12자리 이상이어야 합니다.";
         if (pw !== pw2) throw "비밀번호가 일치하지 않습니다.";
 
         const dob = validateBirthMonth($("s_dob").value);
@@ -143,7 +143,7 @@
         $("btnSignup").disabled = true;
 
         const patientNumber = $("s_pnum").value.trim();
-        if (!patientNumber) throw "의사에게 받은 번호를 입력하세요.";
+        if (!/^\d{8}$/.test(patientNumber)) throw "의사에게 받은 번호는 8자리 숫자로 입력하세요.";
         const userData = { role: "patient", username: id, dob, hospital_code: FIXED_HOSPITAL_CODE, patient_number: patientNumber };
 
         const { data, error } = await sb.auth.signUp({

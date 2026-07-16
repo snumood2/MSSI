@@ -15,12 +15,11 @@ assert.match(cfg, /export const SUPABASE_URL = ENV\.VITE_SUPABASE_URL \|\| "http
 assert.match(cfg, /export const SUPABASE_ANON_KEY = ENV\.VITE_SUPABASE_ANON_KEY \|\| "[^"]{20,}"/);
 assert.doesNotMatch(cfg, /YOUR_|REPLACE_ME/);
 assert.match(cfg, /export const GOOGLE_SHEETS_WEBHOOK_URL = ENV\.GOOGLE_SHEETS_WEBHOOK_URL \|\| "https:\/\/script\.google\.com\/macros\/s\//);
+assert.doesNotMatch(cfg, /export const WEBHOOK_SECRET/);
 
 const respondent = readFileSync('./respondent.html', 'utf8');
-assert.match(respondent, /GOOGLE_SHEETS_WEBHOOK_URL/);
-assert.match(respondent, /Content-Type": "text\/plain;charset=utf-8"/);
-assert.match(respondent, /mode: "no-cors"/);
-assert.doesNotMatch(respondent, /Google Sheets 전송 건너뜀: VITE_WEBHOOK_SECRET/);
+assert.match(respondent, /sb\.functions\.invoke\("submit-survey"/);
+assert.doesNotMatch(respondent, /GOOGLE_SHEETS_WEBHOOK_URL|WEBHOOK_SECRET|mode: "no-cors"/);
 assert.doesNotMatch(respondent, /<script>[\s\S]*<\/script>[\s\S]*el\("btnPrintResult"\)/);
 assert.match(respondent, /let submitInProgress = false;/);
 assert.match(respondent, /await submitSurvey\(\);/);
@@ -51,14 +50,33 @@ const migration = readFileSync('./supabase/migration.sql', 'utf8');
 assert.match(migration, /patient_can_use_hospital/);
 assert.match(migration, /can_patient_write_survey/);
 assert.match(migration, /public\.can_patient_write_survey\(patient_id, hospital_code\)/);
+assert.match(migration, /REVOKE INSERT ON public\.profiles FROM anon, authenticated/);
+assert.match(migration, /CREATE POLICY "profiles_update_own"[\s\S]*WITH CHECK/);
+assert.match(migration, /protect_profile_security_fields/);
 
 const codeGs = readFileSync('./supabase/Code.gs', 'utf8');
-assert.match(codeGs, /mode: 'raw_dynamic_full_payload'/);
+assert.match(codeGs, /mode: 'raw_dynamic_materialized_db2sheet'/);
 assert.match(codeGs, /const FIXED_HEADERS = \[[\s\S]*'timestamp'[\s\S]*'hospital_code'[\s\S]*'patient_number'[\s\S]*'dob'[\s\S]*'sex'/);
 assert.match(codeGs, /flattenObject_\(record, '', params\.answers \|\| \{\}\);/);
 assert.match(codeGs, /flattenObject_\(record, 'score_', params\.scores \|\| \{\}\);/);
 assert.match(codeGs, /dob: params\.dob \? "'" \+ String\(params\.dob\) : ''/);
-assert.match(codeGs, /if \(!expected\) \{[\s\S]*return;[\s\S]*\}/);
+assert.match(codeGs, /if \(!expected\) \{[\s\S]*throw new Error\('Webhook secret is not configured\.'\)/);
+assert.match(codeGs, /assessment_no: params\.assessmentNo \|\| ''/);
+assert.match(codeGs, /assessment_key: params\.assessmentKey \|\| ''/);
+assert.match(codeGs, /findDataRowByValue_/);
+assert.match(codeGs, /safeCellValue_/);
+
+const submitFunction = readFileSync('./supabase/functions/submit-survey/index.ts', 'utf8');
+assert.match(submitFunction, /supabase\.auth\.getUser\(\)/);
+assert.match(submitFunction, /MSSI_GOOGLE_WEBHOOK_URL/);
+assert.match(submitFunction, /status: "completed"/);
+assert.match(submitFunction, /Sheet synchronization is temporarily unavailable/);
+
+const assessmentMigration = readFileSync('./supabase/migrations/20260717_add_assessment_sequence.sql', 'utf8');
+assert.match(assessmentMigration, /ADD COLUMN IF NOT EXISTS assessment_no integer/);
+assert.match(assessmentMigration, /ADD COLUMN IF NOT EXISTS assessment_key text/);
+assert.match(assessmentMigration, /pg_advisory_xact_lock/);
+assert.match(assessmentMigration, /trg_assign_survey_assessment_sequence/);
 
 const workflowExists = existsSync('./.github/workflows/deploy-pages.yml');
 if (workflowExists) {

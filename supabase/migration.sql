@@ -71,6 +71,8 @@ CREATE TABLE IF NOT EXISTS public.survey_responses (
   --메타
   hospital_code   TEXT,
   patient_number  TEXT,
+  assessment_no   INTEGER,
+  assessment_key  TEXT,
 
   --설문 데이터
   answers         JSONB DEFAULT '{}'::jsonb,
@@ -92,6 +94,66 @@ CREATE INDEX IF NOT EXISTS idx_survey_completed ON public.survey_responses(compl
 CREATE INDEX IF NOT EXISTS idx_survey_hospital_code ON public.survey_responses(hospital_code);
 CREATE INDEX IF NOT EXISTS idx_survey_patient_number ON public.survey_responses(patient_number);
 CREATE INDEX IF NOT EXISTS idx_survey_created_at ON public.survey_responses(created_at DESC);
+
+--같은 병원/환자 번호의 반복 설문은 별도 회차로 관리한다.
+ALTER TABLE public.survey_responses
+  ADD COLUMN IF NOT EXISTS assessment_no INTEGER,
+  ADD COLUMN IF NOT EXISTS assessment_key TEXT;
+
+WITH numbered AS (
+  SELECT id,
+         row_number() OVER (
+           PARTITION BY hospital_code, patient_number
+           ORDER BY created_at, id
+         )::integer AS assessment_no
+  FROM public.survey_responses
+  WHERE NULLIF(patient_number, '') IS NOT NULL
+)
+UPDATE public.survey_responses sr
+SET assessment_no = numbered.assessment_no,
+    assessment_key = sr.patient_number || '-' || numbered.assessment_no
+FROM numbered
+WHERE sr.id = numbered.id
+  AND (sr.assessment_no IS NULL OR sr.assessment_key IS NULL);
+
+CREATE UNIQUE INDEX IF NOT EXISTS uq_survey_assessment_occurrence
+  ON public.survey_responses(hospital_code, patient_number, assessment_no)
+  WHERE NULLIF(patient_number, '') IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_survey_assessment_key
+  ON public.survey_responses(assessment_key);
+
+CREATE OR REPLACE FUNCTION public.assign_survey_assessment_sequence()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SET search_path = public
+AS $$
+BEGIN
+  IF NULLIF(NEW.patient_number, '') IS NULL THEN
+    NEW.assessment_no := NULL;
+    NEW.assessment_key := NULL;
+    RETURN NEW;
+  END IF;
+
+  PERFORM pg_advisory_xact_lock(
+    hashtextextended(COALESCE(NEW.hospital_code, '') || ':' || NEW.patient_number, 0)
+  );
+  IF NEW.assessment_no IS NULL THEN
+    SELECT COALESCE(MAX(sr.assessment_no), 0) + 1
+    INTO NEW.assessment_no
+    FROM public.survey_responses sr
+    WHERE sr.hospital_code IS NOT DISTINCT FROM NEW.hospital_code
+      AND sr.patient_number = NEW.patient_number;
+  END IF;
+  NEW.assessment_key := NEW.patient_number || '-' || NEW.assessment_no;
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS trg_assign_survey_assessment_sequence ON public.survey_responses;
+CREATE TRIGGER trg_assign_survey_assessment_sequence
+BEFORE INSERT OR UPDATE OF hospital_code, patient_number, assessment_no
+ON public.survey_responses
+FOR EACH ROW EXECUTE FUNCTION public.assign_survey_assessment_sequence();
 
 --══════════════════════════════════════════════════════════════
 --4. RLS (Row Level Security) 정책
@@ -159,10 +221,9 @@ AS $$
   );
 $$;
 
---누구나 프로필 생성 가능 (회원가입 시)
+--프로필은 auth.users 트리거에서만 생성
 DROP POLICY IF EXISTS "profiles_insert_anyone" ON public.profiles;
-CREATE POLICY "profiles_insert_anyone" ON public.profiles
-  FOR INSERT WITH CHECK (true);
+REVOKE INSERT ON public.profiles FROM anon, authenticated;
 --자신의 프로필은 읽기 가능
 CREATE POLICY IF NOT EXISTS "profiles_select_own" ON public.profiles
   FOR SELECT USING (auth.uid() = id);
@@ -178,9 +239,17 @@ CREATE POLICY "profiles_select_doctor_hospital" ON public.profiles
     )
   );
 
---자신의 프로필만 수정
-CREATE POLICY IF NOT EXISTS "profiles_update_own" ON public.profiles
-  FOR UPDATE USING (auth.uid() = id);
+--자신의 비보안 프로필 필드만 수정
+DROP POLICY IF EXISTS "profiles_update_own" ON public.profiles;
+CREATE POLICY "profiles_update_own" ON public.profiles
+  FOR UPDATE
+  TO authenticated
+  USING ((SELECT auth.uid()) = id)
+  WITH CHECK (
+    (SELECT auth.uid()) = id
+    AND role = public.get_user_role()
+    AND hospital_code IS NOT DISTINCT FROM public.get_user_hospital_code()
+  );
 
 --survey_responses
 ALTER TABLE public.survey_responses ENABLE ROW LEVEL SECURITY;
@@ -390,20 +459,37 @@ SECURITY DEFINER
 SET search_path = public
 AS $$
 DECLARE
-  meta JSONB := NEW.raw_user_meta_data;
+  meta JSONB := COALESCE(NEW.raw_user_meta_data, '{}'::jsonb);
+  requested_role TEXT := COALESCE(NULLIF(meta->>'role', ''), 'patient');
   v_role TEXT;
-  v_hospital_code TEXT;
-  v_patient_number TEXT;
+  v_hospital_code TEXT := UPPER(NULLIF(BTRIM(meta->>'hospital_code'), ''));
+  v_patient_number TEXT := NULLIF(BTRIM(meta->>'patient_number'), '');
+  v_dob TEXT := NULLIF(BTRIM(meta->>'dob'), '');
 BEGIN
-  v_role := COALESCE(NULLIF(meta->>'role', ''), 'patient');
-  v_hospital_code := NULLIF(meta->>'hospital_code', '');
-  v_patient_number := NULLIF(meta->>'patient_number', '');
+  IF requested_role = 'doctor_pending' THEN
+    v_role := 'doctor_pending';
+  ELSIF requested_role = 'patient' THEN
+    v_role := 'patient';
+  ELSE
+    RAISE EXCEPTION '허용되지 않은 가입 역할입니다.';
+  END IF;
+
+  IF char_length(COALESCE(meta->>'username', '')) > 80
+     OR char_length(COALESCE(meta->>'doctor_name', '')) > 100
+     OR char_length(COALESCE(meta->>'hospital_name', '')) > 150 THEN
+    RAISE EXCEPTION '가입 정보가 허용 길이를 초과했습니다.';
+  END IF;
 
   IF v_role = 'patient' THEN
     IF v_hospital_code IS NULL THEN
       RAISE EXCEPTION '병원코드가 필요합니다.';
     END IF;
-
+    IF v_patient_number IS NULL OR v_patient_number !~ '^[0-9]{8}$' THEN
+      RAISE EXCEPTION '환자번호는 8자리 숫자여야 합니다.';
+    END IF;
+    IF v_dob IS NULL OR v_dob !~ '^(19|20)[0-9]{2}-(0[1-9]|1[0-2])$' THEN
+      RAISE EXCEPTION '생년월 형식이 올바르지 않습니다.';
+    END IF;
     IF NOT EXISTS (
       SELECT 1 FROM public.profiles
       WHERE hospital_code = v_hospital_code
@@ -411,6 +497,14 @@ BEGIN
     ) THEN
       RAISE EXCEPTION '존재하지 않거나 미승인된 병원코드입니다.';
     END IF;
+  ELSE
+    IF NULLIF(BTRIM(meta->>'doctor_name'), '') IS NULL
+       OR NULLIF(BTRIM(meta->>'hospital_name'), '') IS NULL
+       OR v_hospital_code IS NULL THEN
+      RAISE EXCEPTION '의사 가입 정보가 부족합니다.';
+    END IF;
+    v_patient_number := NULL;
+    v_dob := NULL;
   END IF;
 
   INSERT INTO public.profiles (
@@ -421,14 +515,14 @@ BEGIN
   ) VALUES (
     NEW.id,
     NEW.email,
-    COALESCE(NULLIF(meta->>'username', ''), SPLIT_PART(NEW.email, '@', 1)),
+    LEFT(COALESCE(NULLIF(meta->>'username', ''), SPLIT_PART(NEW.email, '@', 1)), 80),
     v_role,
-    NULLIF(meta->>'doctor_name', ''),
-    NULLIF(meta->>'hospital_name', ''),
+    CASE WHEN v_role = 'doctor_pending' THEN LEFT(NULLIF(BTRIM(meta->>'doctor_name'), ''), 100) END,
+    CASE WHEN v_role = 'doctor_pending' THEN LEFT(NULLIF(BTRIM(meta->>'hospital_name'), ''), 150) END,
     v_hospital_code,
-    NULLIF(meta->>'dob', ''),
+    v_dob,
     v_patient_number,
-    COALESCE(NULLIF(meta->>'doctor_name', ''), NULLIF(meta->>'username', ''), SPLIT_PART(NEW.email, '@', 1))
+    LEFT(COALESCE(NULLIF(BTRIM(meta->>'doctor_name'), ''), NULLIF(meta->>'username', ''), SPLIT_PART(NEW.email, '@', 1)), 100)
   );
 
   RETURN NEW;
@@ -441,6 +535,44 @@ CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW
   EXECUTE FUNCTION public.handle_new_user();
+
+CREATE OR REPLACE FUNCTION public.protect_profile_security_fields()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SET search_path = public
+AS $$
+BEGIN
+  IF auth.uid() = OLD.id AND (
+    NEW.id IS DISTINCT FROM OLD.id
+    OR NEW.role IS DISTINCT FROM OLD.role
+    OR NEW.email IS DISTINCT FROM OLD.email
+    OR NEW.hospital_code IS DISTINCT FROM OLD.hospital_code
+    OR NEW.patient_number IS DISTINCT FROM OLD.patient_number
+    OR NEW.dob IS DISTINCT FROM OLD.dob
+    OR NEW.approved_at IS DISTINCT FROM OLD.approved_at
+  ) THEN
+    RAISE EXCEPTION '보안 관련 프로필 필드는 직접 변경할 수 없습니다.';
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS trg_protect_profile_security_fields ON public.profiles;
+CREATE TRIGGER trg_protect_profile_security_fields
+  BEFORE UPDATE ON public.profiles
+  FOR EACH ROW
+  EXECUTE FUNCTION public.protect_profile_security_fields();
+
+REVOKE ALL ON FUNCTION public.approve_doctor(UUID) FROM PUBLIC, anon;
+REVOKE ALL ON FUNCTION public.revoke_doctor_approval(UUID) FROM PUBLIC, anon;
+REVOKE ALL ON FUNCTION public.admin_reset_password(UUID, TEXT) FROM PUBLIC, anon;
+REVOKE ALL ON FUNCTION public.doctor_get_patient_results(TEXT) FROM PUBLIC, anon;
+REVOKE ALL ON FUNCTION public.doctor_list_patients() FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.approve_doctor(UUID) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.revoke_doctor_approval(UUID) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.admin_reset_password(UUID, TEXT) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.doctor_get_patient_results(TEXT) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.doctor_list_patients() TO authenticated;
 
 --══════════════════════════════════════════════════════════════
 --7. updated_at 자동 갱신 트리거

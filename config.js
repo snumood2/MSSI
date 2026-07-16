@@ -8,7 +8,6 @@ export const DOCTOR_EMAIL_DOMAIN  = "doctor.local";
 
 export const ADMIN_EMAIL = ENV.ADMIN_EMAIL || "snumood@gmail.com";
 
+// Operational health checks use this public endpoint. Survey clients never post
+// to it directly; submit-survey keeps the required secret server-side.
 export const GOOGLE_SHEETS_WEBHOOK_URL = ENV.GOOGLE_SHEETS_WEBHOOK_URL || "https://script.google.com/macros/s/AKfycbzPLHEYNY_FAsI-zOpENr1mvm0T5FP9755G_dj9682S9rt_C1xHimjYLF_WBSH2olMbTA/exec";
-
-// WEBHOOK_SECRET: loaded from env or empty (backward compatible)
-export const WEBHOOK_SECRET = ENV.VITE_WEBHOOK_SECRET || "";

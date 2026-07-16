@@ -1,4 +1,5 @@
 import fs from "node:fs";
+import { randomBytes } from "node:crypto";
 import { SURVEY_SECTIONS } from "../questions.js";
 import { calculateScores, generateReport } from "../scoring.js";
 
@@ -12,8 +13,8 @@ const ADMIN_PASSWORD = process.env.MSSI_ADMIN_PASSWORD;
 const HDR = { apikey: SUPABASE_ANON_KEY, "Content-Type": "application/json" };
 const tag = new Date().toISOString().replace(/[-:.TZ]/g, "").slice(0, 14);
 const doctorUsername = `e2edoc${tag}`.toLowerCase();
-const doctorPassword = "MssiDoc!2026";
-const patientPassword = "MssiPat!2026";
+const doctorPassword = `MssiDoc!${randomBytes(12).toString("base64url")}`;
+const patientPassword = `MssiPat!${randomBytes(12).toString("base64url")}`;
 const hospitalCode = `E2E${tag.slice(-6)}`;
 const hospitalName = `E2E병원${tag.slice(-4)}`;
 
@@ -200,7 +201,7 @@ check("doctor_login_after_approval", doctorLogin.ok, { status: doctorLogin.statu
 
 const modes = ["mid", "max", "low"];
 for (let i = 0; i < 3; i++) {
-  const patientNumber = `E2E-${tag}-${i + 1}`;
+  const patientNumber = `9${tag.slice(-6)}${i + 1}`;
   const username = `e2epat${tag}${i + 1}`.toLowerCase();
   const email = `${username}@patient.local`;
   const dob = `199${i}-0${i + 1}`;
@@ -282,5 +283,5 @@ for (let i = 0; i < 3; i++) {
   out.patients.push(patient);
 }
 
-fs.writeFileSync(new URL("../mssi_operational_e2e_report.json", import.meta.url), JSON.stringify(out, null, 2));
+fs.writeFileSync(new URL("../mssi_operational_e2e_report.json", import.meta.url), JSON.stringify(out, null, 2), { mode: 0o600 });
 console.log("REPORT mssi_operational_e2e_report.json");

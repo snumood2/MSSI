@@ -1,5 +1,6 @@
 import fs from "node:fs";
 import { execFileSync } from "node:child_process";
+import { randomBytes } from "node:crypto";
 import { SURVEY_SECTIONS } from "../questions.js";
 import { calculateScores, generateReport } from "../scoring.js";
 
@@ -181,7 +182,7 @@ function rank(score, mean, std) {
 const sourceAsrsRows = readAsrsRowsFromXlsx();
 const tag = new Date().toISOString().replace(/[-:.TZ]/g, "").slice(0, 14);
 const hospitalCode = process.env.MSSI_E2E_HOSPITAL_CODE || "JWEY6A";
-const password = "MssiPat!2026";
+const password = `Mssi!${randomBytes(12).toString("base64url")}`;
 const sheetToken = await googleToken();
 const cases = [];
 const allTargets = [0, 1, 2, 3, 4, 6];
@@ -406,6 +407,6 @@ const out = {
   cases,
   ok: cases.every((item) => item.ok),
 };
-fs.writeFileSync(new URL("../mssi_full_six_case_e2e_report.json", import.meta.url), JSON.stringify(out, null, 2));
+fs.writeFileSync(new URL("../mssi_full_six_case_e2e_report.json", import.meta.url), JSON.stringify(out, null, 2), { mode: 0o600 });
 console.log("REPORT mssi_full_six_case_e2e_report.json");
 if (!out.ok) process.exitCode = 1;

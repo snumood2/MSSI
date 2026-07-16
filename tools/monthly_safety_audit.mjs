@@ -41,17 +41,69 @@ async function fetchText(url, options = {}) {
 }
 
 async function checkSupabase() {
-  const result = await fetchText(`${supabaseUrl}/rest/v1/profiles?select=id&limit=1`, {
+  const result = await fetchText(`${supabaseUrl}/auth/v1/health`, {
     headers: {
       apikey: supabaseAnonKey,
-      Authorization: `Bearer ${supabaseAnonKey}`,
       Accept: "application/json",
       "User-Agent": "MSSI-Monthly-Safety-Audit/1.0",
     },
   });
   return {
-    name: "supabase_rest",
+    name: "supabase_auth_health",
     ok: result.ok,
+    status: result.status,
+    response_bytes: result.text.length,
+  };
+}
+
+async function checkAnonymousClinicalTables() {
+  const statuses = [];
+  for (const table of ["profiles", "survey_responses"]) {
+    const result = await fetchText(`${supabaseUrl}/rest/v1/${table}?select=id&limit=1`, {
+      headers: {
+        apikey: supabaseAnonKey,
+        Authorization: `Bearer ${supabaseAnonKey}`,
+        Accept: "application/json",
+        "User-Agent": "MSSI-Monthly-Safety-Audit/1.0",
+      },
+    });
+    statuses.push({ table, status: result.status });
+  }
+  return {
+    name: "anonymous_clinical_tables_blocked",
+    ok: statuses.every((item) => [401, 403].includes(item.status)),
+    statuses,
+  };
+}
+
+async function checkAnonymousAdminRpc() {
+  const result = await fetchText(`${supabaseUrl}/rest/v1/rpc/approve_doctor`, {
+    method: "POST",
+    headers: {
+      apikey: supabaseAnonKey,
+      Authorization: `Bearer ${supabaseAnonKey}`,
+      "Content-Type": "application/json",
+      "User-Agent": "MSSI-Monthly-Safety-Audit/1.0",
+    },
+    body: JSON.stringify({ p_doctor_id: "00000000-0000-4000-8000-000000000000" }),
+  });
+  return {
+    name: "anonymous_admin_rpc_blocked",
+    ok: [401, 403].includes(result.status),
+    status: result.status,
+    response_bytes: result.text.length,
+  };
+}
+
+async function checkSubmitFunctionAuth() {
+  const result = await fetchText(`${supabaseUrl}/functions/v1/submit-survey`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "User-Agent": "MSSI-Monthly-Safety-Audit/1.0" },
+    body: JSON.stringify({ responseId: "00000000-0000-4000-8000-000000000000", answers: {} }),
+  });
+  return {
+    name: "submit_function_requires_auth",
+    ok: result.status === 401,
     status: result.status,
     response_bytes: result.text.length,
   };
@@ -110,11 +162,10 @@ async function checkGoogleWebhook() {
   }
   return {
     name: "google_apps_script_webhook",
-    ok: Boolean(result.ok && json?.status === "ok" && json?.rawSheet && json?.reportSheet),
+    ok: Boolean(result.ok && json?.status === "ok" && json?.service === "mssi-sheet-sync" && !json?.rawSheet),
     status: result.status,
     app_status: json?.status || null,
-    raw_rows: json?.rawSheet?.rows ?? null,
-    report_sheet: json?.reportSheet?.name || null,
+    service: json?.service || null,
     response_bytes: result.text.length,
   };
 }
@@ -133,7 +184,7 @@ function checkVmTimer() {
 
 const startedAt = new Date().toISOString();
 const checks = [];
-for (const fn of [checkSupabase, checkGitHubWorkflowFile, checkGitHubLatestRun, checkGoogleWebhook]) {
+for (const fn of [checkSupabase, checkAnonymousClinicalTables, checkAnonymousAdminRpc, checkSubmitFunctionAuth, checkGitHubWorkflowFile, checkGitHubLatestRun, checkGoogleWebhook]) {
   try {
     checks.push(await fn());
   } catch (error) {
@@ -150,7 +201,7 @@ const report = {
 };
 
 mkdirSync(path.dirname(outputPath), { recursive: true });
-writeFileSync(outputPath, JSON.stringify(report, null, 2));
+writeFileSync(outputPath, JSON.stringify(report, null, 2), { mode: 0o600 });
 console.log(JSON.stringify(report));
 
 if (!report.ok) {

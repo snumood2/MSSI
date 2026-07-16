@@ -400,7 +400,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const instructions = (report && report.instructions) ? report.instructions : getGlobalInstructions();
     const dateStr = fmtDate(row.completed_at);
-    const patNum = row.patient_number || "-";
+    const patNum = row.assessment_key || row.patient_number || "-";
 
     container.innerHTML = `
       <div class="patient-result-card">
@@ -428,8 +428,11 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   async function searchPatient() {
-    const pNum = el("searchPNum").value.trim();
-    if (!pNum) return alert("번호를 입력하세요.");
+    const requested = el("searchPNum").value.trim();
+    const parsed = requested.match(/^(\d{8})(?:-(\d+))?$/);
+    if (!parsed) return alert("8자리 환자번호 또는 환자번호-회차를 입력하세요.");
+    const pNum = parsed[1];
+    const requestedAssessment = parsed[2] ? Number(parsed[2]) : null;
     setMsg("doctorSearchMsg", "검색 중...", "info");
     el("doctorResultArea").innerHTML = "";
 
@@ -442,7 +445,13 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     clearMsg("doctorSearchMsg");
-    const row = data[0];
+    const row = requestedAssessment
+      ? data.find(item => item.assessment_no === requestedAssessment)
+      : data[0];
+    if (!row) {
+      setMsg("doctorSearchMsg", `'${requested}' 에 해당하는 완료된 결과가 없습니다.`, "warn");
+      return;
+    }
     renderDoctorResult(row, el("doctorResultArea"));
   }
 
@@ -463,13 +472,13 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     list.innerHTML = data.map(r => `
-      <div class="history-item" data-response-id="${r.id}" style="cursor:pointer;">
+      <div class="history-item" data-response-id="${escapeAttr(r.id)}" style="cursor:pointer;">
         <div class="history-dot"></div>
         <div class="history-info">
-          <div class="history-date">번호: ${r.patient_number || "미입력"}</div>
-          <div class="history-sub">완료: ${fmtDate(r.completed_at)}</div>
+          <div class="history-date">번호: ${escapeHtml(r.assessment_key || r.patient_number || "미입력")}</div>
+          <div class="history-sub">완료: ${escapeHtml(fmtDate(r.completed_at))}</div>
         </div>
-        <button class="btn secondary sm" data-view-id="${r.id}">결과보기</button>
+        <button class="btn secondary sm" data-view-id="${escapeAttr(r.id)}">결과보기</button>
       </div>`).join("");
 
     list.querySelectorAll('[data-view-id]').forEach(btn => {
@@ -502,7 +511,7 @@ document.addEventListener('DOMContentLoaded', function() {
     el("doctorTabSearch").style.display = "block";
     el("doctorTabList").style.display   = "none";
 
-    el("searchPNum").value = data.patient_number || "";
+    el("searchPNum").value = data.assessment_key || data.patient_number || "";
     area.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
