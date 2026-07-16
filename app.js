@@ -61,8 +61,21 @@ function isDiagChildHidden(sectionId, qId) {
     if (qId === "g5") return !(state.answers.g2 === 1 || state.answers.g3a === 1);
     return false;
   }
-  if (rule.children.includes(qId)) return state.answers[rule.parent] === 0;
-  if (rule.sub && rule.sub.children.includes(qId)) return state.answers[rule.sub.parent] === 0;
+  if (sectionId === "diag_panic") {
+    if (qId === "d1b") return state.answers.d1a !== 1;
+    if (qId === "d2") return !(state.answers.d1a === 1 && state.answers.d1b === 1);
+  }
+  if (sectionId === "diag_agora" && qId === "e3") return state.answers.e1 !== 1;
+  if (sectionId === "diag_social") {
+    if (qId === "f3") return state.answers.f1 !== 1;
+    if (qId === "f4") return !(state.answers.f1 === 1 && state.answers.f3 === 1);
+    if (qId === "f6") return !(state.answers.f1 === 1 && state.answers.f3 === 1 && state.answers.f4 === 1);
+  }
+  if (sectionId === "diag_gad") {
+    if (qId === "n1b") return state.answers.n1a !== 1;
+    if (qId === "n2") return !(state.answers.n1a === 1 && state.answers.n1b === 1);
+    if (/^n3[a-f]$/.test(qId)) return !(state.answers.n1a === 1 && state.answers.n1b === 1 && state.answers.n2 === 1);
+  }
   return false;
 }
 
@@ -711,6 +724,7 @@ function triggerAutoSave() {
 }
 
 window.saveAns    = (k, v)   => { state.answers[k] = Number(v); clearHighlight(k); triggerAutoSave(); };
+window.clearAns   = (k)      => { delete state.answers[k]; triggerAutoSave(); };
 window.saveChk    = (k, v)   => { state.answers[k] = v ? 1 : 0; clearHighlight(k); triggerAutoSave(); };
 window.savePmsSkip = (v)     => { state.answers["pms_skip"] = Number(v); triggerAutoSave(); renderSurvey(); };
 window.handleComplexChange = (qid, val) => {
@@ -984,7 +998,7 @@ function renderYesNoWithSub(q, qRow) {
       ${(q.options || []).map(o => `
         <label class="opt-list-item ${main==o.v?"checked":""}">
           <input type="radio" name="${q.id}" value="${o.v}" ${main==o.v?"checked":""}
-            onchange="window.saveAns('${q.id}', this.value); if(Number(this.value)===0){window.saveAns('${sub.id}', 0);} window.renderSurvey();">
+            onchange="window.saveAns('${q.id}', this.value); if(Number(this.value)===0){window.clearAns('${sub.id}');} window.renderSurvey();">
           ${cleanText(o.l)}
         </label>`).join("")}
     </div>

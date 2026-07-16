@@ -350,6 +350,21 @@ export function generateReport(scores, answers) {
   });
 
   sections.push({
+    title: "혼합/초조 우울증 및 양극성장애 선별",
+    groups: [
+      {
+        rows: [
+          makeRow("기분불안정상태검사", scores.MIQS, 'MIQS'),
+          makeTextOnlyRow("초조우울증선별", scores.AgitatedDep),
+          makeTextOnlyRow("혼합우울증선별", scores.MixedDep),
+          makeRow("기분변동성 기질", scores.MIQT.total, 'MIQT_Total'),
+          makeTextOnlyRow("MDQ 선별결과", scores.MDQ.pos ? "양성" : "음성")
+        ].filter(Boolean)
+      }
+    ]
+  });
+
+  sections.push({
     title: "정서기질",
     groups: [
       {

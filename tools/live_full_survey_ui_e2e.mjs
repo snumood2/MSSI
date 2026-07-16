@@ -32,6 +32,10 @@ function radioChoice(name, values) {
     const number = Number(name.slice(2));
     return values[(number * 5 + 1) % values.length];
   }
+  if (/^spaq2_[0-5]$/.test(name)) {
+    return ["2", "2", "2", "2", "2", "1"][Number(name.slice(-1))];
+  }
+  if (name === "spaq3") return "0";
   if (/^mssi\d+_yn$/.test(name)) return "1";
   if (/^mssi\d+_(freq|sev)$/.test(name)) return values[Math.floor(values.length / 2)];
   if (/^(d1a|e1|f1|n1a)$/.test(name)) return values.includes("0") ? "0" : values[0];
@@ -106,7 +110,7 @@ async function loginToken() {
 }
 
 const browser = await chromium.launch({ headless: true });
-const context = await browser.newContext({ viewport: { width: 1440, height: 1100 } });
+const context = await browser.newContext({ viewport: { width: 1440, height: 1100 }, acceptDownloads: true });
 const page = await context.newPage();
 page.setDefaultTimeout(30000);
 page.on("dialog", async (dialog) => {
@@ -163,6 +167,15 @@ try {
   check("all_sections_answered_via_ui", sectionsCompleted === totalSections && totalSections > 20, { sectionsCompleted, totalSections });
   await page.screenshot({ path: path.join(outDir, "patient-result.png"), fullPage: true });
   check("patient_result_ui", (await page.textContent("body")).includes("기분장애 임상평가 결과지"));
+  check("mixed_agitated_report_section", (await page.textContent("body")).includes("혼합/초조 우울증 및 양극성장애 선별"));
+
+  const webPdfPath = path.join(outDir, `Self_Report_Survey_Results_${patientNumber}.pdf`);
+  const [webPdfDownload] = await Promise.all([
+    page.waitForEvent("download"),
+    page.click("#btnDownloadPdf"),
+  ]);
+  await webPdfDownload.saveAs(webPdfPath);
+  check("web_result_pdf_download", fs.existsSync(webPdfPath) && fs.statSync(webPdfPath).size > 10000, { webPdfPath, bytes: fs.statSync(webPdfPath).size });
 
   const token = await loginToken();
   const response = await fetch(`${supabaseUrl}/rest/v1/survey_responses?select=id,status,completed,completed_at,hospital_code,patient_number,answers,scores,report&patient_number=eq.${patientNumber}&hospital_code=eq.${hospitalCode}&order=completed_at.desc&limit=1`, {
@@ -174,6 +187,8 @@ try {
   check("all_answer_keys_persisted", Object.keys(row?.answers || {}).length > 300, { answerKeys: Object.keys(row?.answers || {}).length });
   check("ocd_branch_scored", row?.scores?.DIAG?.ocdObsession === "O" && row?.scores?.DIAG?.ocdCompulsion === "X", row?.scores?.DIAG || {});
   check("bapq_varied_scored", Number.isFinite(row?.scores?.BAPQ?.total) && new Set([row?.scores?.BAPQ?.aloof, row?.scores?.BAPQ?.pragma, row?.scores?.BAPQ?.rigid]).size > 1, row?.scores?.BAPQ || {});
+  check("spaq_kasper_boundary", row?.scores?.SPAQ?.score === 11 && row?.scores?.SPAQ?.global === 0 && row?.scores?.SPAQ?.class === "subsyndromal SAD", row?.scores?.SPAQ || {});
+  check("spaq_hidden_impairment_blank", row?.answers?.spaq3 === 0 && row?.answers?.spaq3_2 === undefined, { spaq3: row?.answers?.spaq3, spaq3_2: row?.answers?.spaq3_2 });
 
   fs.writeFileSync(path.join(outDir, "e2e.json"), JSON.stringify({
     appUrl, username, password, patientNumber, hospitalCode, sectionsCompleted, totalSections,

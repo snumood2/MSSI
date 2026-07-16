@@ -39,4 +39,20 @@ assert.equal(bapq.aloof, 43 / 12);
 assert.equal(bapq.pragma, 29 / 12);
 assert.equal(bapq.rigid, 3);
 
+const spaqCases = [
+  [{ spaq2_0: 2, spaq2_1: 2, spaq2_2: 2, spaq2_3: 2, spaq2_4: 2, spaq2_5: 1, spaq3_2: 0 }, "subsyndromal SAD"],
+  [{ spaq2_0: 2, spaq2_1: 2, spaq2_2: 2, spaq2_3: 2, spaq2_4: 2, spaq2_5: 1, spaq3_2: 1 }, "subsyndromal SAD"],
+  [{ spaq2_0: 2, spaq2_1: 2, spaq2_2: 2, spaq2_3: 2, spaq2_4: 2, spaq2_5: 1, spaq3_2: 2 }, "SAD"],
+  [{ spaq2_0: 2, spaq2_1: 2, spaq2_2: 2, spaq2_3: 1, spaq2_4: 1, spaq2_5: 1, spaq3_2: 2 }, "subsyndromal SAD"],
+  [{ spaq2_0: 2, spaq2_1: 2, spaq2_2: 2, spaq2_3: 1, spaq2_4: 1, spaq2_5: 1, spaq3_2: 1 }, "not SAD"],
+];
+for (const [answers, expected] of spaqCases) assert.equal(calculateScores(answers).SPAQ.class, expected);
+
+const screeningSection = generateReport(calculateScores(bapqAnswers), bapqAnswers).sections
+  .find((section) => section.title === "혼합/초조 우울증 및 양극성장애 선별");
+assert.ok(screeningSection);
+assert.deepEqual(screeningSection.groups[0].rows.map((row) => row.name), [
+  "기분불안정상태검사", "초조우울증선별", "혼합우울증선별", "기분변동성 기질", "MDQ 선별결과",
+]);
+
 console.log("researcher feedback regression tests passed");
