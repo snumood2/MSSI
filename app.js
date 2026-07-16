@@ -736,7 +736,13 @@ function triggerAutoSave() {
 window.saveAns    = (k, v)   => { state.answers[k] = Number(v); clearHighlight(k); triggerAutoSave(); };
 window.clearAns   = (k)      => { delete state.answers[k]; triggerAutoSave(); };
 window.saveChk    = (k, v)   => { state.answers[k] = v ? 1 : 0; clearHighlight(k); triggerAutoSave(); };
-window.savePmsSkip = (v)     => { state.answers["pms_skip"] = Number(v); triggerAutoSave(); renderSurvey(); };
+window.savePmsSkip = (v)     => {
+  const shouldComplete = Number(v) === 1 && state.currentSectionIdx === SURVEY_SECTIONS.length - 1;
+  state.answers["pms_skip"] = Number(v);
+  triggerAutoSave();
+  renderSurvey();
+  if (shouldComplete) void submitSurvey({ skipConfirmation: true });
+};
 window.handleComplexChange = (qid, val) => {
   state.answers[`${qid}_yn`] = parseInt(val);
   clearHighlight(qid);
@@ -817,6 +823,14 @@ function highlightUnanswered(ids) {
 function renderSurvey() {
   show("view-survey");
 
+  const nextBtn = el("btnNext");
+  if (nextBtn) {
+    nextBtn.disabled = false;
+    nextBtn.textContent = state.currentSectionIdx === SURVEY_SECTIONS.length - 1
+      ? "검사 완료 및 결과 보기"
+      : "다음 →";
+  }
+
   let section = SURVEY_SECTIONS[state.currentSectionIdx];
 
   if (!section) { submitSurvey(); return; }
@@ -843,14 +857,21 @@ function renderSurvey() {
       <div class="pms-skip-title">📋 사전 확인: (여성의 경우) 폐경이 되었거나, 생리를 시작하지 않으셨나요? 혹은 남성이신가요?</div>
       <div class="opts-list">
         <label class="opt-list-item ${state.answers["pms_skip"]==1?'checked':''}">
-          <input type="radio" name="pms_skip" value="1" ${state.answers["pms_skip"]==1?"checked":""} onchange="window.savePmsSkip(1)"> 예 (해당함 – 이 섹션 건너뜁니다)
+          <input type="radio" name="pms_skip" value="1" ${state.answers["pms_skip"]==1?"checked":""} onchange="window.savePmsSkip(1)"> 예 - PMS 문항을 건너뛰고 검사 완료
         </label>
         <label class="opt-list-item ${state.answers["pms_skip"]==0?'checked':''}">
-          <input type="radio" name="pms_skip" value="0" ${state.answers["pms_skip"]==0?"checked":""} onchange="window.savePmsSkip(0)"> 아니오 (해당 없음 – 질문에 응답합니다)
+          <input type="radio" name="pms_skip" value="0" ${state.answers["pms_skip"]==0?"checked":""} onchange="window.savePmsSkip(0)"> 아니오 - PMS 문항에 응답
         </label>
       </div>`;
     container.appendChild(banner);
-    if (state.answers["pms_skip"] == 1) return;
+    if (state.answers["pms_skip"] == 1) {
+      banner.insertAdjacentHTML("beforeend", '<div class="pms-skip-complete">PMS 문항을 건너뛰고 결과를 생성하고 있습니다. 잠시만 기다려 주세요.</div>');
+      if (nextBtn) {
+        nextBtn.disabled = true;
+        nextBtn.textContent = "결과 생성 중...";
+      }
+      return;
+    }
     if (state.answers["pms_skip"] === undefined) return;
   }
 
@@ -911,10 +932,11 @@ function renderStandard(q, section, qRow, qIdx) {
 
   const longOpt = options.some(o => (o.l || "").length > 12);
   const isCompact = !longOpt && options.length >= 5;
+  const countClass = options.length <= 6 ? ` choice-count-${options.length}` : " choice-count-many";
 
   qRow.innerHTML = `
     <div class="q-text">${cleanText(q.text)}</div>
-    <div class="${longOpt ? "opts-list" : "opts-row"}${isCompact ? " compact" : ""}" id="opts_${q.id}"></div>`;
+    <div class="${longOpt ? "opts-list" : "opts-row choice-grid"}${isCompact ? " compact" : ""}${longOpt ? "" : countClass}" id="opts_${q.id}"></div>`;
 
   const optsEl = qRow.querySelector(`#opts_${q.id}`);
 
@@ -1142,8 +1164,8 @@ el("btnSaveQuit")?.addEventListener("click", async () => {
   refreshPatientStatus();
 });
 
-async function submitSurvey() {
-  if (!confirm("모든 설문이 완료되었습니다. 제출하시겠습니까?")) return;
+async function submitSurvey({ skipConfirmation = false } = {}) {
+  if (!skipConfirmation && !confirm("모든 설문이 완료되었습니다. 제출하시겠습니까?")) return;
 
   try {
     const { data, error } = await sb.functions.invoke("submit-survey", {
@@ -1235,7 +1257,7 @@ function renderReportHTML(report, container) {
 
       if (hasSpecial) {
 
-        html += `<div class="result-table-wrap"><table class="result-table">
+        html += `<div class="result-table-wrap" role="region" tabindex="0" aria-label="결과표. 좌우로 밀어 전체 항목을 확인할 수 있습니다."><table class="result-table">
           <thead><tr>
             <th class="col-name">검사명</th>
             <th class="col-score">결과</th>
@@ -1279,7 +1301,7 @@ function renderReportHTML(report, container) {
         html += `</tbody></table></div>`;
       } else {
 
-        html += `<div class="result-table-wrap"><table class="result-table">
+        html += `<div class="result-table-wrap" role="region" tabindex="0" aria-label="결과표. 좌우로 밀어 전체 항목을 확인할 수 있습니다."><table class="result-table">
           <thead><tr>
             <th class="col-name">검사명</th>
             <th class="col-score">응답결과</th>

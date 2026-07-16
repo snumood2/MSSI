@@ -6,6 +6,7 @@ import { chromium, devices } from "playwright";
 const appUrl = (process.env.MSSI_APP_URL || "https://snumood2.github.io/MSSI").replace(/\/$/, "");
 const entryUrl = process.env.MSSI_ENTRY_URL || `${appUrl}/signup-patient-snubh01.html`;
 const mobileProfile = devices[process.env.MSSI_DEVICE || "iPhone 13"];
+const skipPms = process.env.MSSI_PMS_SKIP === "1";
 const tag = Date.now().toString().slice(-8);
 const username = `research${tag}`;
 const password = `MssiE2E!${randomBytes(12).toString("base64url")}`;
@@ -34,7 +35,7 @@ function variedIndex(name, length) {
 }
 
 function radioChoice(name, values) {
-  if (name === "pms_skip") return "0";
+  if (name === "pms_skip") return skipPms ? "1" : "0";
   if (name === "g1a" || name === "g2" || name === "g5") return "1";
   if (name === "g3a") return "0";
   if (/^ba\d+$/.test(name)) {
@@ -52,7 +53,7 @@ function radioChoice(name, values) {
 
 async function answerCurrentSection(page) {
   for (let pass = 0; pass < 1000; pass++) {
-    const pms = page.locator('input[name="pms_skip"][value="0"]');
+    const pms = page.locator(`input[name="pms_skip"][value="${skipPms ? "1" : "0"}"]`);
     if (await pms.count() && !(await pms.isChecked())) {
       await pms.dispatchEvent("click");
       await page.waitForTimeout(40);
@@ -134,6 +135,8 @@ bindPage(page);
 
 let sectionsCompleted = 0;
 let totalSections = 0;
+let capturedFourChoice = false;
+let capturedFiveChoice = false;
 try {
   await page.goto(entryUrl, { waitUntil: "networkidle" });
   if (!page.url().startsWith(appUrl)) {
@@ -174,6 +177,39 @@ try {
     const current = Number(match[1]);
     totalSections = Number(match[2]);
     await answerCurrentSection(page);
+
+    if (!capturedFourChoice && await page.locator(".choice-count-4").count()) {
+      const rows = await page.locator(".choice-count-4 .opt-chip").evaluateAll((items) => {
+        const counts = new Map();
+        items.forEach((item) => {
+          const key = Math.round(item.getBoundingClientRect().top);
+          counts.set(key, (counts.get(key) || 0) + 1);
+        });
+        return [...counts.values()];
+      });
+      check("mobile_four_choice_balanced", rows.length === 2 && rows.every((count) => count === 2), { rows });
+      await page.screenshot({ path: path.join(outDir, "mobile-four-choice.png"), fullPage: true });
+      capturedFourChoice = true;
+    }
+    if (!capturedFiveChoice && await page.locator(".choice-count-5").count()) {
+      const rows = await page.locator(".choice-count-5 .opt-chip").evaluateAll((items) => {
+        const counts = new Map();
+        items.forEach((item) => {
+          const key = Math.round(item.getBoundingClientRect().top);
+          counts.set(key, (counts.get(key) || 0) + 1);
+        });
+        return [...counts.values()];
+      });
+      check("mobile_five_choice_balanced", rows.length === 2 && rows[0] === 3 && rows[1] === 2, { rows });
+      await page.screenshot({ path: path.join(outDir, "mobile-five-choice.png"), fullPage: true });
+      capturedFiveChoice = true;
+    }
+
+    if (skipPms && current === totalSections) {
+      await page.locator("#view-result.active").waitFor({ timeout: 60000 });
+      sectionsCompleted = current;
+      break;
+    }
     const validationDialogsBefore = dialogs.filter((item) => item.message.includes("응답하지 않은 문항")).length;
     await page.click("#btnNext");
     if (current === totalSections) {
@@ -194,6 +230,7 @@ try {
   await page.screenshot({ path: path.join(outDir, "patient-result.png"), fullPage: true });
   check("patient_result_ui", (await page.textContent("body")).includes("기분장애 임상평가 결과지"));
   check("mixed_agitated_report_section", (await page.textContent("body")).includes("혼합/초조 우울증 및 양극성장애 선별"));
+  check("result_scroll_hint_visible", await page.locator(".result-table-wrap").first().evaluate((element) => getComputedStyle(element, "::before").content.includes("좌우로 밀어")));
 
   const webPdfPath = path.join(outDir, `Self_Report_Survey_Results_${patientNumber}.pdf`);
   const [webPdfDownload] = await Promise.all([
@@ -211,6 +248,7 @@ try {
   const row = rows[0];
   check("supabase_completed_response", response.ok && row?.completed === true && row?.status === "completed", { http: response.status, responseId: row?.id });
   check("all_answer_keys_persisted", Object.keys(row?.answers || {}).length > 300, { answerKeys: Object.keys(row?.answers || {}).length });
+  check("pms_completion_path", Number(row?.answers?.pms_skip) === (skipPms ? 1 : 0), { skipPms, persisted: row?.answers?.pms_skip });
   check("ocd_branch_scored", row?.scores?.DIAG?.ocdObsession === "O" && row?.scores?.DIAG?.ocdCompulsion === "X", row?.scores?.DIAG || {});
   check("bapq_varied_scored", Number.isFinite(row?.scores?.BAPQ?.total) && new Set([row?.scores?.BAPQ?.aloof, row?.scores?.BAPQ?.pragma, row?.scores?.BAPQ?.rigid]).size > 1, row?.scores?.BAPQ || {});
   const erValues = Object.entries(row?.answers || {}).filter(([key]) => /^er\d+$/.test(key)).map(([, value]) => Number(value));
@@ -229,7 +267,7 @@ try {
   check("spaq_impairment_value_persisted", row?.answers?.spaq3 === 1 && Number.isFinite(Number(row?.answers?.spaq3_2)), { spaq3: row?.answers?.spaq3, spaq3_2: row?.answers?.spaq3_2 });
 
   fs.writeFileSync(path.join(outDir, "e2e.json"), JSON.stringify({
-    appUrl, entryUrl, device: process.env.MSSI_DEVICE || "iPhone 13", username, patientNumber, hospitalCode, sectionsCompleted, totalSections,
+    appUrl, entryUrl, device: process.env.MSSI_DEVICE || "iPhone 13", skipPms, username, patientNumber, hospitalCode, sectionsCompleted, totalSections,
     dialogs, responseId: row?.id, completedAt: row?.completed_at, scores: row?.scores,
     answers: row?.answers, report: row?.report, checks,
   }, null, 2), { mode: 0o600 });
@@ -237,7 +275,7 @@ try {
   check("ui_e2e_flow", false, { error: String(error), sectionsCompleted, totalSections });
   await page.screenshot({ path: path.join(outDir, "failure.png"), fullPage: true }).catch(() => {});
   const artifactPath = path.join(outDir, "e2e.json");
-  fs.writeFileSync(artifactPath, JSON.stringify({ appUrl, entryUrl, device: process.env.MSSI_DEVICE || "iPhone 13", username, patientNumber, hospitalCode, sectionsCompleted, totalSections, dialogs, checks }, null, 2), { mode: 0o600 });
+  fs.writeFileSync(artifactPath, JSON.stringify({ appUrl, entryUrl, device: process.env.MSSI_DEVICE || "iPhone 13", skipPms, username, patientNumber, hospitalCode, sectionsCompleted, totalSections, dialogs, checks }, null, 2), { mode: 0o600 });
 } finally {
   await browser.close();
 }

@@ -42,6 +42,8 @@ body {
   color: var(--text-main);
   line-height: 1.6;
   min-height: 100vh;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 #mainHeader {
@@ -527,7 +529,32 @@ body {
   padding-top: 24px;
   border-top: 1px solid var(--border);
 }
-.survey-nav .btn { flex: 1; }
+.survey-nav .btn {
+  flex: 1;
+  min-height: 58px;
+  height: 58px;
+  font-size: 17px;
+}
+.save-quit-btn {
+  min-height: 50px;
+  height: 50px;
+  margin-top: 14px;
+  border: 1px solid #cbd5e1;
+  background: #f8fafc;
+  color: #475569;
+  font-size: 14px;
+  font-weight: 700;
+}
+.save-quit-btn:hover { background: #f1f5f9; }
+.pms-skip-complete {
+  margin-top: 14px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  background: #ecfdf5;
+  color: #166534;
+  font-size: 14px;
+  font-weight: 700;
+}
 
 .result-header {
   text-align: center;
@@ -687,7 +714,12 @@ body {
   .card { padding: 24px 18px; }
   .form-row { flex-direction: column; gap: 0; }
   .season-grid { grid-template-columns: 1fr; }
-  .survey-nav { flex-direction: column-reverse; }
+  .survey-nav {
+    flex-direction: column-reverse;
+    gap: 10px;
+    margin-top: 32px;
+    padding-top: 20px;
+  }
   .print-btn-wrap { flex-direction: column; }
   .doctor-tabs { overflow-x: auto; }
   .patient-hero { padding: 24px; }
@@ -719,6 +751,70 @@ body {
     white-space: nowrap;
   }
   .header-nav #btnLogout { margin-left: 0 !important; }
+
+  .result-table-wrap::before {
+    content: "\2190  좌우로 밀어 전체 결과를 확인하세요  \2192";
+    display: block;
+    position: sticky;
+    left: 0;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 8px 12px;
+    background: #eaf5f8;
+    border-bottom: 1px solid #c8d6db;
+    color: #24566a;
+    font-size: 12px;
+    font-weight: 700;
+    text-align: center;
+    z-index: 2;
+  }
+  .result-table {
+    font-size: 13px;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+  .result-table tbody td,
+  .result-table tbody td.score-cell,
+  .result-table tbody td.rank-cell,
+  .result-table tbody td.desc-cell,
+  .result-table tbody tr.desc-row td.desc-cell-block,
+  .section-desc-block {
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 500px) {
+  .opts-row.choice-grid {
+    display: grid;
+    width: 100%;
+    gap: 10px;
+  }
+  .opts-row.choice-grid .opt-chip,
+  .opts-row.choice-grid .opt-chip label {
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+  .opts-row.choice-grid .opt-chip label,
+  .opts-row.choice-grid.compact .opt-chip label {
+    justify-content: center;
+    min-height: 50px;
+    padding: 9px 8px;
+    font-size: 13px;
+    line-height: 1.35;
+    text-align: center;
+    white-space: normal;
+    word-break: keep-all;
+  }
+  .choice-count-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .choice-count-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .choice-count-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .choice-count-5 { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+  .choice-count-5 .opt-chip { grid-column: span 2; }
+  .choice-count-5 .opt-chip:nth-child(4) { grid-column: 2 / span 2; }
+  .choice-count-5 .opt-chip:nth-child(5) { grid-column: 4 / span 2; }
+  .choice-count-6 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .choice-count-many { grid-template-columns: 1fr; }
 }
 
 @media print {
@@ -746,9 +842,14 @@ body {
 }
 .result-table-wrap {
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
   border: 1.5px solid #c8d6db;
   border-top: none;
   border-radius: 0 0 6px 6px;
+}
+.result-table-wrap:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 .result-table {
@@ -1086,6 +1187,7 @@ body {
   border-radius: 0 0 4px 4px !important;
   width: 100% !important;
 }
+.pdf-export .result-table-wrap::before { display: none !important; }
 .pdf-export .result-table {
   table-layout: fixed !important;
   width: 100% !important;
