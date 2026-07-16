@@ -1,4 +1,4 @@
-import { readFileSync, mkdirSync, writeFileSync } from "node:fs";
+import { chmodSync, readFileSync, mkdirSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 import { execFileSync } from "node:child_process";
@@ -202,6 +202,7 @@ const report = {
 
 mkdirSync(path.dirname(outputPath), { recursive: true });
 writeFileSync(outputPath, JSON.stringify(report, null, 2), { mode: 0o600 });
+chmodSync(outputPath, 0o600);
 console.log(JSON.stringify(report));
 
 if (!report.ok) {
