@@ -64,7 +64,7 @@ async function answerCurrentSection(page) {
     }
     if (filledNumber) continue;
 
-    const checkboxes = page.locator('#surveyContainer input[type="checkbox"]');
+    const checkboxes = page.locator('#surveyContainer input[type="checkbox"]:visible');
     const seenCheckboxNames = new Set();
     let clickedCheckbox = false;
     for (let i = 0; i < await checkboxes.count(); i++) {
@@ -78,7 +78,7 @@ async function answerCurrentSection(page) {
     }
     if (clickedCheckbox) continue;
 
-    const radios = page.locator('#surveyContainer input[type="radio"]');
+    const radios = page.locator('#surveyContainer input[type="radio"]:visible');
     const names = await radios.evaluateAll((items) => [...new Set(items.map((item) => item.name).filter(Boolean))]);
     let clickedRadio = false;
     for (const name of names) {

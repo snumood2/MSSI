@@ -45,6 +45,7 @@ const spaqCases = [
   [{ spaq2_0: 2, spaq2_1: 2, spaq2_2: 2, spaq2_3: 2, spaq2_4: 2, spaq2_5: 1, spaq3_2: 2 }, "SAD"],
   [{ spaq2_0: 2, spaq2_1: 2, spaq2_2: 2, spaq2_3: 1, spaq2_4: 1, spaq2_5: 1, spaq3_2: 2 }, "subsyndromal SAD"],
   [{ spaq2_0: 2, spaq2_1: 2, spaq2_2: 2, spaq2_3: 1, spaq2_4: 1, spaq2_5: 1, spaq3_2: 1 }, "not SAD"],
+  [{ spaq2_0: 2, spaq2_1: 2, spaq2_2: 2, spaq2_3: 2, spaq2_4: 2, spaq2_5: 1, spaq3: 0, spaq3_2: 3 }, "subsyndromal SAD"],
 ];
 for (const [answers, expected] of spaqCases) assert.equal(calculateScores(answers).SPAQ.class, expected);
 

@@ -192,7 +192,9 @@ export function calculateScores(answers) {
   else cmsClass = "중간형";
 
   const spaqScore = sum('spaq2_', 0, 5);
-  const spaqGlobal = get('spaq3_2') || get('spaq_global');
+  const spaqGlobal = (answers.spaq3 !== undefined && get('spaq3') === 0)
+    ? 0
+    : (get('spaq3_2') || get('spaq_global'));
   let spaqClass;
   if (spaqScore >= 11 && spaqGlobal >= 2) spaqClass = "SAD";
   else if ((spaqScore >= 9 && spaqScore <= 10 && spaqGlobal >= 2) || (spaqScore >= 11 && spaqGlobal <= 1)) spaqClass = "subsyndromal SAD";
