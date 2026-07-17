@@ -810,13 +810,27 @@
     window.location.href = "login.html";
   });
 
+  function showDoctorAuthError(message) {
+    const view = el("view-loading");
+    const paragraph = view?.querySelector("p");
+    if (paragraph) paragraph.textContent = message;
+    if (view && !view.querySelector(".doctor-login-retry")) {
+      const link = document.createElement("a");
+      link.className = "btn primary doctor-login-retry";
+      link.href = "login.html?role=doctor";
+      link.textContent = "다시 로그인";
+      link.style.cssText = "display:inline-flex;width:auto;margin-top:20px;";
+      view.appendChild(link);
+    }
+  }
+
   async function initializeDoctorSession() {
     const session = await getAuthSession(sb);
 
     const user = session?.user;
     if (!user) {
       console.warn("doctor-auth:no-session");
-      window.location.href = "login.html?role=doctor";
+      showDoctorAuthError("로그인 상태를 확인하지 못했습니다. 다시 로그인해 주세요.");
       return;
     }
     if (user.email?.toLowerCase() === ADMIN_EMAIL) {
@@ -841,7 +855,7 @@
 
     if (!prof) {
       console.warn("doctor-auth:no-profile");
-      window.location.href = "login.html?role=doctor";
+      showDoctorAuthError("의사 계정 정보를 확인하지 못했습니다. 관리자에게 문의해 주세요.");
       return;
     }
     if (prof.role !== "doctor") {
@@ -860,7 +874,7 @@
   });
   initializeDoctorSession().catch(error => {
     console.warn("doctor-auth:initialization-error", error?.message || "unknown");
-    window.location.href = "login.html?role=doctor";
+    showDoctorAuthError("의사 화면을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.");
   });
 </script>
 
