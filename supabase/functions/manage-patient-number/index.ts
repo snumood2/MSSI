@@ -65,7 +65,7 @@ Deno.serve(async (req: Request) => {
   if (userError || !userData.user) return jsonResponse(401, { error: "Invalid session" }, origin);
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
-    .select("role")
+    .select("role, hospital_code")
     .eq("id", userData.user.id)
     .single();
   if (profileError || !profile || !["admin", "doctor"].includes(profile.role)) {
@@ -77,19 +77,33 @@ Deno.serve(async (req: Request) => {
   let databaseUpdated = false;
 
   if (action === "change") {
-    if (profile.role !== "admin") return jsonResponse(403, { error: "Administrator access required" }, origin);
-    const hospitalCode = String(body.hospitalCode || "").trim().toUpperCase();
     const currentPatientNumber = String(body.currentPatientNumber || "").trim();
     const newPatientNumber = String(body.newPatientNumber || "").trim();
-    if (!/^[A-Z0-9_-]{2,20}$/.test(hospitalCode) || !/^\d{8}$/.test(currentPatientNumber) || !/^\d{8}$/.test(newPatientNumber)) {
+    if (!/^\d{8}$/.test(currentPatientNumber) || !/^\d{8}$/.test(newPatientNumber)) {
       return jsonResponse(400, { error: "Invalid patient number change" }, origin);
     }
-    const { data, error } = await supabase.rpc("admin_change_patient_number", {
-      p_hospital_code: hospitalCode,
-      p_current_patient_number: currentPatientNumber,
-      p_new_patient_number: newPatientNumber,
-      p_note: typeof body.note === "string" ? body.note.slice(0, 500) : null,
-    });
+    const note = typeof body.note === "string" ? body.note.slice(0, 500) : null;
+    let data;
+    let error;
+    if (profile.role === "admin") {
+      const hospitalCode = String(body.hospitalCode || "").trim().toUpperCase();
+      if (!/^[A-Z0-9_-]{2,20}$/.test(hospitalCode)) {
+        return jsonResponse(400, { error: "Invalid hospital code" }, origin);
+      }
+      ({ data, error } = await supabase.rpc("admin_change_patient_number", {
+        p_hospital_code: hospitalCode,
+        p_current_patient_number: currentPatientNumber,
+        p_new_patient_number: newPatientNumber,
+        p_note: note,
+      }));
+    } else {
+      if (!profile.hospital_code) return jsonResponse(409, { error: "Doctor hospital code is missing" }, origin);
+      ({ data, error } = await supabase.rpc("doctor_change_patient_number", {
+        p_current_patient_number: currentPatientNumber,
+        p_new_patient_number: newPatientNumber,
+        p_note: note,
+      }));
+    }
     if (error) return jsonResponse(409, { error: error.message }, origin);
     requestId = data?.request_id || null;
     databaseUpdated = true;

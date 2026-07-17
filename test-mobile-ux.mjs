@@ -11,6 +11,9 @@ assert.match(styles, /choice-count-5[\s\S]*nth-child\(4\)[\s\S]*nth-child\(5\)/)
 assert.match(styles, /좌우로 밀어 전체 결과를 확인하세요/);
 assert.match(styles, /-webkit-text-size-adjust:\s*100%/);
 assert.match(styles, /\.save-quit-btn[\s\S]*min-height:\s*50px/);
+assert.match(styles, /\.result-instructions[\s\S]*text-align:\s*justify/);
+assert.match(styles, /\.section-desc-block[\s\S]*text-align:\s*justify/);
+assert.match(styles, /desc-cell-block[\s\S]*text-align:\s*justify/);
 assert.match(respondent, /class="btn save-quit-btn"/);
 
 for (const source of [respondent, doctor, admin]) {
