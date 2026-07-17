@@ -12,6 +12,7 @@ const index = readFileSync("./index.html", "utf8");
 assert.match(config, /export const ADMIN_USER_ID = ENV\.ADMIN_USER_ID \|\| "[0-9a-f-]{36}"/);
 assert.match(helper, /signInWithOAuth\(\{/);
 assert.match(helper, /provider: "google"/);
+assert.match(helper, /redirect\.searchParams\.set\("oauth_cb", Date\.now\(\)\.toString\(\)\)/);
 assert.match(helper, /user\.id !== ADMIN_USER_ID/);
 assert.match(helper, /profile\?\.role !== "admin"/);
 assert.match(helper, /providers\.includes\("google"\)/);

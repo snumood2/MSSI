@@ -35,11 +35,12 @@ export async function validateAdminSession(sb, session) {
 }
 
 export async function signInAdminWithGoogle(sb, redirectPage = "admin.html") {
-  const redirectTo = new URL(redirectPage, window.location.href).href;
+  const redirect = new URL(redirectPage, window.location.href);
+  redirect.searchParams.set("oauth_cb", Date.now().toString());
   return sb.auth.signInWithOAuth({
     provider: "google",
     options: {
-      redirectTo,
+      redirectTo: redirect.href,
       queryParams: { prompt: "select_account" }
     }
   });
