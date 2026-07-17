@@ -137,13 +137,25 @@
       line-height: 1.55;
     }
     .number-management-block {
-      padding: 18px 0;
-      border-top: 1px solid #eef2f4;
+      padding: 24px 0;
+      border-top: 1px solid var(--border);
     }
     .number-management-block:first-of-type { border-top: none; padding-top: 0; }
-    .number-management-block h4 { margin: 0 0 12px; font-size: 14px; }
-    .number-request-row,
-    .number-sync-row {
+    .number-management-block:last-child { padding-bottom: 0; }
+    .number-management-block h4 { margin: 0 0 6px; font-size: 15px; }
+    .number-management-block > p {
+      margin: 0 0 18px;
+      color: var(--text-sub);
+      font-size: 13px;
+      line-height: 1.55;
+    }
+    .number-management-panel {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 24px;
+    }
+    .number-request-row {
       display: grid;
       grid-template-columns: minmax(160px, 1.2fr) minmax(180px, 1fr) auto;
       gap: 16px;
@@ -156,17 +168,33 @@
     .number-request-actions { display: flex; gap: 8px; }
     .number-direct-form {
       display: grid;
-      grid-template-columns: minmax(180px, 1fr) auto;
-      gap: 10px;
+      grid-template-columns: minmax(180px, 1fr) 112px;
+      gap: 12px;
       align-items: end;
     }
     .number-direct-form .form-group { margin: 0; }
+    .number-direct-form .btn,
+    .number-direct-details .btn {
+      width: 112px;
+      min-width: 112px;
+      height: 52px;
+      margin: 0;
+    }
+    .number-patient-summary {
+      margin-top: 18px;
+      padding: 14px 0;
+      border-top: 1px solid #eef2f4;
+      color: var(--text-sub);
+      font-size: 13px;
+      line-height: 1.65;
+    }
+    .number-patient-summary strong { color: var(--text-main); }
     .number-direct-details {
       display: grid;
-      grid-template-columns: minmax(180px, 1fr) minmax(180px, 1fr) auto;
-      gap: 10px;
+      grid-template-columns: minmax(180px, 1fr) minmax(180px, 1fr) 112px;
+      gap: 12px;
       align-items: end;
-      margin-top: 12px;
+      margin-top: 4px;
     }
     .number-empty {
       color: var(--text-sub);
@@ -176,13 +204,17 @@
     @media (max-width: 720px) {
       .doctor-dashboard { padding: 0 18px; }
       .doctor-section-header { align-items: flex-start; }
+      .number-management-panel { padding: 20px 16px; }
       .number-request-row,
-      .number-sync-row,
       .number-direct-form,
       .number-direct-details { grid-template-columns: 1fr; }
       .number-request-actions .btn,
       .number-direct-form .btn,
-      .number-direct-details .btn { width: 100%; min-height: 44px; }
+      .number-direct-details .btn {
+        width: 100%;
+        min-width: 0;
+        min-height: 48px;
+      }
     }
   </style>
 </head>
@@ -256,35 +288,34 @@
       </section>
 
       <section id="number-management" class="doctor-dashboard-section">
-        <div class="doctor-section-header">
-          <div>
-            <h3>의사에게 받은 번호 관리</h3>
-            <p>내 병원 환자의 요청을 검토하거나 현재 번호를 직접 조회하여 변경합니다.</p>
-          </div>
-          <button id="btnRefreshNumberManagement" class="btn secondary sm" type="button">새로고침</button>
-        </div>
-        <div id="doctorNumberMsg" class="status-msg"></div>
-
-        <div class="number-management-block">
-          <h4>환자 변경 요청</h4>
-          <div id="doctorNumberRequestList" class="number-empty">불러오는 중...</div>
-        </div>
-
-        <div class="number-management-block">
-          <h4>의사 직접 변경</h4>
-          <div class="number-direct-form">
-            <div class="form-group">
-              <label for="doctorCurrentPatientNumber">현재 의사에게 받은 번호</label>
-              <input id="doctorCurrentPatientNumber" type="text" inputmode="numeric" maxlength="8" placeholder="8자리 숫자">
+        <div class="number-management-panel">
+          <div class="doctor-section-header">
+            <div>
+              <h3>의사에게 받은 번호 관리</h3>
+              <p>내 병원 환자의 요청을 검토하거나 현재 번호를 직접 조회하여 변경합니다.</p>
             </div>
-            <button id="btnDoctorNumberLookup" class="btn secondary" type="button">조회</button>
+            <button id="btnRefreshNumberManagement" class="btn secondary sm" type="button">새로고침</button>
           </div>
-          <div id="doctorNumberLookupArea"></div>
-        </div>
+          <div id="doctorNumberMsg" class="status-msg"></div>
 
-        <div class="number-management-block">
-          <h4>Google Sheets 동기화 재시도</h4>
-          <div id="doctorNumberSyncList" class="number-empty">불러오는 중...</div>
+          <div class="number-management-block">
+            <h4>환자 변경 요청</h4>
+            <p>환자가 직접 제출한 번호 변경 요청을 검토합니다.</p>
+            <div id="doctorNumberRequestList" class="number-empty">불러오는 중...</div>
+          </div>
+
+          <div class="number-management-block">
+            <h4>의사 직접 변경</h4>
+            <p>현재 번호로 환자를 확인한 뒤 새 번호를 입력합니다.</p>
+            <div class="number-direct-form">
+              <div class="form-group">
+                <label for="doctorCurrentPatientNumber">현재 의사에게 받은 번호</label>
+                <input id="doctorCurrentPatientNumber" type="text" inputmode="numeric" maxlength="8" placeholder="8자리 숫자">
+              </div>
+              <button id="btnDoctorNumberLookup" class="btn secondary" type="button">조회</button>
+            </div>
+            <div id="doctorNumberLookupArea"></div>
+          </div>
         </div>
       </section>
     </div>
@@ -335,12 +366,11 @@
   }
 
   function showNumberSyncFailure(result) {
-    const message = el("doctorNumberMsg");
-    message.className = "status-msg show error";
-    message.innerHTML = `${escapeHtml(result.error || "Google Sheets 동기화에 실패했습니다.")}`
-      + (result.requestId
-        ? ` <button type="button" class="btn secondary sm doctor-sync-number-btn" data-request-id="${escapeAttr(result.requestId)}">시트 동기화 재시도</button>`
-        : "");
+    setMsg(
+      "doctorNumberMsg",
+      "번호는 변경되었지만 후속 저장 처리가 지연되고 있습니다. 관리자에게 문의해 주세요.",
+      "error"
+    );
   }
 
   async function loadDoctorNumberRequests() {
@@ -375,34 +405,6 @@
       </div>`).join("");
   }
 
-  async function loadDoctorNumberSyncFailures() {
-    const list = el("doctorNumberSyncList");
-    list.className = "number-empty";
-    list.textContent = "불러오는 중...";
-    const { data, error } = await sb.rpc("list_patient_number_sheet_sync_failures");
-    if (error) {
-      list.textContent = "동기화 상태를 불러오지 못했습니다.";
-      return;
-    }
-    if (!data?.length) {
-      list.textContent = "재시도가 필요한 동기화가 없습니다.";
-      return;
-    }
-    list.className = "";
-    list.innerHTML = data.map(item => `
-      <div class="number-sync-row">
-        <div>
-          <strong>${escapeHtml(item.username || "환자")}</strong>
-          <div class="number-request-meta">${escapeHtml(item.hospital_code)} · ${escapeHtml(new Date(item.requested_at).toLocaleString("ko-KR"))}</div>
-        </div>
-        <div>
-          <div class="number-request-value">${escapeHtml(item.old_patient_number)} → ${escapeHtml(item.new_patient_number)}</div>
-          <div class="number-request-meta">${escapeHtml(item.sheet_sync_error || "동기화 대기 중")}</div>
-        </div>
-        <button class="btn secondary sm doctor-sync-number-btn" data-request-id="${escapeAttr(item.request_id)}" type="button">시트 동기화 재시도</button>
-      </div>`).join("");
-  }
-
   async function reviewDoctorNumberRequest(row, approve) {
     const label = approve ? "승인" : "반려";
     if (!confirm(`의사에게 받은 번호 변경을 ${label}하시겠습니까?`)) return;
@@ -419,8 +421,8 @@
       if (result.databaseUpdated) return showNumberSyncFailure(result);
       return setMsg("doctorNumberMsg", result.error || `${label}하지 못했습니다.`, "error");
     }
-    setMsg("doctorNumberMsg", approve ? "DB와 Google Sheets에 변경을 반영했습니다." : "변경 요청을 반려했습니다.", "ok");
-    await Promise.all([loadDoctorNumberRequests(), loadDoctorNumberSyncFailures(), loadDoctorPatientList()]);
+    setMsg("doctorNumberMsg", approve ? "번호 변경을 완료했습니다." : "변경 요청을 반려했습니다.", "ok");
+    await Promise.all([loadDoctorNumberRequests(), loadDoctorPatientList()]);
   }
 
   async function lookupDoctorPatientNumber() {
@@ -435,7 +437,7 @@
       return setMsg("doctorNumberMsg", "내 병원에서 해당 환자 계정을 찾을 수 없습니다.", "warn");
     }
     el("doctorNumberLookupArea").innerHTML = `
-      <div class="number-request-meta" style="margin-top:12px;">
+      <div class="number-patient-summary">
         <strong>${escapeHtml(patient.username || "환자")}</strong> · 병원코드 ${escapeHtml(patient.hospital_code)} · 현재 번호 ${escapeHtml(patient.patient_number)} · 생년월 ${escapeHtml(patient.dob || "-")} · 완료 결과 ${escapeHtml(patient.completed_results || 0)}건
       </div>
       <div class="number-direct-details">
@@ -458,7 +460,7 @@
     if (!/^\d{8}$/.test(current) || !/^\d{8}$/.test(next)) {
       return setMsg("doctorNumberMsg", "현재 번호와 새 번호를 8자리 숫자로 입력하세요.", "error");
     }
-    if (!confirm(`${current} 번호를 ${next} 번호로 변경하시겠습니까? DB와 Google Sheets에 함께 반영됩니다.`)) return;
+    if (!confirm(`${current} 번호를 ${next} 번호로 변경하시겠습니까?`)) return;
     const button = el("btnDoctorNumberChange");
     button.disabled = true;
     button.textContent = "변경 중...";
@@ -476,9 +478,8 @@
     }
     el("doctorCurrentPatientNumber").value = next;
     el("doctorNumberLookupArea").innerHTML = "";
-    const rows = result.sheetRowsUpdated || {};
-    setMsg("doctorNumberMsg", `변경 완료: DB 및 Google Sheets 반영 (RAWDATA ${rows.rawData || 0}행, DB2SHEET ${rows.db2Sheet || 0}행)`, "ok");
-    await Promise.all([loadDoctorNumberRequests(), loadDoctorNumberSyncFailures(), loadDoctorPatientList()]);
+    setMsg("doctorNumberMsg", "의사에게 받은 번호를 변경했습니다.", "ok");
+    await Promise.all([loadDoctorNumberRequests(), loadDoctorPatientList()]);
   }
 
   function show(id) {
@@ -779,8 +780,7 @@
 
     Promise.all([
       loadDoctorPatientList(),
-      loadDoctorNumberRequests(),
-      loadDoctorNumberSyncFailures()
+      loadDoctorNumberRequests()
     ]).then(() => {
       const tab = new URLSearchParams(window.location.search).get("tab");
       const target = tab === "list" ? el("patient-list") : tab === "search" ? el("patient-search") : null;
@@ -791,9 +791,7 @@
   el("btnSearchPatient")?.addEventListener("click", searchPatient);
   el("searchPNum")?.addEventListener("keydown", e => { if (e.key === "Enter") searchPatient(); });
   el("btnRefreshPatientList")?.addEventListener("click", loadDoctorPatientList);
-  el("btnRefreshNumberManagement")?.addEventListener("click", async () => {
-    await Promise.all([loadDoctorNumberRequests(), loadDoctorNumberSyncFailures()]);
-  });
+  el("btnRefreshNumberManagement")?.addEventListener("click", loadDoctorNumberRequests);
   el("btnDoctorNumberLookup")?.addEventListener("click", lookupDoctorPatientNumber);
   el("doctorCurrentPatientNumber")?.addEventListener("keydown", event => {
     if (event.key === "Enter") lookupDoctorPatientNumber();
@@ -806,17 +804,6 @@
     if (!button) return;
     reviewDoctorNumberRequest(button.closest(".number-request-row"), button.dataset.approve === "true");
   });
-  el("number-management")?.addEventListener("click", async event => {
-    const button = event.target.closest(".doctor-sync-number-btn");
-    if (!button) return;
-    button.disabled = true;
-    button.textContent = "동기화 중...";
-    const result = await invokeNumberManagement({ action: "sync", requestId: button.dataset.requestId });
-    if (!result.ok) return showNumberSyncFailure(result);
-    setMsg("doctorNumberMsg", "Google Sheets 동기화를 완료했습니다.", "ok");
-    await loadDoctorNumberSyncFailures();
-  });
-
   el("btnLogout")?.addEventListener("click", async () => {
     await sb.auth.signOut();
     window.location.href = "login.html";
