@@ -332,6 +332,7 @@
 
   const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   let doctorProfile = null;
+  let doctorAccessToken = null;
 
   const $  = sel => document.querySelector(sel);
   const $$ = sel => document.querySelectorAll(sel);
@@ -354,16 +355,32 @@
     const el_ = el(elId); if (el_) el_.className = "status-msg";
   }
 
+  function doctorAuthHeaders(contentType = true) {
+    const headers = { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${doctorAccessToken}` };
+    if (contentType) headers["Content-Type"] = "application/json";
+    return headers;
+  }
+
+  async function doctorRpc(name, body = {}) {
+    const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${name}`, {
+      method: "POST",
+      headers: doctorAuthHeaders(),
+      body: JSON.stringify(body)
+    });
+    const payload = await response.json().catch(() => null);
+    if (response.ok) return { data: payload, error: null };
+    return { data: null, error: { message: payload?.message || "요청을 처리하지 못했습니다." } };
+  }
+
   async function invokeNumberManagement(body) {
-    const { data, error } = await sb.functions.invoke("manage-patient-number", { body });
-    if (!error) return { ok: true, ...(data || {}) };
-    let detail = null;
-    try { detail = await error.context?.json(); } catch {}
-    return {
-      ok: false,
-      ...(detail || {}),
-      error: detail?.error || error.message || "번호 변경 처리에 실패했습니다."
-    };
+    const response = await fetch(`${SUPABASE_URL}/functions/v1/manage-patient-number`, {
+      method: "POST",
+      headers: doctorAuthHeaders(),
+      body: JSON.stringify(body)
+    });
+    const data = await response.json().catch(() => null);
+    if (response.ok) return { ok: true, ...(data || {}) };
+    return { ok: false, ...(data || {}), error: data?.error || "번호 변경 처리에 실패했습니다." };
   }
 
   function showNumberSyncFailure(result) {
@@ -378,7 +395,7 @@
     const list = el("doctorNumberRequestList");
     list.className = "number-empty";
     list.textContent = "불러오는 중...";
-    const { data, error } = await sb.rpc("list_patient_number_change_requests");
+    const { data, error } = await doctorRpc("list_patient_number_change_requests");
     if (error) {
       list.textContent = "요청을 불러오지 못했습니다.";
       setMsg("doctorNumberMsg", error.message, "error");
@@ -430,7 +447,7 @@
     const current = el("doctorCurrentPatientNumber").value.trim();
     if (!/^\d{8}$/.test(current)) return setMsg("doctorNumberMsg", "현재 번호는 8자리 숫자로 입력하세요.", "error");
     clearMsg("doctorNumberMsg");
-    const { data, error } = await sb.rpc("doctor_lookup_patient_number", { p_patient_number: current });
+    const { data, error } = await doctorRpc("doctor_lookup_patient_number", { p_patient_number: current });
     if (error) return setMsg("doctorNumberMsg", error.message, "error");
     const patient = data?.[0];
     if (!patient) {
@@ -696,7 +713,7 @@
     setMsg("doctorSearchMsg", "검색 중...", "info");
     el("doctorResultArea").innerHTML = "";
 
-    const { data, error } = await sb.rpc("doctor_get_patient_results", { p_patient_number: pNum });
+    const { data, error } = await doctorRpc("doctor_get_patient_results", { p_patient_number: pNum });
     if (error) { setMsg("doctorSearchMsg", "오류: " + error.message, "error"); return; }
 
     if (!data || !data.length) {
@@ -720,7 +737,7 @@
     if (!list) return;
     list.innerHTML = `<div class="patient-list-loading"><span class="spinner-small"></span>로딩 중...</div>`;
 
-    const { data, error } = await sb.rpc("doctor_list_patients");
+    const { data, error } = await doctorRpc("doctor_list_patients");
 
     if (error || !data?.length) {
       list.innerHTML = `<div class="empty-state">
@@ -751,8 +768,14 @@
   }
 
   async function viewResponseById(responseId) {
-    const { data, error } = await sb.from("survey_responses").select("*").eq("id", responseId).single();
-    if (error || !data) return alert("결과를 찾을 수 없습니다.");
+    const endpoint = new URL(`${SUPABASE_URL}/rest/v1/survey_responses`);
+    endpoint.searchParams.set("select", "*");
+    endpoint.searchParams.set("id", `eq.${responseId}`);
+    endpoint.searchParams.set("limit", "1");
+    const response = await fetch(endpoint, { headers: doctorAuthHeaders(false) });
+    const rows = response.ok ? await response.json() : [];
+    const data = rows[0] || null;
+    if (!data) return alert("결과를 찾을 수 없습니다.");
 
     if (data?.answers) {
       try {
@@ -833,6 +856,7 @@
       showDoctorAuthError("로그인 상태를 확인하지 못했습니다. 다시 로그인해 주세요.");
       return;
     }
+    doctorAccessToken = session.access_token;
     if (user.email?.toLowerCase() === ADMIN_EMAIL) {
       window.location.href = "admin.html";
       return;

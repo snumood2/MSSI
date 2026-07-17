@@ -49,6 +49,8 @@ assert.match(doctor, /id="doctorNumberRequestList"/);
 assert.match(doctor, /id="btnDoctorNumberLookup"/);
 assert.match(doctor, /doctor_lookup_patient_number/);
 assert.match(doctor, /manage-patient-number/);
+assert.match(doctor, /Authorization: `Bearer \$\{doctorAccessToken\}`/);
+assert.match(doctor, /doctorRpc\("doctor_lookup_patient_number"/);
 assert.doesNotMatch(doctor, /doctorNumberSyncList|list_patient_number_sheet_sync_failures/);
 assert.doesNotMatch(doctor, /Google Sheets|RAWDATA|DB2SHEET|동기화/);
 assert.doesNotMatch(doctor, /href="doctor\.html\?tab=(?:search|list)"/);
