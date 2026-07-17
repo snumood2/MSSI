@@ -224,6 +224,12 @@
         </div>
 
         <div class="number-management-block">
+          <h3 class="number-management-title">Google Sheets 동기화 재시도</h3>
+          <div id="adminNumberSyncMsg" class="status-msg"></div>
+          <div id="adminNumberSyncList" class="number-request-list"></div>
+        </div>
+
+        <div class="number-management-block">
           <h3 class="number-management-title">관리자 직접 변경</h3>
           <div class="form-row" style="max-width:760px;align-items:flex-end;">
             <div class="form-group">
@@ -383,7 +389,7 @@
       await loadAdminPending();
       await loadAdminDoctors();
       await loadAdminRevokedDoctors();
-      await loadPatientNumberRequests();
+      await Promise.all([loadPatientNumberRequests(), loadPatientNumberSyncFailures()]);
       return session;
     }
 
@@ -580,6 +586,34 @@
       </div>`).join("");
   }
 
+  async function loadPatientNumberSyncFailures() {
+    const list = el("adminNumberSyncList");
+    list.innerHTML = '<div class="admin-loading">로딩 중...</div>';
+    const { data, error } = await sb.rpc("list_patient_number_sheet_sync_failures");
+    if (error) {
+      list.innerHTML = `<div class="admin-error">오류: ${escapeHtml(error.message)}</div>`;
+      return;
+    }
+    if (!data?.length) {
+      list.innerHTML = '<div class="admin-empty">재시도가 필요한 동기화가 없습니다.</div>';
+      return;
+    }
+    list.innerHTML = data.map(item => `
+      <div class="number-request-row">
+        <div>
+          <strong>${escapeHtml(item.username || "환자")}</strong>
+          <div class="number-request-meta">병원코드 ${escapeHtml(item.hospital_code)} · ${escapeHtml(new Date(item.requested_at).toLocaleString("ko-KR"))}</div>
+        </div>
+        <div>
+          <div class="number-request-value">${escapeHtml(item.old_patient_number)} → ${escapeHtml(item.new_patient_number)}</div>
+          <div class="number-request-meta">${escapeHtml(item.sheet_sync_error || "동기화 대기 중")}</div>
+        </div>
+        <div class="number-request-actions">
+          <button type="button" class="btn secondary sm sync-number-btn" data-request-id="${escapeAttr(item.request_id)}">시트 동기화 재시도</button>
+        </div>
+      </div>`).join("");
+  }
+
   async function reviewPatientNumberRequest(row, approve) {
     const label = approve ? "승인" : "반려";
     if (!confirm(`의사에게 받은 번호 변경을 ${label}하시겠습니까?`)) return;
@@ -681,16 +715,17 @@
 
     const syncButton = e.target.closest(".sync-number-btn");
     if (syncButton) {
+      const messageId = syncButton.closest(".status-msg")?.id || "adminNumberSyncMsg";
       syncButton.disabled = true;
       syncButton.textContent = "동기화 중...";
       const result = await invokePatientNumberManagement({ action: "sync", requestId: syncButton.dataset.requestId });
       if (!result.ok) {
         syncButton.disabled = false;
         syncButton.textContent = "시트 동기화 재시도";
-        return showNumberSyncFailure(syncButton.closest(".status-msg").id, result);
+        return showNumberSyncFailure(messageId, result);
       }
-      setMsg(syncButton.closest(".status-msg").id, "Google Sheets 동기화를 완료했습니다.", "ok");
-      await loadPatientNumberRequests();
+      setMsg(messageId, "Google Sheets 동기화를 완료했습니다.", "ok");
+      await Promise.all([loadPatientNumberRequests(), loadPatientNumberSyncFailures()]);
       return;
     }
 
@@ -764,7 +799,7 @@
     const btn = el("btnAdminRefresh");
     btn.disabled = true;
     btn.textContent = "로딩 중...";
-    await Promise.all([loadAdminPending(), loadAdminDoctors(), loadAdminRevokedDoctors(), loadPatientNumberRequests()]);
+    await Promise.all([loadAdminPending(), loadAdminDoctors(), loadAdminRevokedDoctors(), loadPatientNumberRequests(), loadPatientNumberSyncFailures()]);
     btn.textContent = "🔄 새로고침";
     btn.disabled = false;
   }
@@ -798,7 +833,9 @@
     btn.disabled = false;
   });
 
-  el("btnRefreshNumberRequests")?.addEventListener("click", loadPatientNumberRequests);
+  el("btnRefreshNumberRequests")?.addEventListener("click", async () => {
+    await Promise.all([loadPatientNumberRequests(), loadPatientNumberSyncFailures()]);
+  });
   el("btnAdminNumberLookup")?.addEventListener("click", lookupPatientNumberForChange);
 
   function fmtDate(d) {
