@@ -18,6 +18,12 @@ assert.match(helper, /profile\?\.role !== "admin"/);
 assert.match(helper, /providers\.includes\("google"\)/);
 
 assert.match(admin, /id="btnGoogleLogin"/);
+assert.match(admin, /body:not\(\.admin-authenticated\) #mainHeader/);
+assert.match(admin, /class="admin-unauthenticated"/);
+assert.match(admin, /function setAuthenticatedUi\(isAuthenticated\)/);
+assert.doesNotMatch(admin, /관리자 로그인<\/h2>/);
+assert.doesNotMatch(admin, /등록된 관리자 Google 계정으로만 접속할 수 있습니다/);
+assert.doesNotMatch(admin, /id="authMsg"/);
 assert.match(admin, /validateAdminSession/);
 assert.match(admin, /sb\.auth\.getUser\(\)/);
 assert.match(admin, /sb\.auth\.onAuthStateChange/);

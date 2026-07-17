@@ -83,6 +83,21 @@
       font-weight: 800;
       line-height: 1;
     }
+    body:not(.admin-authenticated) #mainHeader {
+      display: none;
+    }
+    body:not(.admin-authenticated) .container {
+      min-height: 100svh;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+    }
+    body:not(.admin-authenticated) #view-auth {
+      width: min(100%, 360px);
+    }
+    .admin-login-only {
+      width: 100%;
+    }
 
     @media (max-width: 600px) {
       .admin-header { flex-direction: column; align-items: stretch; }
@@ -94,7 +109,7 @@
     }
   </style>
 </head>
-<body>
+<body class="admin-unauthenticated">
 
 <header id="mainHeader">
   <h1>기분장애 임상평가 설문 – 관리자</h1>
@@ -111,12 +126,7 @@
 <div class="container">
 
   <div id="view-auth" class="view active">
-    <div class="card" style="max-width:440px; margin:0 auto;">
-      <h2 class="card-title text-center" style="text-align:center;">관리자 로그인</h2>
-      <p class="admin-oauth-note">등록된 관리자 Google 계정으로만 접속할 수 있습니다.</p>
-      <div id="authMsg" class="status-msg"></div>
-      <button id="btnGoogleLogin" class="btn primary"><span class="google-mark" aria-hidden="true">G</span>Google 계정으로 로그인</button>
-    </div>
+    <button id="btnGoogleLogin" class="btn primary admin-login-only"><span class="google-mark" aria-hidden="true">G</span>Google 계정으로 로그인</button>
   </div>
 
   <div id="view-admin" class="view">
@@ -240,6 +250,13 @@
     if (target) { target.classList.add("active"); window.scrollTo(0, 0); }
   }
 
+  function setAuthenticatedUi(isAuthenticated) {
+    document.body.classList.toggle("admin-authenticated", isAuthenticated);
+    document.body.classList.toggle("admin-unauthenticated", !isAuthenticated);
+    el("userBadge").style.display = isAuthenticated ? "inline" : "none";
+    el("btnLogout").style.display = isAuthenticated ? "inline-flex" : "none";
+  }
+
   function setMsg(id, msg, type = "info") {
     const el_ = el(id);
     if (!el_) return;
@@ -283,10 +300,9 @@
     if (validation.ok) {
       state.user = validation.user;
       state.session = session;
+      setAuthenticatedUi(true);
       showView("view-admin");
-      el("userBadge").style.display = "inline";
       el("userBadge").textContent = "관리자";
-      el("btnLogout").style.display = "inline-flex";
       await loadAdminPending();
       await loadAdminDoctors();
       await loadAdminRevokedDoctors();
@@ -296,10 +312,11 @@
     if (session) {
       await sb.auth.signOut({ scope: "local" });
     }
+    setAuthenticatedUi(false);
     showView("view-auth");
     const oauthError = oauthErrorMessage();
-    if (oauthError) setMsg("authMsg", "Google 로그인 실패: " + oauthError, "error");
-    else if (session) setMsg("authMsg", validation.reason, "error");
+    if (oauthError) alert("Google 로그인 실패: " + oauthError);
+    else if (session) alert(validation.reason);
     return null;
     })();
 
@@ -316,7 +333,6 @@
   });
 
   el("btnGoogleLogin").addEventListener("click", async () => {
-    clearMsg("authMsg");
     const button = el("btnGoogleLogin");
     button.disabled = true;
     const previousText = button.innerHTML;
@@ -325,7 +341,7 @@
     if (error) {
       button.disabled = false;
       button.innerHTML = previousText;
-      setMsg("authMsg", "Google 로그인을 시작하지 못했습니다: " + error.message, "error");
+      alert("Google 로그인을 시작하지 못했습니다: " + error.message);
     }
   });
 
@@ -333,8 +349,7 @@
     await sb.auth.signOut();
     state.user = null;
     state.session = null;
-    el("userBadge").style.display = "none";
-    el("btnLogout").style.display = "none";
+    setAuthenticatedUi(false);
     showView("view-auth");
   });
 
