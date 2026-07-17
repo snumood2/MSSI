@@ -2,6 +2,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const PROD_ORIGIN = "https://snumood2.github.io";
 const MAX_BODY_BYTES = 16 * 1024;
+const SHEET_SYNC_TIMEOUT_MS = 60_000;
 
 function allowedOrigin(origin: string | null): string | null {
   if (!origin) return PROD_ORIGIN;
@@ -146,7 +147,7 @@ Deno.serve(async (req: Request) => {
         oldPatientNumber: syncRow.old_patient_number,
         newPatientNumber: syncRow.new_patient_number,
       }),
-      signal: AbortSignal.timeout(20000),
+      signal: AbortSignal.timeout(SHEET_SYNC_TIMEOUT_MS),
     });
     const webhookResult = await webhookResponse.json().catch(() => null);
     if (!webhookResponse.ok || webhookResult?.status !== "ok") throw new Error("Webhook rejected patient number change");

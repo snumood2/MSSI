@@ -45,6 +45,7 @@ assert.match(edge, /MSSI_WEBHOOK_SECRET/);
 assert.match(edge, /admin_change_patient_number/);
 assert.match(edge, /review_patient_number_change/);
 assert.match(edge, /mark_patient_number_sheet_sync/);
+assert.match(edge, /SHEET_SYNC_TIMEOUT_MS = 60_000/);
 assert.doesNotMatch(admin, /MSSI_WEBHOOK_SECRET|GOOGLE_SHEETS_WEBHOOK_URL/);
 
 console.log("PASS patient number integrity guards");
