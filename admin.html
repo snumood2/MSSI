@@ -98,6 +98,58 @@
     .admin-login-only {
       width: 100%;
     }
+    .number-management-block + .number-management-block {
+      margin-top: 28px;
+      padding-top: 24px;
+      border-top: 1px solid var(--border);
+    }
+    .number-management-title {
+      margin: 0 0 12px;
+      font-size: 17px;
+      font-weight: 800;
+    }
+    .number-request-list {
+      border-top: 1px solid var(--border);
+    }
+    .number-request-row {
+      display: grid;
+      grid-template-columns: minmax(180px, 1.2fr) minmax(180px, 1fr) auto;
+      gap: 18px;
+      align-items: center;
+      padding: 16px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .number-request-meta {
+      color: var(--text-sub);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+    .number-request-value {
+      font-size: 15px;
+      font-weight: 700;
+    }
+    .number-request-row .request-note {
+      width: 100%;
+      min-height: 42px;
+      margin-top: 8px;
+      box-sizing: border-box;
+    }
+    .number-request-actions {
+      display: flex;
+      gap: 8px;
+    }
+    .direct-number-result {
+      margin-top: 14px;
+      padding: 16px 0;
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+    .direct-number-summary {
+      margin-bottom: 14px;
+      color: var(--text-sub);
+      font-size: 14px;
+      line-height: 1.7;
+    }
 
     @media (max-width: 600px) {
       .admin-header { flex-direction: column; align-items: stretch; }
@@ -106,6 +158,8 @@
       .list-row { flex-direction: column; align-items: flex-start; gap: 10px; }
       .list-actions { align-self: stretch; }
       .list-actions .btn { flex: 1; }
+      .number-request-row { grid-template-columns: 1fr; gap: 10px; }
+      .number-request-actions .btn { flex: 1; min-height: 44px; }
     }
   </style>
 </head>
@@ -114,9 +168,7 @@
 <header id="mainHeader">
   <h1>기분장애 임상평가 설문 – 관리자</h1>
   <div class="header-nav">
-    <a href="patient-number-requests.html">의사에게 받은 번호 변경</a>
-    <span id="userBadge" class="user-badge" style="display:none;">관리자</span>
-    <button id="btnLogout" class="btn secondary sm" style="display:none;margin-left:8px;">로그아웃</button>
+    <button id="btnLogout" class="btn secondary sm" style="display:none;">로그아웃</button>
   </div>
 </header>
 
@@ -157,6 +209,36 @@
           <button id="btnRefreshRevokedDoctors" class="btn secondary sm" style="min-width:70px;">새로고침</button>
         </div>
         <div id="adminRevokedDoctorList"></div>
+      </div>
+
+      <div class="section-body" id="patientNumberManagement">
+        <div class="section-header">
+          <div class="list-section-title">의사에게 받은 번호 변경</div>
+          <button id="btnRefreshNumberRequests" class="btn secondary sm" style="min-width:70px;">새로고침</button>
+        </div>
+
+        <div class="number-management-block">
+          <h3 class="number-management-title">환자 변경 요청</h3>
+          <div id="adminNumberRequestMsg" class="status-msg"></div>
+          <div id="adminNumberRequestList" class="number-request-list"></div>
+        </div>
+
+        <div class="number-management-block">
+          <h3 class="number-management-title">관리자 직접 변경</h3>
+          <div class="form-row" style="max-width:760px;align-items:flex-end;">
+            <div class="form-group">
+              <label for="adminNumberHospitalCode">병원 코드</label>
+              <input type="text" id="adminNumberHospitalCode" placeholder="예: SNUBH01" autocomplete="off">
+            </div>
+            <div class="form-group">
+              <label for="adminNumberCurrent">현재 의사에게 받은 번호</label>
+              <input type="text" id="adminNumberCurrent" inputmode="numeric" maxlength="8" placeholder="8자리 숫자" autocomplete="off">
+            </div>
+            <button id="btnAdminNumberLookup" class="btn primary sm" style="min-width:72px;margin-bottom:16px;">조회</button>
+          </div>
+          <div id="adminDirectNumberMsg" class="status-msg"></div>
+          <div id="adminDirectNumberArea"></div>
+        </div>
       </div>
 
       <div class="section-body">
@@ -250,7 +332,6 @@
   function setAuthenticatedUi(isAuthenticated) {
     document.body.classList.toggle("admin-authenticated", isAuthenticated);
     document.body.classList.toggle("admin-unauthenticated", !isAuthenticated);
-    el("userBadge").style.display = isAuthenticated ? "inline" : "none";
     el("btnLogout").style.display = isAuthenticated ? "inline-flex" : "none";
   }
 
@@ -299,10 +380,10 @@
       state.session = session;
       setAuthenticatedUi(true);
       showView("view-admin");
-      el("userBadge").textContent = "관리자";
       await loadAdminPending();
       await loadAdminDoctors();
       await loadAdminRevokedDoctors();
+      await loadPatientNumberRequests();
       return session;
     }
 
@@ -449,7 +530,174 @@
       </div>`).join("");
   }
 
+  async function invokePatientNumberManagement(body) {
+    const { data, error } = await sb.functions.invoke("manage-patient-number", { body });
+    if (!error) return { ok: true, ...(data || {}) };
+    let detail = null;
+    try { detail = await error.context?.json(); } catch {}
+    return {
+      ok: false,
+      ...(detail || {}),
+      error: detail?.error || error.message || "번호 변경 처리에 실패했습니다."
+    };
+  }
+
+  function showNumberSyncFailure(messageId, result) {
+    const message = el(messageId);
+    message.className = "status-msg show error";
+    message.innerHTML = `${escapeHtml(result.error || "Google Sheets 동기화에 실패했습니다.")}`
+      + (result.requestId
+        ? ` <button type="button" class="btn secondary sm sync-number-btn" data-request-id="${escapeAttr(result.requestId)}">시트 동기화 재시도</button>`
+        : "");
+  }
+
+  async function loadPatientNumberRequests() {
+    const list = el("adminNumberRequestList");
+    list.innerHTML = '<div class="admin-loading">로딩 중...</div>';
+    const { data, error } = await sb.rpc("list_patient_number_change_requests");
+    if (error) {
+      list.innerHTML = `<div class="admin-error">오류: ${escapeHtml(error.message)}</div>`;
+      return;
+    }
+    if (!data?.length) {
+      list.innerHTML = '<div class="admin-empty">대기 중인 변경 요청이 없습니다.</div>';
+      return;
+    }
+    list.innerHTML = data.map(item => `
+      <div class="number-request-row" data-id="${escapeAttr(item.request_id)}">
+        <div>
+          <strong>${escapeHtml(item.username || "환자")}</strong>
+          <div class="number-request-meta">병원코드 ${escapeHtml(item.hospital_code)} · 생년월 ${escapeHtml(item.dob || "-")}<br>${escapeHtml(new Date(item.requested_at).toLocaleString("ko-KR"))}</div>
+        </div>
+        <div>
+          <div class="number-request-value">${escapeHtml(item.old_patient_number)} → ${escapeHtml(item.new_patient_number)}</div>
+          <input class="request-note" type="text" maxlength="500" placeholder="검토 메모 (선택)">
+        </div>
+        <div class="number-request-actions">
+          <button class="btn secondary sm number-review-btn" data-approve="false" type="button">반려</button>
+          <button class="btn primary sm number-review-btn" data-approve="true" type="button">승인</button>
+        </div>
+      </div>`).join("");
+  }
+
+  async function reviewPatientNumberRequest(row, approve) {
+    const label = approve ? "승인" : "반려";
+    if (!confirm(`의사에게 받은 번호 변경을 ${label}하시겠습니까?`)) return;
+    const buttons = row.querySelectorAll("button");
+    buttons.forEach(button => { button.disabled = true; });
+    const result = await invokePatientNumberManagement({
+      action: "review",
+      requestId: row.dataset.id,
+      approve,
+      note: row.querySelector(".request-note")?.value.trim() || null
+    });
+    if (!result.ok) {
+      buttons.forEach(button => { button.disabled = false; });
+      if (result.databaseUpdated) showNumberSyncFailure("adminNumberRequestMsg", result);
+      else setMsg("adminNumberRequestMsg", result.error, "error");
+      return;
+    }
+    setMsg("adminNumberRequestMsg", approve ? "DB와 Google Sheets에 변경을 반영했습니다." : "변경 요청을 반려했습니다.", "ok");
+    await loadPatientNumberRequests();
+  }
+
+  async function lookupPatientNumberForChange() {
+    clearMsg("adminDirectNumberMsg");
+    el("adminDirectNumberArea").innerHTML = "";
+    const hospitalCode = el("adminNumberHospitalCode").value.trim().toUpperCase();
+    const currentPatientNumber = el("adminNumberCurrent").value.trim();
+    if (!/^[A-Z0-9_-]{2,20}$/.test(hospitalCode) || !/^\d{8}$/.test(currentPatientNumber)) {
+      return setMsg("adminDirectNumberMsg", "병원코드와 현재 8자리 번호를 확인하세요.", "error");
+    }
+    const button = el("btnAdminNumberLookup");
+    button.disabled = true;
+    button.textContent = "조회 중...";
+    const { data, error } = await sb.rpc("admin_lookup_patient_number", {
+      p_hospital_code: hospitalCode,
+      p_patient_number: currentPatientNumber
+    }).maybeSingle();
+    button.disabled = false;
+    button.textContent = "조회";
+    if (error) return setMsg("adminDirectNumberMsg", error.message, "error");
+    if (!data) return setMsg("adminDirectNumberMsg", "일치하는 환자 계정을 찾지 못했습니다.", "error");
+
+    el("adminDirectNumberArea").innerHTML = `
+      <div class="direct-number-result" data-hospital-code="${escapeAttr(data.hospital_code)}" data-current-number="${escapeAttr(data.patient_number)}">
+        <div class="direct-number-summary">
+          <strong>${escapeHtml(data.username || "환자")}</strong><br>
+          병원코드 ${escapeHtml(data.hospital_code)} · 현재 번호 ${escapeHtml(data.patient_number)} · 생년월 ${escapeHtml(data.dob || "-")} · 완료 결과 ${Number(data.completed_results || 0)}건
+        </div>
+        <div class="form-row" style="max-width:640px;align-items:flex-end;">
+          <div class="form-group">
+            <label for="adminNumberNew">새 의사에게 받은 번호</label>
+            <input type="text" id="adminNumberNew" inputmode="numeric" maxlength="8" placeholder="8자리 숫자" autocomplete="off">
+          </div>
+          <div class="form-group">
+            <label for="adminNumberNote">변경 사유</label>
+            <input type="text" id="adminNumberNote" maxlength="500" placeholder="선택 입력">
+          </div>
+          <button id="btnAdminNumberChange" class="btn primary sm" style="min-width:72px;margin-bottom:16px;">변경</button>
+        </div>
+      </div>`;
+  }
+
+  async function changePatientNumberDirectly() {
+    const resultArea = el("adminDirectNumberArea").querySelector(".direct-number-result");
+    if (!resultArea) return;
+    const hospitalCode = resultArea.dataset.hospitalCode;
+    const currentPatientNumber = resultArea.dataset.currentNumber;
+    const newPatientNumber = el("adminNumberNew").value.trim();
+    const note = el("adminNumberNote").value.trim();
+    if (!/^\d{8}$/.test(newPatientNumber)) return setMsg("adminDirectNumberMsg", "새 번호는 8자리 숫자로 입력하세요.", "error");
+    if (!confirm(`${hospitalCode}의 ${currentPatientNumber} 번호를 ${newPatientNumber}(으)로 변경하시겠습니까? DB와 Google Sheets에 함께 반영됩니다.`)) return;
+    const button = el("btnAdminNumberChange");
+    button.disabled = true;
+    button.textContent = "변경 중...";
+    const result = await invokePatientNumberManagement({
+      action: "change", hospitalCode, currentPatientNumber, newPatientNumber, note
+    });
+    if (!result.ok) {
+      button.disabled = false;
+      button.textContent = "변경";
+      if (result.databaseUpdated) showNumberSyncFailure("adminDirectNumberMsg", result);
+      else setMsg("adminDirectNumberMsg", result.error, "error");
+      return;
+    }
+    const rawCount = Number(result.sheetRowsUpdated?.rawData || 0);
+    const db2Count = Number(result.sheetRowsUpdated?.db2Sheet || 0);
+    setMsg("adminDirectNumberMsg", `변경 완료: DB 및 Google Sheets 반영 (RAWDATA ${rawCount}행, DB2SHEET ${db2Count}행)`, "ok");
+    el("adminNumberCurrent").value = newPatientNumber;
+    el("adminDirectNumberArea").innerHTML = "";
+    await loadPatientNumberRequests();
+  }
+
   document.addEventListener("click", async (e) => {
+
+    const reviewButton = e.target.closest(".number-review-btn");
+    if (reviewButton) {
+      await reviewPatientNumberRequest(reviewButton.closest(".number-request-row"), reviewButton.dataset.approve === "true");
+      return;
+    }
+
+    const syncButton = e.target.closest(".sync-number-btn");
+    if (syncButton) {
+      syncButton.disabled = true;
+      syncButton.textContent = "동기화 중...";
+      const result = await invokePatientNumberManagement({ action: "sync", requestId: syncButton.dataset.requestId });
+      if (!result.ok) {
+        syncButton.disabled = false;
+        syncButton.textContent = "시트 동기화 재시도";
+        return showNumberSyncFailure(syncButton.closest(".status-msg").id, result);
+      }
+      setMsg(syncButton.closest(".status-msg").id, "Google Sheets 동기화를 완료했습니다.", "ok");
+      await loadPatientNumberRequests();
+      return;
+    }
+
+    if (e.target.closest("#btnAdminNumberChange")) {
+      await changePatientNumberDirectly();
+      return;
+    }
 
     if (e.target.matches(".approve-btn")) {
       const id = e.target.dataset.id;
@@ -516,7 +764,7 @@
     const btn = el("btnAdminRefresh");
     btn.disabled = true;
     btn.textContent = "로딩 중...";
-    await Promise.all([loadAdminPending(), loadAdminDoctors(), loadAdminRevokedDoctors()]);
+    await Promise.all([loadAdminPending(), loadAdminDoctors(), loadAdminRevokedDoctors(), loadPatientNumberRequests()]);
     btn.textContent = "🔄 새로고침";
     btn.disabled = false;
   }
@@ -549,6 +797,9 @@
     btn.textContent = "새로고침";
     btn.disabled = false;
   });
+
+  el("btnRefreshNumberRequests")?.addEventListener("click", loadPatientNumberRequests);
+  el("btnAdminNumberLookup")?.addEventListener("click", lookupPatientNumberForChange);
 
   function fmtDate(d) {
     if (!d) return "";

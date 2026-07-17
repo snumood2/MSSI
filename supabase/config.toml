@@ -119,6 +119,9 @@ password_requirements = ""
 [functions.submit-survey]
 verify_jwt = true
 
+[functions.manage-patient-number]
+verify_jwt = true
+
 [auth.rate_limit]
 
 email_sent = 2

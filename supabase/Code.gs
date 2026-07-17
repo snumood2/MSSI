@@ -38,6 +38,19 @@ function doPost(e) {
     const sheet2Report = getSheetByGid_(ss, CONFIG.SHEET2REPORT_GID);
     const reportSheet = getSheetByGid_(ss, CONFIG.REPORT_GID);
 
+    if (params.action === 'change_patient_number') {
+      validatePatientNumberChange_(params);
+      const rawUpdated = updatePatientNumberRows_(rawSheet, params, 2);
+      const db2Updated = db2Sheet ? updatePatientNumberRows_(db2Sheet, params, 3) : 0;
+      SpreadsheetApp.flush();
+      return json_({
+        status: 'ok',
+        mode: 'patient_number_change',
+        rawUpdated: rawUpdated,
+        db2SheetUpdated: db2Updated
+      });
+    }
+
     validatePayload_(params);
     const record = buildRecord_(params);
     const headers = ensureHeaders_(rawSheet, record);
@@ -60,6 +73,48 @@ function doPost(e) {
   } finally {
     lock.releaseLock();
   }
+}
+
+function validatePatientNumberChange_(params) {
+  if (!/^[0-9a-f-]{36}$/i.test(String(params.patientId || ''))) throw new Error('Invalid patient id.');
+  if (!/^[A-Z0-9_-]{2,20}$/.test(String(params.hospitalCode || ''))) throw new Error('Invalid hospital code.');
+  if (!/^[0-9]{8}$/.test(String(params.oldPatientNumber || ''))) throw new Error('Invalid old patient number.');
+  if (!/^[0-9]{8}$/.test(String(params.newPatientNumber || ''))) throw new Error('Invalid new patient number.');
+  if (params.oldPatientNumber === params.newPatientNumber) throw new Error('Patient numbers are identical.');
+}
+
+function updatePatientNumberRows_(sheet, params, startRow) {
+  if (!sheet || sheet.getLastRow() < startRow) return 0;
+  const lastColumn = sheet.getLastColumn();
+  const headers = sheet.getRange(1, 1, 1, lastColumn).getValues()[0].map(String);
+  const patientIdColumn = headers.indexOf('patient_id') + 1;
+  const hospitalColumn = headers.indexOf('hospital_code') + 1;
+  const patientNumberColumn = headers.indexOf('patient_number') + 1;
+  const assessmentNoColumn = headers.indexOf('assessment_no') + 1;
+  const assessmentKeyColumn = headers.indexOf('assessment_key') + 1;
+  if (!patientIdColumn || !hospitalColumn || !patientNumberColumn) return 0;
+
+  const rowCount = sheet.getLastRow() - startRow + 1;
+  const values = sheet.getRange(startRow, 1, rowCount, lastColumn).getValues();
+  let updated = 0;
+  values.forEach((row, index) => {
+    if (String(row[patientIdColumn - 1]) !== String(params.patientId)) return;
+    if (String(row[hospitalColumn - 1]) !== String(params.hospitalCode)) return;
+    if (String(row[patientNumberColumn - 1]) !== String(params.oldPatientNumber)) return;
+
+    const targetRow = startRow + index;
+    sheet.getRange(targetRow, patientNumberColumn).setValue(params.newPatientNumber);
+    if (assessmentKeyColumn) {
+      const assessmentNo = assessmentNoColumn ? String(row[assessmentNoColumn - 1] || '') : '';
+      const currentKey = String(row[assessmentKeyColumn - 1] || '');
+      const nextKey = assessmentNo
+        ? params.newPatientNumber + '-' + assessmentNo
+        : currentKey.replace(new RegExp('^' + params.oldPatientNumber + '(?=-)'), params.newPatientNumber);
+      if (nextKey !== currentKey) sheet.getRange(targetRow, assessmentKeyColumn).setValue(nextKey);
+    }
+    updated += 1;
+  });
+  return updated;
 }
 
 function doGet() {

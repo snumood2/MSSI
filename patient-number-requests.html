@@ -59,6 +59,22 @@
       el("requestMsg").textContent = message;
     };
 
+    async function invokeNumberManagement(body) {
+      const { data, error } = await sb.functions.invoke("manage-patient-number", { body });
+      if (!error) return { ok: true, ...(data || {}) };
+      let detail = null;
+      try { detail = await error.context?.json(); } catch {}
+      return { ok: false, ...(detail || {}), error: detail?.error || error.message || "처리에 실패했습니다." };
+    }
+
+    function showSyncRetry(result) {
+      el("requestMsg").className = "status-msg show error";
+      el("requestMsg").innerHTML = `${escapeHtml(result.error || "Google Sheets 동기화에 실패했습니다.")}`
+        + (result.requestId
+          ? ` <button type="button" class="btn secondary sm sync-retry-btn" data-request-id="${escapeHtml(result.requestId)}">시트 동기화 재시도</button>`
+          : "");
+    }
+
     let role = null;
 
     async function loadRequests() {
@@ -95,16 +111,18 @@
       if (!confirm(`의사에게 받은 번호 변경을 ${label}하시겠습니까?`)) return;
       const buttons = row.querySelectorAll("button");
       buttons.forEach(button => { button.disabled = true; });
-      const { error } = await sb.rpc("review_patient_number_change", {
-        p_request_id: row.dataset.id,
-        p_approve: approve,
-        p_note: row.querySelector(".request-note")?.value.trim() || null
+      const result = await invokeNumberManagement({
+        action: "review",
+        requestId: row.dataset.id,
+        approve,
+        note: row.querySelector(".request-note")?.value.trim() || null
       });
-      if (error) {
+      if (!result.ok) {
         buttons.forEach(button => { button.disabled = false; });
-        return setMsg(error.message || `${label}하지 못했습니다.`, "error");
+        if (result.databaseUpdated) return showSyncRetry(result);
+        return setMsg(result.error || `${label}하지 못했습니다.`, "error");
       }
-      setMsg(`${label} 처리했습니다.`, "ok");
+      setMsg(approve ? "DB와 Google Sheets에 변경을 반영했습니다." : "변경 요청을 반려했습니다.", "ok");
       await loadRequests();
     }
 
@@ -112,6 +130,16 @@
       const button = event.target.closest("button[data-action]");
       if (!button) return;
       review(button.closest(".request-row"), button.dataset.action === "approve");
+    });
+    el("requestMsg").addEventListener("click", async event => {
+      const button = event.target.closest(".sync-retry-btn");
+      if (!button) return;
+      button.disabled = true;
+      button.textContent = "동기화 중...";
+      const result = await invokeNumberManagement({ action: "sync", requestId: button.dataset.requestId });
+      if (!result.ok) return showSyncRetry(result);
+      setMsg("Google Sheets 동기화를 완료했습니다.", "ok");
+      await loadRequests();
     });
     el("btnRefresh").addEventListener("click", loadRequests);
     el("btnLogout").addEventListener("click", async () => {
