@@ -11,6 +11,8 @@ assert.match(index, /doctor_revoked: "signup-doctor\.html\?revoked=1"/);
 
 const login = readFileSync('./login.html', 'utf8');
 const doctorPage = readFileSync('./doctor.html', 'utf8');
+const respondentPage = readFileSync('./respondent.html', 'utf8');
+const authSession = readFileSync('./auth-session.js', 'utf8');
 const signupPatient = readFileSync('./signup-patient.html', 'utf8');
 assert.match(login, /urlRole\s*=\s*new URLSearchParams\(location\.search\)\.get\("role"\)/s);
 assert.match(login, /urlRole === "doctor"[\s\S]*selectedRole = "doctor"[\s\S]*form-doctor[\s\S]*signup-doctor\.html/);
@@ -25,11 +27,16 @@ assert.match(login, /let target = redirectMap\[prof\.role\]/);
 assert.match(login, /doctor_pending[\s\S]*signup-doctor\.html\?pending=1/);
 assert.match(login, /const \{ data, error \} = await sb\.auth\.signInWithPassword[\s\S]*sb\.auth\.setSession[\s\S]*await redirectSignedInUser\(data\.user, data\.session\.access_token\)/);
 assert.match(login, /Authorization: `Bearer \$\{accessToken\}`/);
+assert.match(login, /storeAuthSessionHandoff\(data\.session\)/);
 assert.match(login, /if \(selectedRole === "admin"\)[\s\S]*sb\.auth\.onAuthStateChange/);
-assert.match(doctorPage, /async function initializeDoctorSession\(\)[\s\S]*sb\.auth\.getSession\(\)/);
+assert.match(doctorPage, /async function initializeDoctorSession\(\)[\s\S]*getAuthSession\(sb\)/);
 assert.match(doctorPage, /Authorization: `Bearer \$\{session\.access_token\}`/);
 assert.match(doctorPage, /sb\.auth\.onAuthStateChange\(event =>[\s\S]*event === "SIGNED_OUT"/);
 assert.doesNotMatch(doctorPage, /event === "SIGNED_IN" \|\| event === "INITIAL_SESSION"/);
+assert.match(respondentPage, /const session = await getAuthSession\(sb\)/);
+assert.match(authSession, /AUTH_HANDOFF_TTL_MS = 60_000/);
+assert.match(authSession, /sessionStorage\.removeItem\(AUTH_HANDOFF_KEY\)/);
+assert.match(authSession, /sb\.auth\.setSession/);
 
 assert.match(signupPatient, /id="s_pnum"[^>]*required/);
 assert.match(signupPatient, /if \(!\/\^\\d\{8\}\$\/\.test\(patientNumber\)\) throw "의사에게 받은 번호는 8자리 숫자로 입력하세요\."/);

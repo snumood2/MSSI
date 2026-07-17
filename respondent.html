@@ -159,6 +159,7 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY, ADMIN_EMAIL } from "./config.js";
 import { SURVEY_SECTIONS } from "./questions.js";
 import { calculateScores, generateReport, getGlobalInstructions } from "./scoring.js";
 import { renderAnswerRawHTML } from "./answer-view.js";
+import { getAuthSession } from "./auth-session.js";
 
 const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -307,7 +308,7 @@ function fmtDate(str) {
 }
 
 async function checkAuth() {
-  const { data: { session } } = await sb.auth.getSession();
+  const session = await getAuthSession(sb);
   if (!session) {
     window.location.href = "login.html";
     return;

@@ -328,6 +328,7 @@
   import { SURVEY_SECTIONS } from "./questions.js";
   import { calculateScores, generateReport, getGlobalInstructions } from "./scoring.js";
   import { renderAnswerRawHTML } from "./answer-view.js";
+  import { getAuthSession } from "./auth-session.js";
 
   const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   let doctorProfile = null;
@@ -810,13 +811,7 @@
   });
 
   async function initializeDoctorSession() {
-    let session = null;
-    for (let i = 0; i < 5; i++) {
-      const { data } = await sb.auth.getSession();
-      session = data?.session || null;
-      if (session?.user) break;
-      if (i < 4) await new Promise(resolve => setTimeout(resolve, 250));
-    }
+    const session = await getAuthSession(sb);
 
     const user = session?.user;
     if (!user) {

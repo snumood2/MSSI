@@ -44,6 +44,7 @@
 <script type="module">
   import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
   import { SUPABASE_URL, SUPABASE_ANON_KEY, PATIENT_EMAIL_DOMAIN } from "./config.js";
+  import { storeAuthSessionHandoff } from "./auth-session.js";
 
   const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   const $ = id => document.getElementById(id);
@@ -86,6 +87,7 @@
         refresh_token: data.session.refresh_token
       });
       if (sessionError) throw "로그인 상태를 저장하지 못했습니다. 다시 시도하세요.";
+      storeAuthSessionHandoff(data.session);
       await new Promise(resolve => setTimeout(resolve, 200));
       window.location.href = "respondent.html";
     } catch (e) {
