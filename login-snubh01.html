@@ -43,7 +43,7 @@
 
 <script type="module">
   import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
-  import { SUPABASE_URL, SUPABASE_ANON_KEY, PATIENT_EMAIL_DOMAIN, ADMIN_EMAIL } from "./config.js";
+  import { SUPABASE_URL, SUPABASE_ANON_KEY, PATIENT_EMAIL_DOMAIN } from "./config.js";
 
   const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   const $ = id => document.getElementById(id);
@@ -78,8 +78,10 @@
       setMsg("로그인 중...", "info");
       $("btnLogin").disabled = true;
 
-      const { error } = await sb.auth.signInWithPassword({ email, password: pw });
+      const { data, error } = await sb.auth.signInWithPassword({ email, password: pw });
       if (error) throw "로그인 실패. 정보를 확인하세요.";
+      if (!data?.user) throw "로그인 정보를 확인하지 못했습니다. 다시 시도하세요.";
+      window.location.href = "respondent.html";
     } catch (e) {
       setMsg(typeof e === "string" ? e : (e.message || "오류 발생"), "error");
       $("btnLogin").disabled = false;
@@ -92,16 +94,6 @@
     });
   });
 
-  sb.auth.onAuthStateChange((event, session) => {
-    if (event !== "SIGNED_IN") return;
-    const user = session?.user;
-    if (!user) return;
-    if (user.email?.toLowerCase() === ADMIN_EMAIL) {
-      window.location.href = "admin.html";
-      return;
-    }
-    window.location.href = "respondent.html";
-  });
 </script>
 </body>
 </html>
