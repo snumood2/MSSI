@@ -23,7 +23,7 @@ assert.match(login, /admin: "admin\.html"/);
 assert.match(login, /doctor_revoked: "signup-doctor\.html\?revoked=1"/);
 assert.match(login, /let target = redirectMap\[prof\.role\]/);
 assert.match(login, /doctor_pending[\s\S]*signup-doctor\.html\?pending=1/);
-assert.match(login, /const \{ data, error \} = await sb\.auth\.signInWithPassword[\s\S]*await redirectSignedInUser\(data\.user\)/);
+assert.match(login, /const \{ data, error \} = await sb\.auth\.signInWithPassword[\s\S]*sb\.auth\.setSession[\s\S]*await redirectSignedInUser\(data\.user\)/);
 assert.match(login, /if \(selectedRole === "admin"\)[\s\S]*sb\.auth\.onAuthStateChange/);
 assert.match(doctorPage, /async function initializeDoctorSession\(\)[\s\S]*sb\.auth\.getSession\(\)/);
 assert.match(doctorPage, /sb\.auth\.onAuthStateChange\(event =>[\s\S]*event === "SIGNED_OUT"/);
@@ -39,7 +39,7 @@ assert.match(snubhLogin, /signup-patient-snubh01\.html/);
 assert.match(snubhLogin, /respondent\.html/);
 assert.doesNotMatch(snubhLogin, /form-doctor/);
 assert.doesNotMatch(snubhLogin, /form-admin/);
-assert.match(snubhLogin, /const \{ data, error \} = await sb\.auth\.signInWithPassword[\s\S]*window\.location\.href = "respondent\.html"/);
+assert.match(snubhLogin, /const \{ data, error \} = await sb\.auth\.signInWithPassword[\s\S]*sb\.auth\.setSession[\s\S]*window\.location\.href = "respondent\.html"/);
 assert.doesNotMatch(snubhLogin, /sb\.auth\.onAuthStateChange/);
 
 const snubhSignup = readFileSync('./signup-patient-snubh01.html', 'utf8');
