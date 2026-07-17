@@ -83,6 +83,7 @@
     <a href="admin.html" class="active">대시보드</a>
     <a href="admin.html#pending">승인대기</a>
     <a href="admin.html#doctors">의사관리</a>
+    <a href="patient-number-requests.html">의사에게 받은 번호 변경</a>
     <span id="userBadge" class="user-badge" style="display:none;">관리자</span>
     <button id="btnLogout" class="btn secondary sm" style="display:none;margin-left:8px;">로그아웃</button>
   </div>
@@ -149,7 +150,7 @@
             <input type="text" id="adminSearchHCode" placeholder="예: SNUBH01" autocomplete="off">
           </div>
           <div class="form-group">
-            <label>환자 번호</label>
+            <label>의사에게 받은 번호</label>
             <input type="text" id="adminSearchPNum" placeholder="예: 36496934" autocomplete="off">
           </div>
           <button id="btnAdminSearchResult" class="btn primary sm" style="min-width:72px;margin-bottom:16px;">검색</button>
@@ -607,7 +608,7 @@
     const hCode = el("adminSearchHCode").value.trim().toUpperCase();
     const pNum = el("adminSearchPNum").value.trim();
     if (!hCode || !pNum) {
-      setMsg("adminResultMsg", "병원 코드와 환자 번호를 모두 입력해주세요.", "warn");
+      setMsg("adminResultMsg", "병원 코드와 의사에게 받은 번호를 모두 입력해주세요.", "warn");
       return;
     }
     el("adminSearchHCode").value = hCode;

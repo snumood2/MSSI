@@ -1543,3 +1543,25 @@ body {
   background: var(--accent-light);
   color: var(--accent);
 }
+
+.patient-number-panel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 0 16px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 16px;
+}
+.patient-number-label { display: block; color: var(--text-sub); font-size: 12px; margin-bottom: 3px; }
+.patient-number-panel strong { font-size: 17px; letter-spacing: 0; }
+.patient-number-change-form {
+  padding: 16px;
+  margin-bottom: 16px;
+  background: var(--bg-base);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+.patient-number-change-form p { margin: 0 0 14px; color: var(--text-sub); font-size: 13px; line-height: 1.6; }
+.patient-number-change-form input { width: 100%; height: 44px; box-sizing: border-box; }
+.patient-number-actions { display: flex; justify-content: flex-end; gap: 8px; }

@@ -24,8 +24,17 @@ for (const source of [respondent, app]) {
   assert.match(source, /choice-count-\$\{options\.length\}/);
   assert.match(source, /submitSurvey\(\{ skipConfirmation: true \}\)/);
   assert.match(source, /async function submitSurvey\(\{ skipConfirmation = false \} = \{\}\)/);
-  assert.match(source, /PMS 문항을 건너뛰고 검사 완료/);
+  assert.match(source, /초경 이후이며 폐경 전인 여성/);
+  assert.match(source, /초경 전이거나 폐경 후인 여성/);
+  assert.match(source, /name="pms_applicability"/);
   assert.match(source, /aria-label="결과표\. 좌우로 밀어 전체 항목을 확인할 수 있습니다\."/);
+}
+
+for (const signupFile of ["signup-patient.html", "signup-patient-snubh01.html"]) {
+  const signup = fs.readFileSync(signupFile, "utf8");
+  assert.match(signup, /height:\s*44px;\s*min-height:\s*44px/);
+  assert.match(signup, /input\[type=month\][\s\S]*max-width:\s*none/);
+  assert.match(signup, /id="s_pnum2"/);
 }
 
 console.log("PASS mobile UX and PMS completion guards");

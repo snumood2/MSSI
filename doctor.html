@@ -119,6 +119,7 @@
     <a href="doctor.html" class="active">대시보드</a>
     <a href="doctor.html?tab=search">환자검색</a>
     <a href="doctor.html?tab=list">환자목록</a>
+    <a href="patient-number-requests.html">의사에게 받은 번호 변경</a>
     <span id="userBadge" class="user-badge" style="display:none;">의사</span>
     <button id="btnLogout" class="btn secondary sm" style="margin-left:8px;">로그아웃</button>
   </div>
@@ -169,7 +170,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
       <div id="doctorTabSearch">
         <div class="form-group">
-          <label>환자 번호</label>
+          <label>의사에게 받은 번호</label>
           <div style="display:flex; gap:10px;">
             <input type="text" id="searchPNum" placeholder="예: 12345" style="margin:0;">
             <button id="btnSearchPatient" class="btn primary" style="width:100px; margin:0;">검색</button>
@@ -430,7 +431,7 @@ document.addEventListener('DOMContentLoaded', function() {
   async function searchPatient() {
     const requested = el("searchPNum").value.trim();
     const parsed = requested.match(/^(\d{8})(?:-(\d+))?$/);
-    if (!parsed) return alert("8자리 환자번호 또는 환자번호-회차를 입력하세요.");
+    if (!parsed) return alert("8자리 의사에게 받은 번호 또는 번호-회차를 입력하세요.");
     const pNum = parsed[1];
     const requestedAssessment = parsed[2] ? Number(parsed[2]) : null;
     setMsg("doctorSearchMsg", "검색 중...", "info");

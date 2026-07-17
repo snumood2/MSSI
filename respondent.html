@@ -54,6 +54,33 @@
 
     <div class="card">
       <h3 style="font-size:16px; font-weight:800; margin-bottom:16px;">설문 현황</h3>
+      <div class="patient-number-panel">
+        <div>
+          <span class="patient-number-label">의사에게 받은 번호</span>
+          <strong id="currentPatientNumber"></strong>
+        </div>
+        <button id="btnOpenPatientNumberChange" class="btn secondary sm" type="button">번호 수정</button>
+      </div>
+      <div id="patientNumberChangeForm" class="patient-number-change-form" hidden>
+        <p>번호를 잘못 입력했다면 수정할 수 있습니다. 완료된 결과가 있으면 담당자의 승인 후 모든 회차에 반영됩니다.</p>
+        <div class="form-group">
+          <label for="newPatientNumber">새 번호</label>
+          <input id="newPatientNumber" type="text" inputmode="numeric" maxlength="8" autocomplete="off" placeholder="8자리 숫자">
+        </div>
+        <div class="form-group">
+          <label for="newPatientNumberConfirm">새 번호 확인</label>
+          <input id="newPatientNumberConfirm" type="text" inputmode="numeric" maxlength="8" autocomplete="off" placeholder="8자리 숫자 다시 입력">
+        </div>
+        <div class="form-group">
+          <label for="patientNumberCurrentPassword">현재 비밀번호</label>
+          <input id="patientNumberCurrentPassword" type="password" autocomplete="current-password">
+        </div>
+        <div id="patientNumberChangeMsg" class="status-msg"></div>
+        <div class="patient-number-actions">
+          <button id="btnCancelPatientNumberChange" class="btn secondary sm" type="button">취소</button>
+          <button id="btnSubmitPatientNumberChange" class="btn primary sm" type="button">변경 요청</button>
+        </div>
+      </div>
       <div id="patientStatusArea"></div>
       <div style="display:flex; flex-direction:column; gap:10px; margin-top:16px;">
         <button id="btnStartSurvey" class="btn primary">설문 시작하기</button>
@@ -330,8 +357,49 @@ async function initPatient() {
   const p = state.profile;
   el("patientHeroName").textContent = `${p?.username || "환자"}님`;
   el("patientHeroSub").textContent = ``;
+  el("currentPatientNumber").textContent = p?.patient_number || "-";
   await refreshPatientStatus();
 }
+
+el("btnOpenPatientNumberChange")?.addEventListener("click", () => {
+  el("patientNumberChangeForm").hidden = false;
+  el("newPatientNumber").focus();
+});
+
+el("btnCancelPatientNumberChange")?.addEventListener("click", () => {
+  el("patientNumberChangeForm").hidden = true;
+  clearMsg("patientNumberChangeMsg");
+});
+
+el("btnSubmitPatientNumberChange")?.addEventListener("click", async () => {
+  const next = el("newPatientNumber").value.trim();
+  const confirmNumber = el("newPatientNumberConfirm").value.trim();
+  const password = el("patientNumberCurrentPassword").value;
+  if (!/^\d{8}$/.test(next)) return setMsg("patientNumberChangeMsg", "새 번호를 8자리 숫자로 입력하세요.", "error");
+  if (next !== confirmNumber) return setMsg("patientNumberChangeMsg", "새 번호가 서로 일치하지 않습니다.", "error");
+  if (!password) return setMsg("patientNumberChangeMsg", "현재 비밀번호를 입력하세요.", "error");
+
+  const button = el("btnSubmitPatientNumberChange");
+  button.disabled = true;
+  setMsg("patientNumberChangeMsg", "본인 확인 중...", "info");
+  const { error: authError } = await sb.auth.signInWithPassword({ email: state.user.email, password });
+  if (authError) {
+    button.disabled = false;
+    return setMsg("patientNumberChangeMsg", "현재 비밀번호가 올바르지 않습니다.", "error");
+  }
+
+  const { data, error } = await sb.rpc("request_patient_number_change", { p_new_patient_number: next });
+  button.disabled = false;
+  el("patientNumberCurrentPassword").value = "";
+  if (error) return setMsg("patientNumberChangeMsg", error.message || "번호를 변경할 수 없습니다.", "error");
+  if (data?.status === "applied") {
+    state.profile.patient_number = next;
+    el("currentPatientNumber").textContent = next;
+    setMsg("patientNumberChangeMsg", "번호가 변경되었습니다.", "ok");
+  } else {
+    setMsg("patientNumberChangeMsg", "완료된 결과가 있어 담당자에게 변경 승인을 요청했습니다.", "ok");
+  }
+});
 
 async function refreshPatientStatus() {
   await refreshHospitalAccess();
@@ -481,9 +549,11 @@ function triggerAutoSave() {
 window.saveAns    = (k, v)   => { state.answers[k] = Number(v); clearHighlight(k); triggerAutoSave(); };
 window.clearAns   = (k)      => { delete state.answers[k]; triggerAutoSave(); };
 window.saveChk    = (k, v)   => { state.answers[k] = v ? 1 : 0; clearHighlight(k); triggerAutoSave(); };
-window.savePmsSkip = (v)     => {
-  const shouldComplete = Number(v) === 1 && state.currentSectionIdx === SURVEY_SECTIONS.length - 1;
-  state.answers["pms_skip"] = Number(v);
+window.savePmsApplicability = (value) => {
+  const shouldSkip = value !== "pre_menopause";
+  const shouldComplete = shouldSkip && state.currentSectionIdx === SURVEY_SECTIONS.length - 1;
+  state.answers.pms_applicability = value;
+  state.answers.pms_skip = shouldSkip ? 1 : 0;
   triggerAutoSave();
   renderSurvey();
   if (shouldComplete) void submitSurvey({ skipConfirmation: true });
@@ -502,8 +572,8 @@ function getUnanswered() {
   if (!section) return [];
 
   const isPmsSection = section.title.includes("PMS") || section.title.includes("생리주기");
-  if (isPmsSection && state.answers["pms_skip"] === 1)  return [];
-  if (isPmsSection && state.answers["pms_skip"] === undefined) return ["pms_skip"];
+  if (isPmsSection && state.answers.pms_applicability && state.answers.pms_skip === 1) return [];
+  if (isPmsSection && !state.answers.pms_applicability) return ["pms_applicability"];
 
   const missing = [];
   for (const q of section.questions) {
@@ -590,20 +660,28 @@ function renderSurvey() {
 
   const isPmsSection = section.title.includes("PMS") || section.title.includes("생리주기");
   if (isPmsSection) {
+    if (!state.answers.pms_applicability && state.answers.pms_skip === 0) {
+      state.answers.pms_applicability = "pre_menopause";
+    } else if (!state.answers.pms_applicability && state.answers.pms_skip === 1) {
+      delete state.answers.pms_skip;
+    }
     const banner = document.createElement("div");
     banner.className = "pms-skip-banner";
     banner.innerHTML = `
-      <div class="pms-skip-title">📋 사전 확인: (여성의 경우) 폐경이 되었거나, 생리를 시작하지 않으셨나요? 혹은 남성이신가요?</div>
+      <div class="pms-skip-title">PMS 문항 적용을 위해 해당하는 항목을 선택해 주세요.</div>
       <div class="opts-list">
-        <label class="opt-list-item ${state.answers["pms_skip"]==1?'checked':''}">
-          <input type="radio" name="pms_skip" value="1" ${state.answers["pms_skip"]==1?"checked":""} onchange="window.savePmsSkip(1)"> 예 - PMS 문항을 건너뛰고 검사 완료
+        <label class="opt-list-item ${state.answers.pms_applicability==='pre_menopause'?'checked':''}">
+          <input type="radio" name="pms_applicability" value="pre_menopause" ${state.answers.pms_applicability==='pre_menopause'?"checked":""} onchange="window.savePmsApplicability(this.value)"> 초경 이후이며 폐경 전인 여성
         </label>
-        <label class="opt-list-item ${state.answers["pms_skip"]==0?'checked':''}">
-          <input type="radio" name="pms_skip" value="0" ${state.answers["pms_skip"]==0?"checked":""} onchange="window.savePmsSkip(0)"> 아니오 - PMS 문항에 응답
+        <label class="opt-list-item ${state.answers.pms_applicability==='not_menstruating'?'checked':''}">
+          <input type="radio" name="pms_applicability" value="not_menstruating" ${state.answers.pms_applicability==='not_menstruating'?"checked":""} onchange="window.savePmsApplicability(this.value)"> 초경 전이거나 폐경 후인 여성
+        </label>
+        <label class="opt-list-item ${state.answers.pms_applicability==='male'?'checked':''}">
+          <input type="radio" name="pms_applicability" value="male" ${state.answers.pms_applicability==='male'?"checked":""} onchange="window.savePmsApplicability(this.value)"> 남성
         </label>
       </div>`;
     container.appendChild(banner);
-    if (state.answers["pms_skip"] == 1) {
+    if (state.answers.pms_applicability && state.answers.pms_skip === 1) {
       banner.insertAdjacentHTML("beforeend", '<div class="pms-skip-complete">PMS 문항을 건너뛰고 결과를 생성하고 있습니다. 잠시만 기다려 주세요.</div>');
       if (nextBtn) {
         nextBtn.disabled = true;
@@ -611,7 +689,7 @@ function renderSurvey() {
       }
       return;
     }
-    if (state.answers["pms_skip"] === undefined) return;
+    if (!state.answers.pms_applicability) return;
   }
 
   section.questions.forEach((q, qIdx) => {

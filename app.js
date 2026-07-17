@@ -736,9 +736,11 @@ function triggerAutoSave() {
 window.saveAns    = (k, v)   => { state.answers[k] = Number(v); clearHighlight(k); triggerAutoSave(); };
 window.clearAns   = (k)      => { delete state.answers[k]; triggerAutoSave(); };
 window.saveChk    = (k, v)   => { state.answers[k] = v ? 1 : 0; clearHighlight(k); triggerAutoSave(); };
-window.savePmsSkip = (v)     => {
-  const shouldComplete = Number(v) === 1 && state.currentSectionIdx === SURVEY_SECTIONS.length - 1;
-  state.answers["pms_skip"] = Number(v);
+window.savePmsApplicability = (value) => {
+  const shouldSkip = value !== "pre_menopause";
+  const shouldComplete = shouldSkip && state.currentSectionIdx === SURVEY_SECTIONS.length - 1;
+  state.answers.pms_applicability = value;
+  state.answers.pms_skip = shouldSkip ? 1 : 0;
   triggerAutoSave();
   renderSurvey();
   if (shouldComplete) void submitSurvey({ skipConfirmation: true });
@@ -757,8 +759,8 @@ function getUnanswered() {
   if (!section) return [];
 
   const isPmsSection = section.title.includes("PMS") || section.title.includes("생리주기");
-  if (isPmsSection && state.answers["pms_skip"] === 1)  return [];
-  if (isPmsSection && state.answers["pms_skip"] === undefined) return ["pms_skip"];
+  if (isPmsSection && state.answers.pms_applicability && state.answers.pms_skip === 1) return [];
+  if (isPmsSection && !state.answers.pms_applicability) return ["pms_applicability"];
 
   const missing = [];
   for (const q of section.questions) {
@@ -851,20 +853,28 @@ function renderSurvey() {
 
   const isPmsSection = section.title.includes("PMS") || section.title.includes("생리주기");
   if (isPmsSection) {
+    if (!state.answers.pms_applicability && state.answers.pms_skip === 0) {
+      state.answers.pms_applicability = "pre_menopause";
+    } else if (!state.answers.pms_applicability && state.answers.pms_skip === 1) {
+      delete state.answers.pms_skip;
+    }
     const banner = document.createElement("div");
     banner.className = "pms-skip-banner";
     banner.innerHTML = `
-      <div class="pms-skip-title">📋 사전 확인: (여성의 경우) 폐경이 되었거나, 생리를 시작하지 않으셨나요? 혹은 남성이신가요?</div>
+      <div class="pms-skip-title">PMS 문항 적용을 위해 해당하는 항목을 선택해 주세요.</div>
       <div class="opts-list">
-        <label class="opt-list-item ${state.answers["pms_skip"]==1?'checked':''}">
-          <input type="radio" name="pms_skip" value="1" ${state.answers["pms_skip"]==1?"checked":""} onchange="window.savePmsSkip(1)"> 예 - PMS 문항을 건너뛰고 검사 완료
+        <label class="opt-list-item ${state.answers.pms_applicability==='pre_menopause'?'checked':''}">
+          <input type="radio" name="pms_applicability" value="pre_menopause" ${state.answers.pms_applicability==='pre_menopause'?"checked":""} onchange="window.savePmsApplicability(this.value)"> 초경 이후이며 폐경 전인 여성
         </label>
-        <label class="opt-list-item ${state.answers["pms_skip"]==0?'checked':''}">
-          <input type="radio" name="pms_skip" value="0" ${state.answers["pms_skip"]==0?"checked":""} onchange="window.savePmsSkip(0)"> 아니오 - PMS 문항에 응답
+        <label class="opt-list-item ${state.answers.pms_applicability==='not_menstruating'?'checked':''}">
+          <input type="radio" name="pms_applicability" value="not_menstruating" ${state.answers.pms_applicability==='not_menstruating'?"checked":""} onchange="window.savePmsApplicability(this.value)"> 초경 전이거나 폐경 후인 여성
+        </label>
+        <label class="opt-list-item ${state.answers.pms_applicability==='male'?'checked':''}">
+          <input type="radio" name="pms_applicability" value="male" ${state.answers.pms_applicability==='male'?"checked":""} onchange="window.savePmsApplicability(this.value)"> 남성
         </label>
       </div>`;
     container.appendChild(banner);
-    if (state.answers["pms_skip"] == 1) {
+    if (state.answers.pms_applicability && state.answers.pms_skip === 1) {
       banner.insertAdjacentHTML("beforeend", '<div class="pms-skip-complete">PMS 문항을 건너뛰고 결과를 생성하고 있습니다. 잠시만 기다려 주세요.</div>');
       if (nextBtn) {
         nextBtn.disabled = true;
@@ -872,7 +882,7 @@ function renderSurvey() {
       }
       return;
     }
-    if (state.answers["pms_skip"] === undefined) return;
+    if (!state.answers.pms_applicability) return;
   }
 
   section.questions.forEach((q, qIdx) => {

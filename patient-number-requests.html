@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>의사에게 받은 번호 변경 요청 - 기분장애 임상평가 설문</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .request-toolbar { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:20px; }
+    .request-toolbar h2 { margin:0; font-size:22px; }
+    .request-list { border-top:2px solid var(--text-main); }
+    .request-row { display:grid; grid-template-columns:minmax(180px,1.2fr) minmax(180px,1fr) auto; gap:18px; align-items:center; padding:18px 0; border-bottom:1px solid var(--border); }
+    .request-meta { color:var(--text-sub); font-size:13px; line-height:1.6; }
+    .request-number { font-size:15px; font-weight:700; }
+    .request-arrow { color:var(--text-sub); padding:0 6px; }
+    .request-actions { display:flex; gap:8px; }
+    .request-note { width:100%; min-height:42px; margin-top:8px; box-sizing:border-box; }
+    @media (max-width:720px) {
+      .request-row { grid-template-columns:1fr; gap:10px; }
+      .request-actions .btn { flex:1; min-height:44px; }
+    }
+  </style>
+</head>
+<body>
+  <header id="mainHeader">
+    <h1>기분장애 임상평가 설문</h1>
+    <div class="header-nav">
+      <a id="backLink" href="doctor.html">대시보드</a>
+      <a class="active" href="patient-number-requests.html">의사에게 받은 번호 변경</a>
+      <button id="btnLogout" class="btn secondary sm">로그아웃</button>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="card">
+      <div class="request-toolbar">
+        <div>
+          <h2>의사에게 받은 번호 변경 요청</h2>
+          <p class="text-sub" style="margin:5px 0 0;">완료된 검사 결과가 있는 환자의 번호 변경을 검토합니다.</p>
+        </div>
+        <button id="btnRefresh" class="btn secondary sm" type="button">새로고침</button>
+      </div>
+      <div id="requestMsg" class="status-msg"></div>
+      <div id="requestList" class="request-list"><div class="text-sub" style="padding:24px 0;text-align:center;">불러오는 중...</div></div>
+    </section>
+  </main>
+
+  <script type="module">
+    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
+    import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
+
+    const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const el = id => document.getElementById(id);
+    const escapeHtml = value => String(value ?? "").replace(/[&<>"']/g, char => ({
+      "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;"
+    })[char]);
+    const setMsg = (message, type = "info") => {
+      el("requestMsg").className = `status-msg show ${type}`;
+      el("requestMsg").textContent = message;
+    };
+
+    let role = null;
+
+    async function loadRequests() {
+      el("requestList").innerHTML = '<div class="text-sub" style="padding:24px 0;text-align:center;">불러오는 중...</div>';
+      const { data, error } = await sb.rpc("list_patient_number_change_requests");
+      if (error) {
+        el("requestList").innerHTML = "";
+        return setMsg(error.message || "요청을 불러오지 못했습니다.", "error");
+      }
+      el("requestMsg").className = "status-msg";
+      if (!data?.length) {
+        el("requestList").innerHTML = '<div class="text-sub" style="padding:28px 0;text-align:center;">대기 중인 변경 요청이 없습니다.</div>';
+        return;
+      }
+      el("requestList").innerHTML = data.map(item => `
+        <div class="request-row" data-id="${escapeHtml(item.request_id)}">
+          <div>
+            <strong>${escapeHtml(item.username || "환자")}</strong>
+            <div class="request-meta">병원코드 ${escapeHtml(item.hospital_code)} · 생년월 ${escapeHtml(item.dob || "-")}<br>${escapeHtml(new Date(item.requested_at).toLocaleString("ko-KR"))}</div>
+          </div>
+          <div>
+            <div class="request-number">${escapeHtml(item.old_patient_number)}<span class="request-arrow">→</span>${escapeHtml(item.new_patient_number)}</div>
+            <input class="request-note" type="text" maxlength="500" placeholder="검토 메모 (선택)">
+          </div>
+          <div class="request-actions">
+            <button class="btn secondary sm" data-action="reject" type="button">반려</button>
+            <button class="btn primary sm" data-action="approve" type="button">승인</button>
+          </div>
+        </div>`).join("");
+    }
+
+    async function review(row, approve) {
+      const label = approve ? "승인" : "반려";
+      if (!confirm(`의사에게 받은 번호 변경을 ${label}하시겠습니까?`)) return;
+      const buttons = row.querySelectorAll("button");
+      buttons.forEach(button => { button.disabled = true; });
+      const { error } = await sb.rpc("review_patient_number_change", {
+        p_request_id: row.dataset.id,
+        p_approve: approve,
+        p_note: row.querySelector(".request-note")?.value.trim() || null
+      });
+      if (error) {
+        buttons.forEach(button => { button.disabled = false; });
+        return setMsg(error.message || `${label}하지 못했습니다.`, "error");
+      }
+      setMsg(`${label} 처리했습니다.`, "ok");
+      await loadRequests();
+    }
+
+    el("requestList").addEventListener("click", event => {
+      const button = event.target.closest("button[data-action]");
+      if (!button) return;
+      review(button.closest(".request-row"), button.dataset.action === "approve");
+    });
+    el("btnRefresh").addEventListener("click", loadRequests);
+    el("btnLogout").addEventListener("click", async () => {
+      await sb.auth.signOut();
+      window.location.href = "login.html";
+    });
+
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) {
+      window.location.href = "login.html";
+    } else {
+      const { data: profile } = await sb.from("profiles").select("role").eq("id", session.user.id).maybeSingle();
+      role = profile?.role;
+      if (!['doctor', 'admin'].includes(role)) {
+        window.location.href = "login.html";
+      } else {
+        el("backLink").href = role === "admin" ? "admin.html" : "doctor.html";
+        await loadRequests();
+      }
+    }
+  </script>
+</body>
+</html>

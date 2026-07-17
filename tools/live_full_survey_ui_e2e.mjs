@@ -35,7 +35,7 @@ function variedIndex(name, length) {
 }
 
 function radioChoice(name, values) {
-  if (name === "pms_skip") return skipPms ? "1" : "0";
+  if (name === "pms_applicability") return skipPms ? "male" : "pre_menopause";
   if (name === "g1a" || name === "g2" || name === "g5") return "1";
   if (name === "g3a") return "0";
   if (/^ba\d+$/.test(name)) {
@@ -53,7 +53,7 @@ function radioChoice(name, values) {
 
 async function answerCurrentSection(page) {
   for (let pass = 0; pass < 1000; pass++) {
-    const pms = page.locator(`input[name="pms_skip"][value="${skipPms ? "1" : "0"}"]`);
+    const pms = page.locator(`input[name="pms_applicability"][value="${skipPms ? "male" : "pre_menopause"}"]`);
     if (await pms.count() && !(await pms.isChecked())) {
       await pms.dispatchEvent("click");
       await page.waitForTimeout(40);
@@ -156,6 +156,7 @@ try {
   await page.fill("#s_pw2", password);
   await page.fill("#s_dob", "1990-06");
   await page.fill("#s_pnum", patientNumber);
+  await page.fill("#s_pnum2", patientNumber);
   await page.click("#btnSignup");
   await page.waitForURL(/(login-snubh01|respondent)\.html/, { timeout: 30000 });
   check("snubh_signup_ui", true, { username, patientNumber, hospitalCode });
@@ -249,6 +250,7 @@ try {
   check("supabase_completed_response", response.ok && row?.completed === true && row?.status === "completed", { http: response.status, responseId: row?.id });
   check("all_answer_keys_persisted", Object.keys(row?.answers || {}).length > 300, { answerKeys: Object.keys(row?.answers || {}).length });
   check("pms_completion_path", Number(row?.answers?.pms_skip) === (skipPms ? 1 : 0), { skipPms, persisted: row?.answers?.pms_skip });
+  check("pms_applicability_persisted", row?.answers?.pms_applicability === (skipPms ? "male" : "pre_menopause"), { persisted: row?.answers?.pms_applicability });
   check("ocd_branch_scored", row?.scores?.DIAG?.ocdObsession === "O" && row?.scores?.DIAG?.ocdCompulsion === "X", row?.scores?.DIAG || {});
   check("bapq_varied_scored", Number.isFinite(row?.scores?.BAPQ?.total) && new Set([row?.scores?.BAPQ?.aloof, row?.scores?.BAPQ?.pragma, row?.scores?.BAPQ?.rigid]).size > 1, row?.scores?.BAPQ || {});
   const erValues = Object.entries(row?.answers || {}).filter(([key]) => /^er\d+$/.test(key)).map(([, value]) => Number(value));

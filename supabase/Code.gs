@@ -100,6 +100,7 @@ function repairDb2SheetSchema_(sheet) {
 
   const additions = {
     f4: '6. 사회공포증 선별 / SOC3. 이런 사회적 상황이 두려워서 피하거나 그렇지 못할 경우 그 상황 때문에 고통스럽습니까?',
+    pms_applicability: 'PMS 문항 적용 구분 (초경 이후 폐경 전 여성 / 초경 전 또는 폐경 후 여성 / 남성)',
     assessment_no: '검사회차',
     assessment_key: '환자번호-회차',
     migration_batch_id: '과거자료 이관 배치',

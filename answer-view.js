@@ -93,9 +93,18 @@ function renderQuestionRows(section, question, answers) {
 
 export function renderAnswerRawHTML(answers = {}) {
   const sections = SURVEY_SECTIONS.map(section => {
-    const rows = (section.questions || [])
+    const rows = [];
+    if (section.id === "pms") {
+      const labels = {
+        pre_menopause: "초경 이후이며 폐경 전인 여성",
+        not_menstruating: "초경 전이거나 폐경 후인 여성",
+        male: "남성"
+      };
+      pushRow(rows, "PMS 문항 적용 구분", labels[answers.pms_applicability] || "미응답");
+    }
+    rows.push(...(section.questions || [])
       .filter(question => question.type !== "info")
-      .flatMap(question => renderQuestionRows(section, question, answers));
+      .flatMap(question => renderQuestionRows(section, question, answers)));
     if (!rows.length) return "";
     return `
       <details class="raw-answer-section">
