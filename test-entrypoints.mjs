@@ -36,6 +36,8 @@ assert.doesNotMatch(doctorPage, /sb\.auth\.onAuthStateChange/);
 assert.match(respondentPage, /const session = await getAuthSession\(sb\)/);
 assert.match(authSession, /AUTH_HANDOFF_TTL_MS = 60_000/);
 assert.match(authSession, /sessionStorage\.removeItem\(AUTH_HANDOFF_KEY\)/);
+assert.match(authSession, /AUTH_WINDOW_PREFIX = "MSSI_AUTH:"/);
+assert.match(authSession, /window\.name = ""/);
 assert.match(authSession, /sb\.auth\.setSession/);
 assert.match(authSession, /sb\.auth\.refreshSession/);
 

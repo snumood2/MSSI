@@ -1,21 +1,28 @@
 const AUTH_HANDOFF_KEY = "mssi_auth_handoff";
+const AUTH_WINDOW_PREFIX = "MSSI_AUTH:";
 const AUTH_HANDOFF_TTL_MS = 60_000;
 
 export function storeAuthSessionHandoff(session) {
   if (!session?.access_token || !session?.refresh_token) return;
-  sessionStorage.setItem(AUTH_HANDOFF_KEY, JSON.stringify({
+  const payload = JSON.stringify({
     access_token: session.access_token,
     refresh_token: session.refresh_token,
     created_at: Date.now()
-  }));
+  });
+  sessionStorage.setItem(AUTH_HANDOFF_KEY, payload);
+  window.name = `${AUTH_WINDOW_PREFIX}${payload}`;
 }
 
 export async function getAuthSession(sb) {
   const { data } = await sb.auth.getSession();
   if (data?.session?.user) return data.session;
 
-  const raw = sessionStorage.getItem(AUTH_HANDOFF_KEY);
+  let raw = sessionStorage.getItem(AUTH_HANDOFF_KEY);
   sessionStorage.removeItem(AUTH_HANDOFF_KEY);
+  if (!raw && window.name.startsWith(AUTH_WINDOW_PREFIX)) {
+    raw = window.name.slice(AUTH_WINDOW_PREFIX.length);
+  }
+  if (window.name.startsWith(AUTH_WINDOW_PREFIX)) window.name = "";
   if (!raw) return null;
 
   try {
