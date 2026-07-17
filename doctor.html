@@ -815,6 +815,7 @@
 
     const user = session?.user;
     if (!user) {
+      console.warn("doctor-auth:no-session");
       window.location.href = "login.html?role=doctor";
       return;
     }
@@ -839,6 +840,7 @@
     }
 
     if (!prof) {
+      console.warn("doctor-auth:no-profile");
       window.location.href = "login.html?role=doctor";
       return;
     }
@@ -856,7 +858,8 @@
   sb.auth.onAuthStateChange(event => {
     if (event === "SIGNED_OUT") window.location.href = "login.html?role=doctor";
   });
-  initializeDoctorSession().catch(() => {
+  initializeDoctorSession().catch(error => {
+    console.warn("doctor-auth:initialization-error", error?.message || "unknown");
     window.location.href = "login.html?role=doctor";
   });
 </script>
