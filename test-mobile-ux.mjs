@@ -4,12 +4,20 @@ import fs from "node:fs";
 const styles = fs.readFileSync("styles.css", "utf8");
 const respondent = fs.readFileSync("respondent.html", "utf8");
 const app = fs.readFileSync("app.js", "utf8");
+const doctor = fs.readFileSync("doctor.html", "utf8");
+const admin = fs.readFileSync("admin.html", "utf8");
 
 assert.match(styles, /choice-count-5[\s\S]*nth-child\(4\)[\s\S]*nth-child\(5\)/);
 assert.match(styles, /좌우로 밀어 전체 결과를 확인하세요/);
 assert.match(styles, /-webkit-text-size-adjust:\s*100%/);
 assert.match(styles, /\.save-quit-btn[\s\S]*min-height:\s*50px/);
 assert.match(respondent, /class="btn save-quit-btn"/);
+
+for (const source of [respondent, doctor, admin]) {
+  assert.match(source, /<details open style="margin-bottom:24px;">/);
+  assert.match(source, /📋 결과 해석 안내/);
+  assert.doesNotMatch(source, /결과 해석 안내 \(클릭하여 펼치기\)/);
+}
 
 for (const source of [respondent, app]) {
   assert.match(source, /choice-grid/);
