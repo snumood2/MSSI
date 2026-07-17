@@ -23,9 +23,11 @@ assert.match(login, /admin: "admin\.html"/);
 assert.match(login, /doctor_revoked: "signup-doctor\.html\?revoked=1"/);
 assert.match(login, /let target = redirectMap\[prof\.role\]/);
 assert.match(login, /doctor_pending[\s\S]*signup-doctor\.html\?pending=1/);
-assert.match(login, /const \{ data, error \} = await sb\.auth\.signInWithPassword[\s\S]*sb\.auth\.setSession[\s\S]*await redirectSignedInUser\(data\.user\)/);
+assert.match(login, /const \{ data, error \} = await sb\.auth\.signInWithPassword[\s\S]*sb\.auth\.setSession[\s\S]*await redirectSignedInUser\(data\.user, data\.session\.access_token\)/);
+assert.match(login, /Authorization: `Bearer \$\{accessToken\}`/);
 assert.match(login, /if \(selectedRole === "admin"\)[\s\S]*sb\.auth\.onAuthStateChange/);
 assert.match(doctorPage, /async function initializeDoctorSession\(\)[\s\S]*sb\.auth\.getSession\(\)/);
+assert.match(doctorPage, /Authorization: `Bearer \$\{session\.access_token\}`/);
 assert.match(doctorPage, /sb\.auth\.onAuthStateChange\(event =>[\s\S]*event === "SIGNED_OUT"/);
 assert.doesNotMatch(doctorPage, /event === "SIGNED_IN" \|\| event === "INITIAL_SESSION"/);
 

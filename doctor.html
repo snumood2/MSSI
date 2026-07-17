@@ -830,11 +830,16 @@
 
     let prof = null;
     for (let i = 0; i < 5; i++) {
-      const { data, error } = await sb.from("profiles")
-        .select("id, role, email, username, doctor_name, hospital_name, hospital_code")
-        .eq("id", user.id).maybeSingle();
-      if (data) { prof = data; break; }
-      if (error) console.warn("프로필 조회 오류:", error.message);
+      const endpoint = new URL(`${SUPABASE_URL}/rest/v1/profiles`);
+      endpoint.searchParams.set("select", "id,role,email,username,doctor_name,hospital_name,hospital_code");
+      endpoint.searchParams.set("id", `eq.${user.id}`);
+      const response = await fetch(endpoint, {
+        headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${session.access_token}` }
+      });
+      if (response.ok) {
+        const rows = await response.json();
+        if (rows[0]) { prof = rows[0]; break; }
+      }
       if (i < 4) await new Promise(resolve => setTimeout(resolve, 500));
     }
 

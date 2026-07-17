@@ -82,11 +82,19 @@
     doctor_revoked: "signup-doctor.html?revoked=1"
   };
 
-  async function redirectSignedInUser(user) {
+  async function redirectSignedInUser(user, accessToken) {
     let prof = null;
     for (let i = 0; i < 5; i++) {
-      const { data } = await sb.from("profiles").select("role").eq("id", user.id).maybeSingle();
-      if (data) { prof = data; break; }
+      const endpoint = new URL(`${SUPABASE_URL}/rest/v1/profiles`);
+      endpoint.searchParams.set("select", "role");
+      endpoint.searchParams.set("id", `eq.${user.id}`);
+      const response = await fetch(endpoint, {
+        headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${accessToken}` }
+      });
+      if (response.ok) {
+        const rows = await response.json();
+        if (rows[0]) { prof = rows[0]; break; }
+      }
       if (i < 4) await new Promise(resolve => setTimeout(resolve, 500));
     }
     if (!prof) throw "계정 정보를 확인하지 못했습니다. 잠시 후 다시 시도하세요.";
@@ -167,7 +175,7 @@
       });
       if (sessionError) throw "로그인 상태를 저장하지 못했습니다. 다시 시도하세요.";
       await new Promise(resolve => setTimeout(resolve, 200));
-      await redirectSignedInUser(data.user);
+      await redirectSignedInUser(data.user, data.session.access_token);
     } catch (e) {
       setMsg(typeof e === "string" ? e : (e.message || "오류 발생"), "error");
       $("btnLogin").disabled = false;
@@ -184,7 +192,7 @@
     sb.auth.onAuthStateChange((event, session) => {
       if (event !== "SIGNED_IN" || !session?.user) return;
       setTimeout(() => {
-        redirectSignedInUser(session.user).catch(error => {
+        redirectSignedInUser(session.user, session.access_token).catch(error => {
           setMsg(typeof error === "string" ? error : (error.message || "로그인 오류가 발생했습니다."), "error");
           $("btnLogin").disabled = false;
         });
