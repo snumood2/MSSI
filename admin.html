@@ -261,9 +261,24 @@
     return query.get("error_description") || hash.get("error_description") || "";
   }
 
-  async function checkSession() {
-    const { data: { session }, error } = await sb.auth.getSession();
-    if (error) { console.error("Session error:", error); return null; }
+  let authCheckPromise = null;
+
+  async function checkSession(incomingSession = null) {
+    if (authCheckPromise) return authCheckPromise;
+    authCheckPromise = (async () => {
+    let session = incomingSession;
+    if (!session) {
+      const { data, error } = await sb.auth.getSession();
+      if (error) { console.error("Session error:", error); return null; }
+      session = data.session;
+    }
+
+    if (session) {
+      const { data: userData, error: userError } = await sb.auth.getUser();
+      if (!userError && userData?.user) {
+        session = { ...session, user: userData.user };
+      }
+    }
     const validation = await validateAdminSession(sb, session);
     if (validation.ok) {
       state.user = validation.user;
@@ -286,7 +301,19 @@
     if (oauthError) setMsg("authMsg", "Google 로그인 실패: " + oauthError, "error");
     else if (session) setMsg("authMsg", validation.reason, "error");
     return null;
+    })();
+
+    try {
+      return await authCheckPromise;
+    } finally {
+      authCheckPromise = null;
+    }
   }
+
+  sb.auth.onAuthStateChange((event, session) => {
+    if (!["INITIAL_SESSION", "SIGNED_IN", "TOKEN_REFRESHED"].includes(event)) return;
+    window.setTimeout(() => checkSession(session), 0);
+  });
 
   el("btnGoogleLogin").addEventListener("click", async () => {
     clearMsg("authMsg");
@@ -714,13 +741,6 @@
     crypto.getRandomValues(bytes);
     return Array.from(bytes, b => chars[b % chars.length]).join("");
   }
-
-  el("a_pw").addEventListener("keydown", (e) => {
-    if (e.key === "Enter") el("btnLogin").click();
-  });
-  el("a_email").addEventListener("keydown", (e) => {
-    if (e.key === "Enter") el("btnLogin").click();
-  });
 
   checkSession();
 </script>

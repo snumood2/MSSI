@@ -18,7 +18,11 @@ assert.match(helper, /providers\.includes\("google"\)/);
 
 assert.match(admin, /id="btnGoogleLogin"/);
 assert.match(admin, /validateAdminSession/);
+assert.match(admin, /sb\.auth\.getUser\(\)/);
+assert.match(admin, /sb\.auth\.onAuthStateChange/);
+assert.match(admin, /"INITIAL_SESSION", "SIGNED_IN", "TOKEN_REFRESHED"/);
 assert.doesNotMatch(admin, /id="a_pw"|signInWithPassword/);
+assert.doesNotMatch(admin, /el\("a_(?:pw|email)"\)/);
 assert.match(login, /selectedRole === "admin"[\s\S]*signInAdminWithGoogle/);
 assert.doesNotMatch(login, /id="a_pw"/);
 assert.doesNotMatch(index, /user\.email\?\.toLowerCase\(\) === ADMIN_EMAIL/);
