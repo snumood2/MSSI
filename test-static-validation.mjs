@@ -72,7 +72,7 @@ assert.match(submitFunction, /MSSI_GOOGLE_WEBHOOK_URL/);
 assert.match(submitFunction, /status: "completed"/);
 assert.match(submitFunction, /Sheet synchronization is temporarily unavailable/);
 
-const assessmentMigration = readFileSync('./supabase/migrations/20260717_add_assessment_sequence.sql', 'utf8');
+const assessmentMigration = readFileSync('./supabase/migrations/20260717120000_add_assessment_sequence.sql', 'utf8');
 assert.match(assessmentMigration, /ADD COLUMN IF NOT EXISTS assessment_no integer/);
 assert.match(assessmentMigration, /ADD COLUMN IF NOT EXISTS assessment_key text/);
 assert.match(assessmentMigration, /pg_advisory_xact_lock/);

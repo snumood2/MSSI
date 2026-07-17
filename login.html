@@ -41,14 +41,7 @@
 
     <!-- 관리자 로그인 -->
     <div id="form-admin" style="display:none;">
-      <div class="form-group">
-        <label>관리자 이메일</label>
-        <input type="email" id="a_email" placeholder="snumood@gmail.com">
-      </div>
-      <div class="form-group">
-        <label>비밀번호</label>
-        <input type="password" id="a_pw" placeholder="비밀번호" autocomplete="current-password">
-      </div>
+      <p style="margin:0 0 8px;color:var(--text-sub);font-size:14px;line-height:1.6;text-align:center;">등록된 관리자 Google 계정으로만 접속할 수 있습니다.</p>
     </div>
 
     <div class="form-actions">
@@ -68,7 +61,8 @@
 
 <script type="module">
   import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
-  import { SUPABASE_URL, SUPABASE_ANON_KEY, PATIENT_EMAIL_DOMAIN, DOCTOR_EMAIL_DOMAIN, ADMIN_EMAIL } from "./config.js";
+  import { SUPABASE_URL, SUPABASE_ANON_KEY, PATIENT_EMAIL_DOMAIN, DOCTOR_EMAIL_DOMAIN } from "./config.js";
+  import { signInAdminWithGoogle } from "./admin-auth.js";
 
   const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   let selectedRole = "patient";
@@ -93,6 +87,8 @@
     $("form-patient").style.display = "none";
     $("form-admin").style.display = "block";
     $("signupLink").style.display = "none";
+    $("saveIdCheck").closest(".form-actions").style.display = "none";
+    $("btnLogin").textContent = "Google 계정으로 로그인";
   } else {
     selectedRole = "patient";
     $("signupLink").href = "signup-patient.html";
@@ -112,6 +108,13 @@
     let email, pw;
 
     try {
+      if (selectedRole === "admin") {
+        setMsg("Google 로그인으로 이동 중...", "info");
+        $("btnLogin").disabled = true;
+        const { error } = await signInAdminWithGoogle(sb);
+        if (error) throw "Google 로그인을 시작하지 못했습니다.";
+        return;
+      }
       if (selectedRole === "patient") {
         const id = $("p_id").value.trim();
         if (!id) throw "아이디를 입력하세요.";
@@ -123,12 +126,6 @@
         if (!id) throw "아이디를 입력하세요.";
         email = `${id}@${DOCTOR_EMAIL_DOMAIN}`;
         pw = $("d_pw").value;
-      } else {
-        const val = $("a_email").value.trim();
-        if (!val) throw "이메일을 입력하세요.";
-        if (val.toLowerCase() !== ADMIN_EMAIL) throw "관리자 계정이 아닙니다.";
-        email = val;
-        pw = $("a_pw").value;
       }
 
       if (!pw) throw "비밀번호를 입력하세요.";
@@ -165,11 +162,6 @@
     if (event === "SIGNED_IN") {
       const user = session?.user;
       if (!user) return;
-
-      if (user.email?.toLowerCase() === ADMIN_EMAIL) {
-        window.location.href = "admin.html";
-        return;
-      }
 
       setTimeout(async () => {
         let prof = null;

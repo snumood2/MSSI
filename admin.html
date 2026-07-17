@@ -64,6 +64,25 @@
       font-weight: 600;
       text-align: center;
     }
+    .admin-oauth-note {
+      margin: 0 0 18px;
+      color: var(--text-sub);
+      font-size: 14px;
+      line-height: 1.6;
+      text-align: center;
+    }
+    .google-mark {
+      display: inline-flex;
+      width: 24px;
+      height: 24px;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      background: #fff;
+      color: #1a73e8;
+      font-weight: 800;
+      line-height: 1;
+    }
 
     @media (max-width: 600px) {
       .admin-header { flex-direction: column; align-items: stretch; }
@@ -94,16 +113,9 @@
   <div id="view-auth" class="view active">
     <div class="card" style="max-width:440px; margin:0 auto;">
       <h2 class="card-title text-center" style="text-align:center;">관리자 로그인</h2>
-      <div class="form-group">
-        <label>관리자 이메일</label>
-        <input type="email" id="a_email" placeholder="관리자 이메일" autocomplete="email">
-      </div>
-      <div class="form-group">
-        <label>비밀번호</label>
-        <input type="password" id="a_pw" autocomplete="current-password">
-      </div>
+      <p class="admin-oauth-note">등록된 관리자 Google 계정으로만 접속할 수 있습니다.</p>
       <div id="authMsg" class="status-msg"></div>
-      <button id="btnLogin" class="btn primary">로그인</button>
+      <button id="btnGoogleLogin" class="btn primary"><span class="google-mark" aria-hidden="true">G</span>Google 계정으로 로그인</button>
     </div>
   </div>
 
@@ -169,7 +181,8 @@
   <script type="module">
 
   import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
-  import { SUPABASE_URL, SUPABASE_ANON_KEY, ADMIN_EMAIL } from "./config.js";
+  import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
+  import { signInAdminWithGoogle, validateAdminSession } from "./admin-auth.js";
   import { calculateScores, generateReport, getGlobalInstructions } from "./scoring.js";
   import { renderAnswerRawHTML } from "./answer-view.js";
 
@@ -242,11 +255,18 @@
 
   const state = { user: null, session: null };
 
+  function oauthErrorMessage() {
+    const query = new URLSearchParams(window.location.search);
+    const hash = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+    return query.get("error_description") || hash.get("error_description") || "";
+  }
+
   async function checkSession() {
     const { data: { session }, error } = await sb.auth.getSession();
     if (error) { console.error("Session error:", error); return null; }
-    if (session?.user?.email === ADMIN_EMAIL) {
-      state.user = session.user;
+    const validation = await validateAdminSession(sb, session);
+    if (validation.ok) {
+      state.user = validation.user;
       state.session = session;
       showView("view-admin");
       el("userBadge").style.display = "inline";
@@ -259,46 +279,26 @@
     }
 
     if (session) {
-      await sb.auth.signOut();
+      await sb.auth.signOut({ scope: "local" });
     }
     showView("view-auth");
+    const oauthError = oauthErrorMessage();
+    if (oauthError) setMsg("authMsg", "Google 로그인 실패: " + oauthError, "error");
+    else if (session) setMsg("authMsg", validation.reason, "error");
     return null;
   }
 
-  el("btnLogin").addEventListener("click", async () => {
-    const email = el("a_email").value.trim();
-    const password = el("a_pw").value;
-    if (!email || !password) {
-      setMsg("authMsg", "이메일과 비밀번호를 입력해주세요.", "warn");
-      return;
-    }
-    if (email !== ADMIN_EMAIL) {
-      setMsg("authMsg", "관리자 이메일이 올바르지 않습니다.", "error");
-      return;
-    }
+  el("btnGoogleLogin").addEventListener("click", async () => {
     clearMsg("authMsg");
-    el("btnLogin").disabled = true;
-    el("btnLogin").textContent = "로그인 중...";
-    const { data, error } = await sb.auth.signInWithPassword({ email, password });
-    el("btnLogin").disabled = false;
-    el("btnLogin").textContent = "로그인";
+    const button = el("btnGoogleLogin");
+    button.disabled = true;
+    const previousText = button.innerHTML;
+    button.textContent = "Google 로그인으로 이동 중...";
+    const { error } = await signInAdminWithGoogle(sb);
     if (error) {
-      setMsg("authMsg", "로그인 실패: " + error.message, "error");
-      return;
-    }
-    if (data?.user?.email === ADMIN_EMAIL) {
-      state.user = data.user;
-      state.session = data.session;
-      showView("view-admin");
-      el("userBadge").style.display = "inline";
-      el("userBadge").textContent = "관리자";
-      el("btnLogout").style.display = "inline-flex";
-      await loadAdminPending();
-      await loadAdminDoctors();
-      await loadAdminRevokedDoctors();
-    } else {
-      await sb.auth.signOut();
-      setMsg("authMsg", "관리자 계정으로 로그인해주세요.", "error");
+      button.disabled = false;
+      button.innerHTML = previousText;
+      setMsg("authMsg", "Google 로그인을 시작하지 못했습니다: " + error.message, "error");
     }
   });
 
@@ -308,8 +308,6 @@
     state.session = null;
     el("userBadge").style.display = "none";
     el("btnLogout").style.display = "none";
-    el("a_email").value = "";
-    el("a_pw").value = "";
     showView("view-auth");
   });
 
@@ -585,7 +583,7 @@
         <div class="divider" style="margin-top:0;"></div>
         <div class="result-header-block">
           <h2 class="report-main-title">기분장애 임상평가 결과지</h2>
-          <p class="report-date-line">${escapeHtml(fmtDate(row.completed_at))}&nbsp;&nbsp;번호: ${escapeHtml(row.patient_number || "-")}</p>
+          <p class="report-date-line">${escapeHtml(fmtDate(row.completed_at))}&nbsp;&nbsp;번호: ${escapeHtml(row.assessment_key || row.patient_number || "-")}</p>
         </div>
         <details open style="margin-bottom:24px;">
           <summary style="cursor:pointer;font-size:14px;font-weight:700;color:var(--accent);padding:12px 16px;background:var(--accent-light);border-radius:10px;">
@@ -595,7 +593,7 @@
         </details>
         <div id="${contentId}"></div>
         <div class="print-btn-wrap">
-          <button class="btn secondary sm btn-admin-pdf" data-patnum="${escapeAttr(row.patient_number || "result")}" data-date="${escapeAttr(fmtDate(row.completed_at))}">📄 PDF 다운로드</button>
+          <button class="btn secondary sm btn-admin-pdf" data-patnum="${escapeAttr(row.assessment_key || row.patient_number || "result")}" data-date="${escapeAttr(fmtDate(row.completed_at))}">📄 PDF 다운로드</button>
           <button class="btn primary sm" onclick="window.print()">🖨️ 인쇄</button>
         </div>
       </div>`;
@@ -606,29 +604,32 @@
 
   async function searchAdminResult() {
     const hCode = el("adminSearchHCode").value.trim().toUpperCase();
-    const pNum = el("adminSearchPNum").value.trim();
-    if (!hCode || !pNum) {
+    const requested = el("adminSearchPNum").value.trim();
+    const parsed = requested.match(/^(\d{8})(?:-(\d+))?$/);
+    if (!hCode || !parsed) {
       setMsg("adminResultMsg", "병원 코드와 의사에게 받은 번호를 모두 입력해주세요.", "warn");
       return;
     }
+    const pNum = parsed[1];
+    const requestedAssessment = parsed[2] ? Number(parsed[2]) : null;
     el("adminSearchHCode").value = hCode;
     setMsg("adminResultMsg", "검색 중...", "info");
     el("adminResultArea").innerHTML = "";
-    const { data, error } = await sb
+    let query = sb
       .from("survey_responses")
       .select("*")
       .eq("hospital_code", hCode)
       .eq("patient_number", pNum)
       .or("status.eq.completed,completed.eq.true")
-      .order("completed_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
+      .order("completed_at", { ascending: false });
+    if (requestedAssessment) query = query.eq("assessment_no", requestedAssessment);
+    const { data, error } = await query.limit(1).maybeSingle();
     if (error) {
       setMsg("adminResultMsg", "오류: " + error.message, "error");
       return;
     }
     if (!data) {
-      setMsg("adminResultMsg", `'${hCode} / ${pNum}' 완료 결과가 없습니다.`, "warn");
+      setMsg("adminResultMsg", `'${hCode} / ${requested}' 완료 결과가 없습니다.`, "warn");
       return;
     }
     clearMsg("adminResultMsg");

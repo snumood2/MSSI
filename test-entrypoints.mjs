@@ -14,6 +14,8 @@ const signupPatient = readFileSync('./signup-patient.html', 'utf8');
 assert.match(login, /urlRole\s*=\s*new URLSearchParams\(location\.search\)\.get\("role"\)/s);
 assert.match(login, /urlRole === "doctor"[\s\S]*selectedRole = "doctor"[\s\S]*form-doctor[\s\S]*signup-doctor\.html/);
 assert.match(login, /urlRole === "admin"[\s\S]*selectedRole = "admin"[\s\S]*form-admin[\s\S]*signupLink/);
+assert.match(login, /signInAdminWithGoogle/);
+assert.doesNotMatch(login, /id="a_pw"/);
 assert.match(login, /patient: "respondent\.html"/);
 assert.match(login, /doctor: "doctor\.html"/);
 assert.match(login, /admin: "admin\.html"/);
@@ -22,7 +24,7 @@ assert.match(login, /let target = redirectMap\[prof\.role\]/);
 assert.match(login, /doctor_pending[\s\S]*signup-doctor\.html\?pending=1/);
 
 assert.match(signupPatient, /id="s_pnum"[^>]*required/);
-assert.match(signupPatient, /if \(!patientNumber\) throw "의사에게 받은 번호를 입력하세요\."/);
+assert.match(signupPatient, /if \(!\/\^\\d\{8\}\$\/\.test\(patientNumber\)\) throw "의사에게 받은 번호는 8자리 숫자로 입력하세요\."/);
 assert.match(signupPatient, /patient_number: patientNumber/);
 assert.doesNotMatch(signupPatient, /의사에게 받은 번호 <span class="optional">/);
 
@@ -36,7 +38,7 @@ const snubhSignup = readFileSync('./signup-patient-snubh01.html', 'utf8');
 assert.match(snubhSignup, /FIXED_HOSPITAL_CODE = "SNUBH01"/);
 assert.match(snubhSignup, /hospital_code: FIXED_HOSPITAL_CODE/);
 assert.match(snubhSignup, /id="s_pnum"[^>]*required/);
-assert.match(snubhSignup, /if \(!patientNumber\) throw "의사에게 받은 번호를 입력하세요\."/);
+assert.match(snubhSignup, /if \(!\/\^\\d\{8\}\$\/\.test\(patientNumber\)\) throw "의사에게 받은 번호는 8자리 숫자로 입력하세요\."/);
 assert.match(snubhSignup, /patient_number: patientNumber/);
 assert.match(snubhSignup, /login-snubh01\.html/);
 assert.doesNotMatch(snubhSignup, /id="s_hcode"/);
