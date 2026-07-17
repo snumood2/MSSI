@@ -37,6 +37,7 @@ assert.match(respondentPage, /const session = await getAuthSession\(sb\)/);
 assert.match(authSession, /AUTH_HANDOFF_TTL_MS = 60_000/);
 assert.match(authSession, /sessionStorage\.removeItem\(AUTH_HANDOFF_KEY\)/);
 assert.match(authSession, /sb\.auth\.setSession/);
+assert.match(authSession, /sb\.auth\.refreshSession/);
 
 assert.match(signupPatient, /id="s_pnum"[^>]*required/);
 assert.match(signupPatient, /if \(!\/\^\\d\{8\}\$\/\.test\(patientNumber\)\) throw "의사에게 받은 번호는 8자리 숫자로 입력하세요\."/);

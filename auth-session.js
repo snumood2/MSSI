@@ -25,7 +25,12 @@ export async function getAuthSession(sb) {
       access_token: handoff.access_token,
       refresh_token: handoff.refresh_token
     });
-    return error ? null : (restored?.session || null);
+    if (!error && restored?.session) return restored.session;
+
+    const { data: refreshed, error: refreshError } = await sb.auth.refreshSession({
+      refresh_token: handoff.refresh_token
+    });
+    return refreshError ? null : (refreshed?.session || null);
   } catch {
     return null;
   }
