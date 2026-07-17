@@ -869,9 +869,6 @@
     initDoctor(prof);
   }
 
-  sb.auth.onAuthStateChange(event => {
-    if (event === "SIGNED_OUT") window.location.href = "login.html?role=doctor";
-  });
   initializeDoctorSession().catch(error => {
     console.warn("doctor-auth:initialization-error", error?.message || "unknown");
     showDoctorAuthError("의사 화면을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.");
