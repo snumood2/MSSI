@@ -39,6 +39,27 @@
     .form-group input[type=month] { width: 100%; max-width: none; min-width: 0; }
     .form-group input[type=month]::-webkit-date-and-time-value { text-align: left; }
     .form-divider { height: 1px; background: #eee; margin: 20px 0; }
+    .terms-box {
+      padding: 14px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      font-size: 12px;
+      line-height: 1.65;
+      color: #475569;
+      word-break: keep-all;
+    }
+    .terms-agree {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      margin: 12px 0 18px;
+      font-size: 13px;
+      line-height: 1.5;
+      color: #334155;
+      cursor: pointer;
+    }
+    .terms-agree input { margin: 3px 0 0; flex: 0 0 auto; }
     .btn-signup {
       width: 100%; padding: 14px;
       background: #4263eb; color: #fff; border: none; border-radius: 10px;
@@ -96,6 +117,14 @@
         <input type="text" id="s_pnum2" placeholder="8자리 번호 다시 입력" inputmode="numeric" maxlength="8" autocomplete="off" required>
       </div>
 
+      <div class="terms-box">
+        본 프로그램은 무료 온라인 설문 프로그램입니다. 의료용이 아니며 모든 사용 책임은 작성자에게 있습니다. 보안을 보장할 수 없으니 개인식별정보 및 민감정보를 적지 않도록 주의하세요. 회원가입시 신원을 특정할 수 있는 아이디를 사용하지 마세요. 익명 프로그램이므로 계정을 분실하면 복구할 수 없습니다.
+      </div>
+      <label class="terms-agree">
+        <input type="checkbox" id="s_agree">
+        <span>위 내용을 확인하였으며 동의합니다. <span class="required">*</span></span>
+      </label>
+
       <button id="btnSignup" class="btn-signup">가입하기</button>
 
       <div class="auth-link">
@@ -141,6 +170,7 @@
         if (!pw) throw "비밀번호를 입력하세요.";
         if (pw.length < 12) throw "비밀번호는 12자리 이상이어야 합니다.";
         if (pw !== pw2) throw "비밀번호가 일치하지 않습니다.";
+        if (!$("s_agree").checked) throw "회원가입 약관을 확인하고 동의하세요.";
 
         const dob = validateBirthMonth($("s_dob").value);
         const email = `${id}@${PATIENT_EMAIL_DOMAIN}`;
