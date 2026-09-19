@@ -48,10 +48,11 @@ assert.doesNotMatch(signupPatient, /의사에게 받은 번호 <span class="opti
 
 const snubhLogin = readFileSync('./login-snubh01.html', 'utf8');
 assert.match(snubhLogin, /signup-patient-snubh01\.html/);
-assert.match(snubhLogin, /respondent\.html/);
+assert.match(snubhLogin, /import \{ patientReturnTarget, patientFlowQuery \} from "\.\/patient-navigation\.js"/);
+assert.match(readFileSync('./patient-navigation.js', 'utf8'), /"respondent\.html"/);
 assert.doesNotMatch(snubhLogin, /form-doctor/);
 assert.doesNotMatch(snubhLogin, /form-admin/);
-assert.match(snubhLogin, /const \{ data, error \} = await sb\.auth\.signInWithPassword[\s\S]*storeAuthSessionHandoff\(data\.session\)[\s\S]*window\.location\.href = "respondent\.html"/);
+assert.match(snubhLogin, /const \{ data, error \} = await sb\.auth\.signInWithPassword[\s\S]*storeAuthSessionHandoff\(data\.session\)[\s\S]*window\.location\.href = patientReturnTarget\(location\.search\)/);
 assert.doesNotMatch(snubhLogin, /sb\.auth\.onAuthStateChange/);
 
 const snubhSignup = readFileSync('./signup-patient-snubh01.html', 'utf8');

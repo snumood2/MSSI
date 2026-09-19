@@ -136,6 +136,9 @@
   <script type="module">
     import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
     import { SUPABASE_URL, SUPABASE_ANON_KEY, PATIENT_EMAIL_DOMAIN } from "./config.js";
+    import { patientFlowQuery } from "./patient-navigation.js";
+    const nextQuery=patientFlowQuery(location.search);
+    document.querySelector('.auth-link a').href=`login-snubh01.html${nextQuery}`;
 
     const FIXED_HOSPITAL_CODE = "SNUBH01";
     const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -196,7 +199,7 @@
         if (!data.user) throw "가입 요청 실패.";
 
         setMsg("가입 성공! 로그인 페이지로 이동합니다.", "ok");
-        setTimeout(() => { window.location.href = "login-snubh01.html"; }, 1500);
+        setTimeout(() => { window.location.href = `login-snubh01.html${nextQuery}`; }, 1500);
       } catch (e) {
         setMsg(typeof e === "string" ? e : (e.message || "오류 발생"), "error");
         $("btnSignup").disabled = false;

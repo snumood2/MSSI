@@ -52,6 +52,16 @@
       <div class="sub" id="patientHeroSub"></div>
     </div>
 
+    <div class="card" id="patientDailyHistory" style="display:none;">
+      <h3 style="font-size:16px;font-weight:800;margin-bottom:12px;">나의 기분과 생활</h3>
+      <p style="font-size:14px;line-height:1.7;color:var(--text-sub);margin-bottom:16px;">지금 로그인한 계정으로 기록하고, 시간에 따른 변화를 살펴보세요.</p>
+      <div style="display:flex;flex-wrap:wrap;gap:10px;">
+        <a class="btn primary" href="patient.html?view=history">나의 변화 보기</a>
+        <a class="btn secondary" href="patient.html?view=lifestyle">생활습관 기록</a>
+        <a class="btn secondary" href="patient.html?view=mssi">기분안정성 기록</a>
+      </div>
+    </div>
+
     <div class="card">
       <h3 style="font-size:16px; font-weight:800; margin-bottom:16px;">설문 현황</h3>
       <div class="patient-number-panel">
@@ -335,6 +345,7 @@ async function checkAuth() {
   }
 
   state.profile = prof;
+  el("patientDailyHistory").style.display = prof.hospital_code === "SNUBH01" ? "block" : "none";
 
   el("loginCheckOverlay").remove();
   el("mainHeader").classList.remove("hidden");

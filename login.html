@@ -64,6 +64,7 @@
   import { SUPABASE_URL, SUPABASE_ANON_KEY, PATIENT_EMAIL_DOMAIN, DOCTOR_EMAIL_DOMAIN } from "./config.js";
   import { signInAdminWithGoogle } from "./admin-auth.js";
   import { storeAuthSessionHandoff } from "./auth-session.js";
+  import { patientReturnTarget } from "./patient-navigation.js";
 
   const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   let selectedRole = "patient";
@@ -101,6 +102,7 @@
     if (!prof) throw "계정 정보를 확인하지 못했습니다. 잠시 후 다시 시도하세요.";
 
     let target = redirectMap[prof.role] || "respondent.html";
+    if (prof.role === "patient") target = patientReturnTarget(location.search);
     if (prof.role === "doctor_pending") target = "signup-doctor.html?pending=1";
     window.location.href = target;
   }
