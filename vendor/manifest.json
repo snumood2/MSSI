@@ -1,0 +1,46 @@
+[
+  {
+    "repo": "MSSI",
+    "path": "vendor/html2canvas.js",
+    "source": "https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js",
+    "resolved_url": "https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js",
+    "version": null,
+    "sha256": "e87e550794322e574a1fda0c1549a3c70dae5a93d9113417a429016838eab8cb",
+    "bytes": 198689
+  },
+  {
+    "repo": "MSSI",
+    "path": "vendor/jspdf.js",
+    "source": "https://cdn.jsdelivr.net/npm/jspdf@4.2.1/dist/jspdf.umd.min.js",
+    "resolved_url": "https://cdn.jsdelivr.net/npm/jspdf@4.2.1/dist/jspdf.umd.min.js",
+    "version": "4.2.1",
+    "sha256": "e6551fcdc32f09d6853b2c5126d18d01d9447e0da618a41a11ebeee0f6c20d54",
+    "bytes": 420165
+  },
+  {
+    "repo": "MSSI",
+    "path": "vendor/html2pdf.js",
+    "source": "npm:html2pdf.js@0.14.0/src/index.js",
+    "resolved_url": null,
+    "version": "0.14.0",
+    "sha256": "6904582c7e72c8c9c1f569cbf7a9bd1f416c9b15a0499dc99143e8dbe5c96919",
+    "bytes": 833104,
+    "dependencies": {
+      "jspdf": "4.2.1",
+      "dompurify": "3.4.15",
+      "html2canvas": "1.4.1"
+    },
+    "build": "cd vendor-build && npm ci --ignore-scripts && npm run build"
+  },
+  {
+    "repo": "MSSI",
+    "path": "vendor/supabase-js.js",
+    "source": "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2",
+    "resolved_url": "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2",
+    "version": "2.116.0",
+    "sha256": "b8427ddda596cea20b69fb0926b9deb01032ebc924d413214953424d30228c9e",
+    "bytes": 218709,
+    "upstream_sha256": "fbde52aab1700a3b308087ae78b41fb5192e7a952d81d5d08238763ce3245dd8",
+    "transformation": "Append ESM createClient export; upstream browser bundle unchanged"
+  }
+]

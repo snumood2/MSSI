@@ -1,5 +1,5 @@
 
-import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
+import { createClient } from "./vendor/supabase-js.js";
 import { SUPABASE_URL, SUPABASE_ANON_KEY, PATIENT_EMAIL_DOMAIN, DOCTOR_EMAIL_DOMAIN, ADMIN_EMAIL } from "./config.js";
 import { SURVEY_SECTIONS } from "./questions.js";
 import { calculateScores, generateReport, getGlobalInstructions } from "./scoring.js";

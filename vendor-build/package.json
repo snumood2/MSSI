@@ -1,0 +1,12 @@
+{
+  "name": "mssi-reviewed-browser-vendor",
+  "private": true,
+  "scripts": { "build": "node build.cjs" },
+  "dependencies": {
+    "html2pdf.js": "0.14.0",
+    "html2canvas": "1.4.1",
+    "jspdf": "4.2.1",
+    "dompurify": "3.4.15"
+  },
+  "devDependencies": { "esbuild": "0.28.2" }
+}
