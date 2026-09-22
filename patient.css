@@ -174,6 +174,9 @@
   }
 }
 @layer utilities {
+  .visible {
+    visibility: visible;
+  }
   .sr-only {
     position: absolute;
     width: 1px;
@@ -194,8 +197,17 @@
   .relative {
     position: relative;
   }
+  .static {
+    position: static;
+  }
   .inset-0 {
     inset: calc(var(--spacing) * 0);
+  }
+  .start {
+    inset-inline-start: var(--spacing);
+  }
+  .end {
+    inset-inline-end: var(--spacing);
   }
   .top-1\/2 {
     top: calc(1 / 2 * 100%);
@@ -226,6 +238,12 @@
   }
   .grid {
     display: grid;
+  }
+  .hidden {
+    display: none;
+  }
+  .hidden\! {
+    display: none !important;
   }
   .inline-flex {
     display: inline-flex;
@@ -317,6 +335,15 @@
   .translate-y-\[-50\%\] {
     --tw-translate-y: -50%;
     translate: var(--tw-translate-x) var(--tw-translate-y);
+  }
+  .transform {
+    transform: var(--tw-rotate-x,) var(--tw-rotate-y,) var(--tw-rotate-z,) var(--tw-skew-x,) var(--tw-skew-y,);
+  }
+  .transform\! {
+    transform: var(--tw-rotate-x,) var(--tw-rotate-y,) var(--tw-rotate-z,) var(--tw-skew-x,) var(--tw-skew-y,) !important;
+  }
+  .resize {
+    resize: both;
   }
   .flex-col {
     flex-direction: column;
@@ -519,6 +546,9 @@
     outline-style: var(--tw-outline-style);
     outline-width: 1px;
   }
+  .filter {
+    filter: var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,) var(--tw-grayscale,) var(--tw-hue-rotate,) var(--tw-invert,) var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,);
+  }
   .transition-\[color\,box-shadow\] {
     transition-property: color,box-shadow;
     transition-timing-function: var(--tw-ease, var(--default-transition-timing-function));
@@ -546,6 +576,9 @@
   .outline-none {
     --tw-outline-style: none;
     outline-style: none;
+  }
+  .running {
+    animation-play-state: running;
   }
   .group-data-\[orientation\=horizontal\]\/tabs\:h-9 {
     &:is(:where(.group\/tabs)[data-orientation="horizontal"] *) {
@@ -2889,6 +2922,26 @@ h1 {
   inherits: false;
   initial-value: 0;
 }
+@property --tw-rotate-x {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-rotate-y {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-rotate-z {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-skew-x {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-skew-y {
+  syntax: "*";
+  inherits: false;
+}
 @property --tw-border-style {
   syntax: "*";
   inherits: false;
@@ -2972,6 +3025,59 @@ h1 {
   inherits: false;
   initial-value: solid;
 }
+@property --tw-blur {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-brightness {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-contrast {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-grayscale {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-hue-rotate {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-invert {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-opacity {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-saturate {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-sepia {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-drop-shadow {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-drop-shadow-color {
+  syntax: "*";
+  inherits: false;
+}
+@property --tw-drop-shadow-alpha {
+  syntax: "<percentage>";
+  inherits: false;
+  initial-value: 100%;
+}
+@property --tw-drop-shadow-size {
+  syntax: "*";
+  inherits: false;
+}
 @property --tw-duration {
   syntax: "*";
   inherits: false;
@@ -3009,6 +3115,11 @@ h1 {
       --tw-translate-x: 0;
       --tw-translate-y: 0;
       --tw-translate-z: 0;
+      --tw-rotate-x: initial;
+      --tw-rotate-y: initial;
+      --tw-rotate-z: initial;
+      --tw-skew-x: initial;
+      --tw-skew-y: initial;
       --tw-border-style: solid;
       --tw-leading: initial;
       --tw-font-weight: initial;
@@ -3027,6 +3138,19 @@ h1 {
       --tw-ring-offset-color: #fff;
       --tw-ring-offset-shadow: 0 0 #0000;
       --tw-outline-style: solid;
+      --tw-blur: initial;
+      --tw-brightness: initial;
+      --tw-contrast: initial;
+      --tw-grayscale: initial;
+      --tw-hue-rotate: initial;
+      --tw-invert: initial;
+      --tw-opacity: initial;
+      --tw-saturate: initial;
+      --tw-sepia: initial;
+      --tw-drop-shadow: initial;
+      --tw-drop-shadow-color: initial;
+      --tw-drop-shadow-alpha: 100%;
+      --tw-drop-shadow-size: initial;
       --tw-duration: initial;
       --tw-content: "";
       --tw-animation-delay: 0s;
@@ -3057,6 +3181,125 @@ h1 {
   }
 }
 
-.self-app{min-height:100vh;background:#f5f8fb;color:#1c2e49;font-size:16px}.self-header{height:88px;background:white;border-bottom:1px solid #e4ebf2;display:flex;align-items:center;justify-content:space-between;padding:0 max(24px,calc((100% - 1180px)/2));gap:24px}.self-brand{display:flex;gap:11px;align-items:center;text-decoration:none;color:#142942;letter-spacing:.03em}.self-brand>span{display:flex;padding:10px;background:#07978e;color:white;border-radius:12px}.self-brand strong{font-size:19px;line-height:1.2}.self-brand small{display:block;font-size:12px;font-weight:500;letter-spacing:0;color:#77869a;margin-top:5px}.self-header>div{display:flex;align-items:center;gap:24px}.self-header button,.self-back{display:flex;align-items:center;gap:7px;font-size:14px;color:#56687c;background:none;border:0;text-decoration:none;cursor:pointer}.self-body{max-width:1180px;margin:auto;padding:28px 24px 0}.self-tabs{display:flex;gap:8px;width:fit-content;background:#eaf0f5;padding:5px;border-radius:14px;margin-bottom:36px}.self-tabs button{display:flex;align-items:center;justify-content:center;gap:9px;border:0;border-radius:10px;background:none;padding:12px 25px;color:#66758b;font-size:15px;font-weight:600;cursor:pointer}.self-tabs button[aria-current]{background:white;color:#087f79;box-shadow:0 2px 6px #243b5310}.patient-section-heading{display:flex;align-items:center;justify-content:space-between;gap:20px;margin-bottom:22px}.patient-section-heading h1{font-size:32px;font-weight:750;letter-spacing:-.045em;margin:8px 0}.patient-section-heading p{font-size:16px;color:#728095;line-height:1.6;margin:0}.self-privacy{display:flex;justify-content:space-between;gap:12px;padding:15px 0;border-bottom:1px solid #e2e9f0;font-size:14px;color:#738198;margin-bottom:18px}.patient-metrics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;margin-bottom:22px}.patient-trend{padding-bottom:12px}.patient-change{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin:20px 0}.patient-change>div{background:#edf5fa;border:1px solid #e2edf6;border-radius:14px;padding:20px 24px}.patient-change span{font-size:14px;color:#63738a}.patient-change strong{display:block;font-size:19px;font-weight:650;margin-top:6px}.patient-disclaimer{font-size:14px;color:#75849a;line-height:1.8;margin:26px 0;text-align:center}.self-footer{margin-top:36px;padding:25px 0;border-top:1px solid #e1e8ef;font-size:13px;color:#8b97a8}.self-success{background:#e6f5ee;color:#1c7250;padding:15px 20px;border-radius:12px;margin-bottom:20px}.record-time{display:block;font-size:12px;color:#8a97a7;margin-top:4px}.patient-history .details-grid{grid-template-columns:1fr 1fr}.patient-history .symptom-cell{background:#f1f5fb}.patient-form{max-width:760px;margin:auto}.survey-progress{position:sticky;top:0;background:#f5f8bf00;background:#f5f8fbf7;backdrop-filter:blur(10px);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;padding:15px 0 18px;gap:10px;z-index:5;font-size:14px;color:#6a7d92;margin-bottom:20px}.survey-progress strong{color:#078e83}.survey-progress>div{width:100%;height:5px;background:#e1e9ee;border-radius:4px;overflow:hidden}.survey-progress>div>span{display:block;height:100%;background:#0c9d92;transition:width .2s}.survey-card{background:white;border:1px solid #e1e8f0;border-radius:17px;padding:0 26px 26px;margin-bottom:22px;min-width:0}.survey-card legend{float:left;width:100%;padding:25px 0 18px;font-size:17px;font-weight:650;line-height:1.7}.survey-card legend>span{color:#089489;margin-right:11px;font-size:15px}.survey-options{clear:both;display:grid;gap:9px}.survey-choice{display:flex;align-items:flex-start;gap:12px;border:1px solid #e5eaf0;border-radius:11px;padding:14px 15px;color:#4a5e75;font-size:15px;line-height:1.7;cursor:pointer}.survey-choice [role=radio]{flex:none;margin-top:4px;color:#078c83;border-color:#b9c8d5}.survey-choice.checked{border-color:#35aca1;background:#effaf7;color:#126e66}.survey-context{clear:both;font-size:14px;color:#7b889b;padding-bottom:14px}.survey-subquestions{margin:22px 0 0;border-top:1px solid #e4eaf0;padding-top:18px}.survey-subquestions h3{font-size:15px;font-weight:600;color:#53687d;margin:0 0 12px}.survey-subquestions h3:not(:first-child){margin-top:20px}.survey-submit{width:100%;background:#058f84;border:0;border-radius:13px;padding:18px;color:white;font-size:17px;font-weight:650;cursor:pointer}.survey-submit:disabled{opacity:.65;cursor:wait}.self-app button:focus-visible,.self-app a:focus-visible{outline:3px solid #449df0;outline-offset:3px}.self-app .detail-dialog{max-width:680px}
-@media(max-width:760px){.self-header{height:76px;padding:0 18px;gap:10px}.self-back{display:none}.self-header>div{gap:0}.self-header button span{display:none}.self-body{padding:20px 16px 0}.self-tabs{display:grid;width:100%;grid-template-columns:repeat(3,1fr);gap:2px;margin-bottom:26px}.self-tabs button{padding:11px 4px;font-size:14px;gap:5px;flex-direction:column}.patient-section-heading{align-items:flex-start;flex-direction:column;gap:12px}.patient-section-heading h1{font-size:27px}.patient-section-heading p{font-size:15px}.patient-section-heading .page-actions{align-self:flex-end}.self-privacy{font-size:13px;flex-wrap:wrap}.patient-metrics{gap:12px}.patient-metrics .metric-card{padding:18px 15px}.patient-metrics .metric-value{font-size:35px}.patient-metrics .metric-caption{font-size:12px;line-height:1.5}.patient-metrics .metric-bottom{flex-wrap:wrap;gap:5px}.patient-history .details-grid{grid-template-columns:1fr}.patient-change{grid-template-columns:1fr;gap:10px}.patient-change>div{padding:16px 20px}.patient-history .section-toolbar{flex-wrap:wrap;gap:16px}.patient-trend .panel-heading{padding:20px 16px}.survey-card{padding:0 18px 20px}.survey-card legend{font-size:16px}.survey-choice{font-size:15px;padding:13px 12px}.self-app .patient-form .page-actions{display:none}.self-app .habit-track{display:block}.self-app .habit-row{grid-template-columns:22px 1fr 65px 55px;gap:7px}.self-app .habit-name{font-size:14px}}
-@media print{.self-header,.self-tabs,.page-actions,.self-footer{display:none!important}.self-app,.self-body{background:white;padding:0}.patient-history .details-grid{grid-template-columns:1fr 1fr}.patient-trend,.patient-metrics,.panel,.patient-change{break-inside:avoid}.patient-section-heading h1{font-size:24px}.self-privacy{padding:8px 0}.patient-disclaimer{font-size:12px}}
+.self-app{min-height:100vh;background:#f7f8fa;color:#25334c;font-size:16px}
+.clinic-header{position:sticky;top:0;z-index:30;background:#fff;border-bottom:1px solid #dfe4ec;box-shadow:0 2px 8px rgba(20,42,105,.08)}
+.clinic-header-inner{max-width:1320px;height:70px;margin:auto;padding:0 24px;display:flex;align-items:center;gap:28px}
+.clinic-brand{flex:none;color:#182a6f;font-size:17px;font-weight:750;letter-spacing:-.055em;white-space:nowrap;text-decoration:none}
+.clinic-nav{min-width:0;display:flex;align-items:center;justify-content:flex-end;gap:22px;flex:1}
+.clinic-nav a{color:#3f4653;font-size:14px;line-height:70px;white-space:nowrap;text-decoration:none}
+.clinic-nav a:hover{color:#172c76}
+.clinic-header-actions{display:flex;align-items:center;gap:10px}
+.clinic-logout,.clinic-menu-toggle{border:0;background:transparent;color:#4e5664;font:inherit;cursor:pointer}
+.clinic-logout{padding:8px 4px;font-size:14px;white-space:nowrap}
+.clinic-logout:hover{color:#172c76}
+.clinic-menu-toggle{display:none;align-items:center;justify-content:center;width:42px;height:42px;color:#1e3c8d}
+.clinic-mobile-menu{display:none}
+.self-body{max-width:1180px;margin:auto;padding:30px 24px 0}
+.preview-note{margin:0 0 16px;color:#66758b;font-size:13px;text-align:right}
+.self-tabs{display:flex;gap:28px;margin:0 0 32px;border-bottom:1px solid #dce3eb}
+.self-tabs button{position:relative;display:block;padding:15px 3px 14px;border:0;background:transparent;color:#6c7482;font-size:15px;font-weight:600;cursor:pointer}
+.self-tabs button:hover{color:#172c76}
+.self-tabs button[aria-current]{color:#172c76;font-weight:750}
+.self-tabs button[aria-current]:after{position:absolute;right:0;bottom:-1px;left:0;height:3px;background:#5da8ef;content:""}
+.patient-section-heading{display:flex;align-items:center;justify-content:space-between;gap:20px;margin-bottom:22px}
+.patient-section-heading h1{margin:7px 0 0;color:#172a70;font-size:32px;font-weight:760;letter-spacing:-.05em}
+.patient-section-heading p{margin:8px 0 0;color:#6d7786;font-size:16px;line-height:1.65}
+.self-app .eyebrow{margin-bottom:4px;color:#4f86c3;letter-spacing:.14em}
+.self-privacy{display:flex;justify-content:space-between;gap:12px;padding:15px 0;border-bottom:1px solid #dce3eb;color:#6d7786;font-size:14px;margin-bottom:20px}
+.patient-metrics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px;margin-bottom:22px}
+.self-app .metric-card,.self-app .panel{border-color:#dfe5ed;border-radius:12px;box-shadow:0 2px 8px rgba(28,48,101,.035)}
+.self-app .metric-card.mssi{border-top-color:#213a91}
+.self-app .metric-card.lifestyle{border-top-color:#68aaf0}
+.self-app .metric-card.mssi .metric-top svg{color:#213a91}
+.self-app .metric-card.lifestyle .metric-top svg{color:#4e93d8}
+.self-app .legend-dot.mssi{background:#213a91}
+.self-app .legend-dot.lifestyle{background:#68aaf0}
+.self-app .habit-track{background:#e6eef7}
+.self-app .habit-track>span{background:#5d9fe2}
+.self-app .habit-score,.self-app .teal-text{color:#316fae}
+.self-app .symptom-cell{background:#f5f8fd}
+.self-app .text-button{color:#316fae}
+.patient-trend{padding-bottom:12px}
+.patient-change{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin:20px 0}
+.patient-change>div{padding:20px 24px;border:1px solid #dbe8f6;border-radius:12px;background:#edf6ff}
+.patient-change span{color:#5d7188;font-size:14px}
+.patient-change strong{display:block;margin-top:6px;color:#1d397d;font-size:19px;font-weight:700}
+.patient-disclaimer{margin:26px 0;color:#6f7b8d;font-size:14px;line-height:1.8;text-align:center}
+.self-footer{margin-top:36px;padding:25px 0;border-top:1px solid #dce3eb;color:#7b8797;font-size:13px}
+.self-success{margin-bottom:20px;padding:15px 20px;border:1px solid #c9e0f7;border-radius:10px;background:#edf7ff;color:#1d5f9d}
+.record-time{display:block;margin-top:4px;color:#8a97a7;font-size:12px}
+.patient-history .details-grid{grid-template-columns:1fr 1fr}
+.patient-form{max-width:760px;margin:auto}
+.survey-progress{position:sticky;top:70px;z-index:5;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:20px;padding:15px 0 18px;background:rgba(247,248,250,.94);backdrop-filter:blur(10px);color:#66758b;font-size:14px}
+.survey-progress strong{color:#1f438e}
+.survey-progress>div{width:100%;height:5px;overflow:hidden;border-radius:4px;background:#dfeaf5}
+.survey-progress>div>span{display:block;height:100%;background:#5da8ef;transition:width .2s}
+.survey-card{min-width:0;margin-bottom:22px;padding:0 26px 26px;border:1px solid #dfe5ed;border-radius:12px;background:#fff;box-shadow:0 2px 8px rgba(28,48,101,.025)}
+.survey-card legend{float:left;width:100%;padding:25px 0 18px;color:#24344e;font-size:17px;font-weight:680;line-height:1.7}
+.survey-card legend>span{margin-right:11px;color:#478bd1;font-size:15px}
+.survey-options{display:grid;clear:both;gap:9px}
+.survey-choice{display:flex;align-items:flex-start;gap:12px;padding:14px 15px;border:1px solid #e0e6ed;border-radius:9px;color:#465b74;font-size:15px;line-height:1.7;cursor:pointer}
+.survey-choice:hover{border-color:#b8d2ec;background:#f8fbff}
+.survey-choice [role=radio]{flex:none;margin-top:4px;border-color:#aebdce;color:#346fac}
+.survey-choice.checked{border-color:#70a9e0;background:#eef7ff;color:#234d7b}
+.survey-context{clear:both;padding-bottom:14px;color:#738197;font-size:14px}
+.survey-subquestions{margin:22px 0 0;padding-top:18px;border-top:1px solid #e1e7ee}
+.survey-subquestions h3{margin:0 0 12px;color:#4e6380;font-size:15px;font-weight:650}
+.survey-subquestions h3:not(:first-child){margin-top:20px}
+.survey-submit{width:100%;padding:18px;border:0;border-radius:9px;background:#172d76;color:#fff;font-size:17px;font-weight:700;cursor:pointer}
+.survey-submit:hover:not(:disabled){background:#0f205e}
+.survey-submit:disabled{opacity:.65;cursor:wait}
+.self-app button:focus-visible,.self-app a:focus-visible{outline:3px solid #6caeec;outline-offset:3px}
+.self-app .detail-dialog{max-width:680px}
+
+@media(max-width:1160px){
+  .clinic-header-inner{height:60px;padding:0 24px}
+  .clinic-nav,.clinic-logout{display:none}
+  .clinic-header-actions{margin-left:auto}
+  .clinic-menu-toggle{display:inline-flex}
+  .clinic-mobile-menu.is-open{display:block;padding:5px 24px 14px;border-top:1px solid #e2e7ee;background:#fff;box-shadow:0 6px 12px rgba(22,40,91,.08)}
+  .clinic-mobile-menu a,.clinic-mobile-menu button{display:block;width:100%;padding:13px 0;border:0;border-bottom:1px solid #eef1f5;background:transparent;color:#394456;font:inherit;font-size:15px;text-align:left;text-decoration:none}
+  .clinic-mobile-menu button{color:#1d397d;font-weight:700}
+  .survey-progress{top:60px}
+}
+
+@media(max-width:760px){
+  .clinic-header-inner{height:60px;padding:0 22px;gap:10px}
+  .clinic-brand{font-size:15px;letter-spacing:-.07em}
+  .clinic-mobile-menu.is-open{padding:5px 22px 14px}
+  .self-body{padding:22px 16px 0}
+  .self-tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:0;margin-bottom:26px}
+  .self-tabs button{padding:13px 3px;font-size:13px}
+  .patient-section-heading{align-items:flex-start;flex-direction:column;gap:12px}
+  .patient-section-heading h1{font-size:27px}
+  .patient-section-heading p{font-size:15px}
+  .patient-section-heading .page-actions{align-self:flex-end}
+  .self-privacy{flex-wrap:wrap;font-size:13px}
+  .patient-metrics{gap:12px}
+  .patient-metrics .metric-card{padding:18px 15px}
+  .patient-metrics .metric-value{font-size:35px}
+  .patient-metrics .metric-caption{font-size:12px;line-height:1.5}
+  .patient-metrics .metric-bottom{flex-wrap:wrap;gap:5px}
+  .patient-history .details-grid,.patient-change{grid-template-columns:1fr}
+  .patient-change{gap:10px}
+  .patient-change>div{padding:16px 20px}
+  .patient-history .section-toolbar{flex-wrap:wrap;gap:16px}
+  .patient-trend .panel-heading{padding:20px 16px}
+  .survey-card{padding:0 18px 20px}
+  .survey-card legend{font-size:16px}
+  .survey-choice{padding:13px 12px;font-size:15px}
+  .self-app .patient-form .page-actions{display:none}
+  .self-app .habit-track{display:block}
+  .self-app .habit-row{grid-template-columns:22px 1fr 65px 55px;gap:7px}
+  .self-app .habit-name{font-size:14px}
+}
+
+@media print{
+  .clinic-header,.self-tabs,.page-actions,.self-footer{display:none!important}
+  .self-app,.self-body{padding:0;background:#fff}
+  .patient-history .details-grid{grid-template-columns:1fr 1fr}
+  .patient-trend,.patient-metrics,.panel,.patient-change{break-inside:avoid}
+  .patient-section-heading h1{font-size:24px}
+  .self-privacy{padding:8px 0}
+  .patient-disclaimer{font-size:12px}
+}

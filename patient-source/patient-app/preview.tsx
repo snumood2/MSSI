@@ -4,4 +4,23 @@ import {demoPatient,type Patient} from "../lib/clinical";
 import {accountRowToEntry,type SurveyKind,type SurveyAnswers,validateAnswers} from "../lib/patient-contract";
 import PatientHistory from "./history";
 import PatientForm from "./forms";
-function Preview(){const [view,setView]=useState<"history"|SurveyKind>("history"),[patient,setPatient]=useState<Patient>(demoPatient);async function submit(kind:SurveyKind,answers:SurveyAnswers){const r=validateAnswers(kind,answers),entry=accountRowToEntry([crypto.randomUUID(),new Date().toISOString(),"preview","SNUBH01","DEMO",kind,r.score,JSON.stringify(r.answers),1])!;setPatient(p=>({...p,entries:[...p.entries,entry]}));setView("history");}return <div className="self-app"><header className="self-header"><a className="self-brand" href="#"><strong>SNUMOOD<small>나의 기분과 생활</small></strong></a><span>가상 예시 · 실제 저장 안 됨</span></header><div className="self-body"><nav className="self-tabs" aria-label="나의 기록 메뉴">{([["history","나의 변화"],["lifestyle","생활습관 기록"],["mssi","기분안정성 기록"]] as const).map(([value,label])=><button key={value} aria-current={view===value?"page":undefined} onClick={()=>setView(value)}>{label}</button>)}</nav>{view==="history"?<PatientHistory patient={patient} reload={()=>{}} busy={false}/>:<PatientForm kind={view} key={view} submit={submit}/>}</div></div>;}createRoot(document.getElementById("root")!).render(<Preview/>);
+import {ClinicHeader,PatientNavigation,type PatientView} from "./chrome";
+
+function Preview(){
+  const [view,setView]=useState<PatientView>("history"),[patient,setPatient]=useState<Patient>(demoPatient);
+  async function submit(kind:SurveyKind,answers:SurveyAnswers){
+    const result=validateAnswers(kind,answers),entry=accountRowToEntry([crypto.randomUUID(),new Date().toISOString(),"preview","SNUBH01","DEMO",kind,result.score,JSON.stringify(result.answers),1])!;
+    setPatient(current=>({...current,entries:[...current.entries,entry]}));
+    setView("history");
+  }
+  return <div className="self-app">
+    <ClinicHeader/>
+    <div className="self-body">
+      <div className="preview-note">가상 예시 · 실제 저장되지 않습니다.</div>
+      <PatientNavigation view={view} onNavigate={setView}/>
+      {view==="history"?<PatientHistory patient={patient} reload={()=>{}} busy={false}/>:<PatientForm kind={view} key={view} submit={submit}/>}
+    </div>
+  </div>;
+}
+
+createRoot(document.getElementById("root")!).render(<Preview/>);
