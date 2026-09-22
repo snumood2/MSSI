@@ -7,6 +7,7 @@ test("patient continuation accepts only the three local views",()=>{
   for(const next of ["https://evil.example","//evil.example","../admin.html","mssi&patientId=other",""]){assert.equal(patientReturnTarget(`?next=${encodeURIComponent(next)}`),"respondent.html");assert.equal(patientFlowQuery(`?next=${encodeURIComponent(next)}`),"");}
 });
 test("patient page uses existing auth and never stores survey data locally",()=>{
-  const html=fs.readFileSync("patient.html","utf8"),auth=fs.readFileSync("patient-auth.js","utf8");
-  assert.match(html,/patient-auth\.js/);assert.match(auth,/\.\/config\.js/);assert.match(auth,/\.\/auth-session\.js/);assert.doesNotMatch(auth,/localStorage\.setItem/);
+  const html=fs.readFileSync("patient.html","utf8"),auth=fs.readFileSync("patient-auth.js","utf8"),bundle=fs.readFileSync("patient-bundle.js","utf8");
+  assert.match(html,/patient-auth\.js/);assert.match(html,/connect-src[^\"]*https:\/\/script\.google\.com[^\"]*https:\/\/script\.googleusercontent\.com/);assert.match(auth,/\.\/vendor\/supabase-js\.js/);assert.match(auth,/\.\/config\.js/);assert.match(auth,/\.\/auth-session\.js/);assert.doesNotMatch(auth,/localStorage\.setItem/);assert.equal(fs.existsSync("vendor/supabase-js.js"),true);
+  assert.match(bundle,/"Content-Type":"text\/plain"/);assert.doesNotMatch(bundle,/cache:"no-store"/);
 });

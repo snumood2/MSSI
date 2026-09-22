@@ -14,7 +14,9 @@ function App(){
   const [view,setView]=useState<View>(readView),[patient,setPatient]=useState<Patient|null>(null),[loading,setLoading]=useState(true),[error,setError]=useState(""),[notice,setNotice]=useState("");
   const request=useCallback(async(payload:object)=>{
     const session=await window.clinicAuth.session();if(!session){location.replace(`login-snubh01.html?next=${readView()}`);throw new Error("로그인해 주세요.");}
-    const response=await fetch(PATIENT_API_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({...payload,accessToken:session.access_token}),credentials:"omit",cache:"no-store",referrerPolicy:"no-referrer"});
+    // Apps Script rejects CORS preflight requests. A POST with text/plain is already
+    // non-cacheable, so keep this deliberately CORS-safelisted and omit cache controls.
+    const response=await fetch(PATIENT_API_URL,{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify({...payload,accessToken:session.access_token}),credentials:"omit",referrerPolicy:"no-referrer"});
     if(!response.ok)throw new Error("연결이 원활하지 않습니다. 잠시 후 다시 시도해 주세요.");
     const result=await response.json() as ApiResult;
     const latest=await window.clinicAuth.session();if(!latest||latest.user.id!==session.user.id)throw new Error("로그인 계정이 변경되었습니다. 새로고침해 주세요.");

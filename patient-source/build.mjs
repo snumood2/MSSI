@@ -11,6 +11,7 @@ await fs.writeFile(path.join(out,"patient-bundle.js"),client.outputFiles[0].text
 const css=await postcss([tailwind()]).process(await fs.readFile(path.join(root,"app/globals.css"),"utf8"),{from:path.join(root,"app/globals.css")});
 await fs.writeFile(path.join(out,"patient.css"),css.css+"\n"+await fs.readFile(path.join(root,"patient-app/patient.css"),"utf8"));
 for(const name of ["patient.html","patient-auth.js"])await fs.copyFile(path.join(root,"patient-app",name),path.join(out,name));
+await fs.mkdir(path.join(out,"vendor"),{recursive:true});await fs.copyFile(path.join(root,"vendor/supabase-js.js"),path.join(out,"vendor/supabase-js.js"));
 const config=await fs.readFile(path.join(out,"config.js"),"utf8"),value=name=>config.match(new RegExp(`export const ${name} = [^\\n]+ \\|\\| "([^"]+)"`))[1];
 const server=await build({absWorkingDir:root,entryPoints:["patient-app/server.ts"],bundle:true,write:false,format:"iife",globalName:"PatientServer",platform:"neutral",target:"es2020",define:{PATIENT_SUPABASE_URL:JSON.stringify(value("SUPABASE_URL")),PATIENT_SUPABASE_ANON_KEY:JSON.stringify(value("SUPABASE_ANON_KEY"))}});
 await fs.mkdir(path.join(root,".google-build"),{recursive:true});
