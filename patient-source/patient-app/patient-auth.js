@@ -7,4 +7,4 @@ window.clinicAuth={
   signOut:async()=>{await sb.auth.signOut();sessionStorage.removeItem("mssi_auth_handoff");if(window.name.startsWith("MSSI_AUTH:"))window.name="";location.replace("login-snubh01.html");},
   onSignOut:callback=>{const {data:{subscription}}=sb.auth.onAuthStateChange(event=>{if(event==="SIGNED_OUT")setTimeout(callback,0);});return()=>subscription.unsubscribe();}
 };
-const app=document.createElement("script");app.src="patient-bundle.js?v=patient-api-20260922";app.defer=true;document.body.appendChild(app);
+const app=document.createElement("script");app.src="patient-bundle.js?v=patient-ui-20260922";app.defer=true;document.body.appendChild(app);
